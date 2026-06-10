@@ -1,0 +1,7 @@
+.claude/
+node_modules/
+.DS_Store
+*.pyc
+.env
+.env.local
+.vercel/
