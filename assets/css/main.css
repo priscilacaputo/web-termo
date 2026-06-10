@@ -2413,3 +2413,25 @@ td {
     line-height: 1;
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   ECAs ANALYTICS — Stat Cards
+   ══════════════════════════════════════════════════════ */
+.ecas-stat-card {
+  padding: 16px;
+  background: var(--color-card);
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  transition: all .2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+
+.ecas-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.1);
+  border-color: var(--color-primary);
+}
+
+.ecas-stat-card:active {
+  transform: translateY(0);
+}
