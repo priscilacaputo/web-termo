@@ -128,7 +128,7 @@ function openMangaModal(equipo) {
     <div class="modal-dominio">${m.denominacion}</div>
   `;
 
-  mangaModalBody.innerHTML = `
+  let mainContent = `
     <div class="modal-field">
       <span class="modal-field-label">Fabricante</span>
       <span class="modal-field-value">${m.fabricante}</span>
@@ -156,7 +156,82 @@ function openMangaModal(equipo) {
     </div>
   `;
 
+  // Add preventive maintenance plan if available
+  if (typeof MANGAS_PLANS_EXTENDED !== 'undefined') {
+    const planKey = getPlanKeyForManga(m);
+    if (planKey && MANGAS_PLANS_EXTENDED[planKey]) {
+      const plan = MANGAS_PLANS_EXTENDED[planKey];
+      mainContent += renderMangaMaintenancePlan(plan, color);
+    }
+  }
+
+  mangaModalBody.innerHTML = mainContent;
   mangaModal.classList.add("open");
+}
+
+function getPlanKeyForManga(m) {
+  const fab = m.fabricante.toUpperCase();
+
+  if (fab === 'ADELTE') return 'adelte-pbb';
+  if (fab === 'TEAM') return 'team';
+
+  // For THYSSEN, distinguish by tipo pattern
+  if (fab === 'THYSSEN') {
+    // Check if it's a newer model (2018+) — models with AD3G pattern
+    if (m.tipo && m.tipo.includes('AD3G')) return 'thyssen-2018';
+    return 'thyssen-2011';
+  }
+
+  return null;
+}
+
+function renderMangaMaintenancePlan(plan, color) {
+  let html = `
+    <div class="manga-maint-section" style="margin-top:24px;border-top:2px solid ${color};padding-top:16px">
+      <div class="manga-maint-header" style="margin-bottom:16px">
+        <h3 style="margin:0;color:${color};font-size:16px;font-weight:700">📋 Plan de Mantenimiento Preventivo</h3>
+      </div>
+  `;
+
+  // Group frequencies by label for better organization
+  const freqMap = {};
+  plan.frecuenciasDetalladas.forEach(frec => {
+    if (!freqMap[frec.label]) freqMap[frec.label] = [];
+    freqMap[frec.label].push(frec);
+  });
+
+  // Render frequencies
+  Object.keys(freqMap).forEach(label => {
+    const freqs = freqMap[label];
+    freqs.forEach(frec => {
+      html += `
+      <div class="manga-freq-block" style="margin-bottom:16px">
+        <div class="manga-freq-label" style="background:${frec.color}20;border-left:4px solid ${frec.color};padding:8px 12px;margin-bottom:8px">
+          <span style="color:${frec.color};font-weight:700">${frec.label}</span>
+        </div>
+      `;
+
+      // Render groups within frequency
+      frec.grupos.forEach(grupo => {
+        html += `
+        <div class="manga-grupo-block" style="margin-left:12px;margin-bottom:12px">
+          <div class="manga-grupo-title" style="color:#374151;font-weight:600;margin-bottom:6px;font-size:14px">${grupo.nombre}</div>
+          <ul style="margin:0;padding-left:20px;list-style:disc;color:#555;font-size:13px;line-height:1.5">
+        `;
+
+        grupo.tareas.forEach(tarea => {
+          html += `<li style="margin-bottom:4px">${tarea}</li>`;
+        });
+
+        html += `</ul></div>`;
+      });
+
+      html += `</div>`;
+    });
+  });
+
+  html += `</div>`;
+  return html;
 }
 
 mangaModalClose.addEventListener("click", () => mangaModal.classList.remove("open"));
