@@ -90,6 +90,12 @@
         <span class="nav-label">Otros Equipos</span>
       </li>
 
+      <li class="nav-section-label">Análisis</li>
+      <li class="nav-item" data-page="analytics">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Distribución de Equipos</span>
+      </li>
+
       <li class="nav-section-label">Recursos</li>
       <li class="nav-item disabled" data-page="documentos">
         <span class="nav-icon">📄</span>
@@ -1211,7 +1217,48 @@
     <!-- ─── PÁGINA: ECAs — Incendios ─── -->
     <div class="page hidden" id="page-ecas">
 
-      <div class="stats-grid" id="ecas-stats" style="margin-bottom:16px"></div>
+      <!-- PLANOS DESTACADOS - SUPERIOR -->
+      <div style="margin-bottom:32px">
+        <h2 style="margin-bottom:20px; color:var(--color-navy); font-weight:800; font-size:24px">📍 Planos de Ubicación de ECAs</h2>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px">
+
+          <!-- Plano PA -->
+          <div style="border:2px solid #3b82f6; border-radius:14px; overflow:hidden; background:linear-gradient(135deg,#eff6ff,#dbeafe); box-shadow:0 4px 12px rgba(59,130,246,0.15)">
+            <div style="padding:16px; background:linear-gradient(135deg,#3b82f6,#2563eb); color:white">
+              <div style="font-size:28px; margin-bottom:8px">📄</div>
+              <div style="font-weight:800; font-size:18px">Planta Alta</div>
+              <div style="font-size:12px; opacity:0.9">Piso de pasajeros</div>
+            </div>
+            <div style="padding:20px; text-align:center">
+              <p style="margin-bottom:16px; font-size:14px; color:var(--color-text); font-weight:600">Ubic. de ECAs • Sprinklers • Hidrantes</p>
+              <a href="assets/eca-pa-plano.pdf" target="_blank" style="display:inline-block; padding:12px 24px; background:linear-gradient(135deg,#3b82f6,#2563eb); color:white; border-radius:10px; text-decoration:none; font-weight:700; font-size:14px; box-shadow:0 4px 8px rgba(59,130,246,0.3)">Abrir Plano PA</a>
+            </div>
+          </div>
+
+          <!-- Plano PB -->
+          <div style="border:2px solid #dc2626; border-radius:14px; overflow:hidden; background:linear-gradient(135deg,#fef2f2,#fee2e2); box-shadow:0 4px 12px rgba(220,38,38,0.15)">
+            <div style="padding:16px; background:linear-gradient(135deg,#dc2626,#b91c1c); color:white">
+              <div style="font-size:28px; margin-bottom:8px">📋</div>
+              <div style="font-weight:800; font-size:18px">Planta Baja</div>
+              <div style="font-size:12px; opacity:0.9">Nivel terminal</div>
+            </div>
+            <div style="padding:20px; text-align:center">
+              <p style="margin-bottom:16px; font-size:14px; color:var(--color-text); font-weight:600">Ubic. de ECAs • Sprinklers • Hidrantes</p>
+              <a href="assets/eca-pb-plano.pdf" target="_blank" style="display:inline-block; padding:12px 24px; background:linear-gradient(135deg,#dc2626,#b91c1c); color:white; border-radius:10px; text-decoration:none; font-weight:700; font-size:14px; box-shadow:0 4px 8px rgba(220,38,38,0.3)">Abrir Plano PB</a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="stats-grid" id="ecas-stats" style="margin-bottom:24px"></div>
+
+      <!-- Separador -->
+      <div style="padding:24px 0; border-top:2px solid var(--color-border); border-bottom:2px solid var(--color-border); margin-bottom:24px">
+        <h3 style="color:var(--color-navy); font-weight:700; margin-bottom:12px">🔍 Buscar ECAs en el Listado</h3>
+        <p style="color:var(--color-muted); font-size:13px">Filtra por tipo, sistema o piso para encontrar equipos específicos</p>
+      </div>
 
       <!-- Toolbar: búsqueda y filtros -->
       <div class="toolbar" style="margin-bottom:16px">
@@ -1263,27 +1310,6 @@
         </table>
       </div>
 
-      <!-- Planos/Mapas de ubicación -->
-      <div style="margin-top:32px; padding-top:24px; border-top:2px solid var(--color-border)">
-        <h3 style="margin-bottom:16px; color:var(--color-navy); font-weight:700">📍 Planos de Ubicación</h3>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px">
-          <div style="border:1px solid var(--color-border); border-radius:10px; overflow:hidden; background:var(--color-card)">
-            <div style="padding:12px; background:#f3f4f6; border-bottom:1px solid var(--color-border); font-weight:700; color:var(--color-navy)">Plano Planta Alta (PA)</div>
-            <div style="padding:16px; text-align:center">
-              <p style="margin-bottom:12px; font-size:13px; color:var(--color-muted)">Ubicación de ECAs en Planta Alta</p>
-              <a href="assets/eca-pa-plano.pdf" target="_blank" style="display:inline-block; padding:10px 16px; background:var(--color-primary); color:white; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px">📄 Descargar PDF</a>
-            </div>
-          </div>
-          <div style="border:1px solid var(--color-border); border-radius:10px; overflow:hidden; background:var(--color-card)">
-            <div style="padding:12px; background:#f3f4f6; border-bottom:1px solid var(--color-border); font-weight:700; color:var(--color-navy)">Plano Planta Baja (PB)</div>
-            <div style="padding:16px; text-align:center">
-              <p style="margin-bottom:12px; font-size:13px; color:var(--color-muted)">Ubicación de ECAs en Planta Baja</p>
-              <a href="assets/eca-pb-plano.pdf" target="_blank" style="display:inline-block; padding:10px 16px; background:#dc2626; color:white; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px">📄 Descargar PDF</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
 
     <!-- ─── PÁGINA: OTROS EQUIPOS ─── -->
@@ -1320,6 +1346,12 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- ─── PÁGINA: ANALYTICS ─── -->
+    <div class="page hidden" id="page-analytics">
+      <div class="stats-grid" id="analytics-stats" style="margin-bottom:24px"></div>
+      <div id="analytics-content"></div>
     </div>
 
     <!-- ─── PÁGINA: PERSONAL ─── -->
@@ -1483,6 +1515,7 @@
   <script src="assets/js/data.js?v=15"></script>
   <script src="assets/js/mant-data.js?v=15"></script>
   <script src="assets/js/mangas-data.js?v=15"></script>
+  <script src="assets/js/mangas-plans.js?v=1"></script>
   <script src="assets/js/ascensores-data.js?v=15"></script>
   <script src="assets/js/escaleras-data.js?v=15"></script>
   <script src="assets/js/extractores-data.js?v=15"></script>
@@ -1493,7 +1526,7 @@
   <script src="assets/js/patio-data.js?v=3"></script>
   <script src="assets/js/app.js?v=16"></script>
   <script src="assets/js/mant-app.js?v=15"></script>
-  <script src="assets/js/mangas-app.js?v=16"></script>
+  <script src="assets/js/mangas-app.js?v=17"></script>
   <script src="assets/js/ascensores-app.js?v=15"></script>
   <script src="assets/js/escaleras-app.js?v=15"></script>
   <script src="assets/js/extractores-app.js?v=15"></script>
@@ -1505,11 +1538,14 @@
   <script src="assets/js/puertas-data.js?v=5"></script>
   <script src="assets/js/puertas-app.js?v=5"></script>
   <script src="assets/js/aac-data.js?v=2"></script>
-  <script src="assets/js/aac-app.js?v=4"></script>
+  <script src="assets/js/uta-specs.js?v=1"></script>
+  <script src="assets/js/aac-app.js?v=5"></script>
   <script src="assets/js/otros-data.js?v=1"></script>
   <script src="assets/js/otros-app.js?v=1"></script>
   <script src="assets/js/ecas-data.js?v=1"></script>
+  <script src="assets/js/ecas-analytics.js?v=1"></script>
   <script src="assets/js/ecas-app.js?v=1"></script>
+  <script src="assets/js/analytics-app.js?v=1"></script>
   <script src="assets/js/global-search.js?v=1"></script>
 </body>
 </html>

@@ -95,7 +95,29 @@ function gsSearch(q) {
   document.getElementById('gs-results').innerHTML = html;
 
   document.querySelectorAll('.gs-item').forEach(el => {
-    el.addEventListener('click', () => gsNavigate(el.dataset.page, el.dataset.equipo));
+    el.addEventListener('click', () => {
+      const page = el.dataset.page;
+      const equipo = el.dataset.equipo;
+      closeGlobalSearch();
+      showPage(page);
+
+      // Open modal based on page type
+      setTimeout(() => {
+        switch(page) {
+          case 'aac': openAACModal(equipo); break;
+          case 'puertas': openPuertaModal(equipo); break;
+          case 'ascensores': openAscModal(equipo); break;
+          case 'escaleras': openEscModal(equipo); break;
+          case 'mangas': openMangaModal(equipo); break;
+          case 'extractores': openExtModal(equipo); break;
+          case 'persianas': openPersModal(equipo); break;
+          case 'cortinas': openCorModal(equipo); break;
+          case 'bombas': openBomModal(equipo); break;
+          case 'patio': openPatioModal(equipo); break;
+          case 'otros': openOtrosModal(equipo); break;
+        }
+      }, 200);
+    });
   });
 }
 
@@ -103,6 +125,48 @@ function gsSearch(q) {
 function gsNavigate(page, equipo) {
   closeGlobalSearch();
   showPage(page);
+
+  // Map equipo code for consistency
+  const equipoCode = String(equipo).trim();
+
+  // Store intent to open modal
+  window.gsModalIntent = { page, equipoCode };
+
+  // Try opening modal immediately, then retry if needed
+  const tryOpenModal = () => {
+    switch(page) {
+      case 'aac':
+        return typeof openAACModal === 'function' && openAACModal(equipoCode);
+      case 'puertas':
+        return typeof openPuertaModal === 'function' && openPuertaModal(equipoCode);
+      case 'ascensores':
+        return typeof openAscModal === 'function' && openAscModal(equipoCode);
+      case 'escaleras':
+        return typeof openEscModal === 'function' && openEscModal(equipoCode);
+      case 'mangas':
+        return typeof openMangaModal === 'function' && openMangaModal(equipoCode);
+      case 'extractores':
+        return typeof openExtModal === 'function' && openExtModal(equipoCode);
+      case 'persianas':
+        return typeof openPersModal === 'function' && openPersModal(equipoCode);
+      case 'cortinas':
+        return typeof openCorModal === 'function' && openCorModal(equipoCode);
+      case 'bombas':
+        return typeof openBomModal === 'function' && openBomModal(equipoCode);
+      case 'patio':
+        return typeof openPatioModal === 'function' && openPatioModal(equipoCode);
+      case 'otros':
+        return typeof openOtrosModal === 'function' && openOtrosModal(equipoCode);
+    }
+    return false;
+  };
+
+  // Try immediately, then with increasing delays
+  if (!tryOpenModal()) {
+    setTimeout(tryOpenModal, 50);
+    setTimeout(tryOpenModal, 150);
+    setTimeout(tryOpenModal, 300);
+  }
 }
 
 /* ── Keyboard nav ── */
