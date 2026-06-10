@@ -45,8 +45,11 @@ function parseLocation(ubicacion) {
   return { building, floor };
 }
 
-function aggregateAllEquipment() {
-  const datasets = [
+let analyticsFilterBuilding = null;
+let analyticsFilterFloor = null;
+
+function getDatasetsList() {
+  return [
     { name: 'AAC', data: typeof AAC_DATA !== 'undefined' ? AAC_DATA : [], icon: '❄️' },
     { name: 'Mangas', data: typeof MANGAS_DATA !== 'undefined' ? MANGAS_DATA : [], icon: '🛬' },
     { name: 'Ascensores', data: typeof ASCENSORES_DATA !== 'undefined' ? ASCENSORES_DATA : [], icon: '🛗' },
@@ -60,6 +63,10 @@ function aggregateAllEquipment() {
     { name: 'ECAs', data: typeof ECAS_DATA !== 'undefined' ? ECAS_DATA : [], icon: '🔥' },
     { name: 'Otros', data: typeof OTROS_DATA !== 'undefined' ? OTROS_DATA : [], icon: '⚙️' },
   ];
+}
+
+function aggregateAllEquipment() {
+  const datasets = getDatasetsList();
 
   const byBuilding = {};
   const byFloor = {};
@@ -127,6 +134,88 @@ function renderAnalyticsStats() {
   `).join('');
 }
 
+function getEquipmentByLocation(building, floor) {
+  const datasets = getDatasetsList();
+  const equipment = [];
+
+  datasets.forEach(dataset => {
+    dataset.data.forEach(item => {
+      const ubicacion = item.ubicacion || item.piso || '';
+      const { building: itemBuilding, floor: itemFloor } = parseLocation(ubicacion);
+
+      const matchBuilding = !building || itemBuilding === building;
+      const matchFloor = !floor || itemFloor === floor;
+
+      if (matchBuilding && matchFloor) {
+        equipment.push({
+          type: dataset.name,
+          icon: dataset.icon,
+          equipo: item.equipo,
+          denominacion: item.denominacion || item.tipo || 'Sin denominación',
+          ubicacion: ubicacion,
+          color: dataset.color || '#666',
+        });
+      }
+    });
+  });
+
+  return equipment;
+}
+
+function renderFilteredEquipment(building, floor) {
+  const equipment = getEquipmentByLocation(building, floor);
+  const displayBuilding = building || 'Todos';
+  const displayFloor = floor === 'PB' ? 'Planta Baja' : floor === 'SUB' ? 'Subsuelo' : floor ? `Piso ${floor}` : 'Todos';
+  const title = building ? (floor ? `${building} - ${displayFloor}` : displayBuilding) : (floor ? displayFloor : 'Todos los equipos');
+
+  const container = document.getElementById('analytics-content');
+  let html = `
+    <div style="margin-bottom:24px; padding-bottom:16px; border-bottom:2px solid var(--color-border)">
+      <div style="display:flex; align-items:center; justify-content:space-between">
+        <h3 style="color:var(--color-navy); font-weight:700; font-size:20px">${title}</h3>
+        <button id="analytics-clear-filter" style="padding:8px 16px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:6px; color:var(--color-text); font-weight:600; cursor:pointer; font-size:13px">
+          ← Volver a distribución
+        </button>
+      </div>
+      <p style="color:var(--color-muted); margin-top:8px; font-size:14px">${equipment.length} equipo${equipment.length !== 1 ? 's' : ''} en esta ubicación</p>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px">
+  `;
+
+  if (equipment.length === 0) {
+    html += `
+      <div style="grid-column:1/-1; padding:40px; text-align:center; background:var(--color-surface); border-radius:8px">
+        <div style="font-size:48px; margin-bottom:16px">🔍</div>
+        <p style="color:var(--color-muted); font-size:15px">No hay equipos en esta ubicación</p>
+      </div>
+    `;
+  } else {
+    equipment.forEach(item => {
+      html += `
+        <div style="padding:16px; background:var(--color-surface); border-radius:8px; border-left:4px solid ${item.color}">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+            <span style="font-size:18px">${item.icon}</span>
+            <span style="font-weight:600; color:var(--color-navy); font-size:13px; text-transform:uppercase; letter-spacing:0.5px">${item.type}</span>
+          </div>
+          <div style="margin-bottom:8px">
+            <div style="font-weight:700; color:var(--color-text); font-size:15px; margin-bottom:4px">${item.equipo}</div>
+            <div style="color:var(--color-muted); font-size:13px">${item.denominacion}</div>
+          </div>
+          <div style="padding-top:8px; border-top:1px solid var(--color-border); color:var(--color-muted); font-size:12px">
+            📍 ${item.ubicacion || 'Sin ubicación'}
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
+
+  document.getElementById('analytics-clear-filter').addEventListener('click', renderAnalyticsContent);
+}
+
 function renderAnalyticsContent() {
   const data = aggregateAllEquipment();
   const container = document.getElementById('analytics-content');
@@ -146,7 +235,7 @@ function renderAnalyticsContent() {
     const percentage = Math.round((d.count / maxBuilding) * 100);
     const color = buildingColors[idx % buildingColors.length];
     html += `
-      <div style="padding:12px; background:var(--color-surface); border-radius:8px; border-left:4px solid ${color}">
+      <div class="analytics-building-item" style="padding:12px; background:var(--color-surface); border-radius:8px; border-left:4px solid ${color}; cursor:pointer; transition:all 0.2s" data-building="${building}">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
           <span style="font-weight:600; color:var(--color-text); font-size:14px">${building}</span>
           <span style="font-weight:700; font-size:15px; color:${color}">${d.count}</span>
@@ -187,7 +276,7 @@ function renderAnalyticsContent() {
     const color = floorColors[floor] || '#6b7280';
     const displayFloor = floor === 'PB' ? 'Planta Baja' : floor === 'SUB' ? 'Subsuelo' : `Piso ${floor}`;
     html += `
-      <div style="padding:12px; background:var(--color-surface); border-radius:8px; border-left:4px solid ${color}">
+      <div class="analytics-floor-item" style="padding:12px; background:var(--color-surface); border-radius:8px; border-left:4px solid ${color}; cursor:pointer; transition:all 0.2s" data-floor="${floor}">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
           <span style="font-weight:600; color:var(--color-text); font-size:14px">${displayFloor}</span>
           <span style="font-weight:700; font-size:15px; color:${color}">${d.count}</span>
@@ -222,7 +311,7 @@ function renderAnalyticsContent() {
 
   data.byBuildingFloor.forEach(item => {
     html += `
-      <tr>
+      <tr class="analytics-table-row" style="cursor:pointer; transition:background 0.2s" data-building="${item.building}" data-floor="${item.floor}">
         <td style="padding:12px; border-bottom:1px solid var(--color-border)">${item.building}</td>
         <td style="padding:12px; border-bottom:1px solid var(--color-border)">${item.floor === 'PB' ? 'Planta Baja' : item.floor === 'SUB' ? 'Subsuelo' : `Piso ${item.floor}`}</td>
         <td style="padding:12px; border-bottom:1px solid var(--color-border); text-align:center; font-weight:600; color:#3b82f6">${item.count}</td>
@@ -239,6 +328,49 @@ function renderAnalyticsContent() {
   `;
 
   container.innerHTML = html;
+
+  // Add event listeners for building items
+  document.querySelectorAll('.analytics-building-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const building = el.dataset.building;
+      renderFilteredEquipment(building, null);
+    });
+    el.addEventListener('mouseover', () => {
+      el.style.background = 'var(--color-border)';
+    });
+    el.addEventListener('mouseout', () => {
+      el.style.background = 'var(--color-surface)';
+    });
+  });
+
+  // Add event listeners for floor items
+  document.querySelectorAll('.analytics-floor-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const floor = el.dataset.floor;
+      renderFilteredEquipment(null, floor);
+    });
+    el.addEventListener('mouseover', () => {
+      el.style.background = 'var(--color-border)';
+    });
+    el.addEventListener('mouseout', () => {
+      el.style.background = 'var(--color-surface)';
+    });
+  });
+
+  // Add event listeners for table rows
+  document.querySelectorAll('.analytics-table-row').forEach(el => {
+    el.addEventListener('click', () => {
+      const building = el.dataset.building;
+      const floor = el.dataset.floor;
+      renderFilteredEquipment(building, floor);
+    });
+    el.addEventListener('mouseover', () => {
+      el.style.background = 'var(--color-border)';
+    });
+    el.addEventListener('mouseout', () => {
+      el.style.background = 'transparent';
+    });
+  });
 }
 
 function initAnalytics() {
