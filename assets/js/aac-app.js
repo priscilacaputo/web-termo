@@ -259,6 +259,7 @@ function openAACModal(equipo) {
   const zona      = aacZona(e.ubicacion);
   const tipoColor = AAC_TIPO_COLORS[e.tipo]  || '#6b7280';
   const zonaColor = AAC_ZONA_COLORS[zona]     || '#6b7280';
+  const uta       = UTA_SPECS && UTA_SPECS[equipo]; // Get UTA specs if available
 
   document.getElementById('aac-modal-header').innerHTML = `
     <span class="modal-equipo">${e.equipo}</span>
@@ -277,7 +278,7 @@ function openAACModal(equipo) {
     </div>`;
   }
 
-  document.getElementById('aac-modal-body').innerHTML = `
+  let bodyHTML = `
     ${mf('Fabricante', e.fabricante || '—')}
     ${mf('Tipo', e.tipo)}
     ${mf('Modelo / N° Tipo', e.modelo || '—', false, true)}
@@ -286,6 +287,25 @@ function openAACModal(equipo) {
     ${mf('Zona', zona)}
     ${mf('Ubicación SAP', e.ubicacion, true, true)}
   `;
+
+  // Add UTA specifications if available
+  if (uta) {
+    bodyHTML += `
+      <div style="margin-top:20px; padding-top:20px; border-top:2px solid var(--color-border)">
+        <h4 style="color:var(--color-navy); font-weight:700; margin-bottom:12px; font-size:14px">📋 Especificaciones Técnicas (UTA)</h4>
+        ${mf('Código UTA', uta['Codigo'])}
+        ${mf('Marca', uta['Marca'])}
+        ${mf('Modelo UTA', uta['Modelo UTA'] || uta['Modelo'])}
+        ${mf('Servicio a', uta['Servicio a'], true)}
+        ${mf('Filtros de Aire', uta['Filtros aire'])}
+        ${mf('Correas', uta['Correas'])}
+        ${mf('Motor Alimentación', uta['Motor Alimentación'])}
+        ${mf('Motor Retorno', uta['Motor Retorno'])}
+      </div>
+    `;
+  }
+
+  document.getElementById('aac-modal-body').innerHTML = bodyHTML;
 
   document.getElementById('aac-modal-overlay').classList.add('open');
 }
