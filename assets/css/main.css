@@ -2264,13 +2264,15 @@ td {
   /* ── Main content takes full width ── */
   .main-content { margin-left: 0; width: 100%; }
 
-  /* ── Topbar compact — STICKY & PROMINENT ── */
+  /* ── Topbar compact — FIXED & PERMANENT ── */
   .topbar {
     padding: 12px 14px;
     gap: 8px;
-    position: sticky;
+    position: fixed;
     top: 0;
-    z-index: 50;
+    left: 0;
+    right: 0;
+    z-index: 999;
     box-shadow: 0 4px 20px rgba(0,0,0,.15), 0 2px 8px rgba(11,79,158,.2);
     background: var(--color-card);
     border-bottom: 2px solid var(--color-sky);
@@ -2284,8 +2286,8 @@ td {
   .gs-trigger-btn kbd { display: none; }
   .gs-trigger-btn { padding: 9px 11px; min-height: 40px; }
 
-  /* ── Page padding (extra bottom for bottom-nav) ── */
-  .page { padding: 14px 14px 84px; }
+  /* ── Page padding (extra bottom for bottom-nav + top for fixed header) ── */
+  .page { padding: 70px 14px 84px; }
 
   /* ── Stats grid: 2 columnas en mobile ── */
   .stats-grid {
