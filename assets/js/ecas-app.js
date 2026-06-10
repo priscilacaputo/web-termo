@@ -6,46 +6,83 @@ let ecasSearch        = '';
 let ecasTipoFilter    = '';
 let ecasSistemaFilter = '';
 let ecasPisoFilter    = '';
+let ecasInitialized   = false;
 
 /* ─── Init ───────────────────────────────────────────────── */
-(function initECAS() {
+function initECAS() {
+  if (ecasInitialized) return;
+
+  const statsEl = document.getElementById('ecas-stats');
+  const searchEl = document.getElementById('ecas-search');
+  const filterTipoEl = document.getElementById('ecas-filter-tipo');
+
+  if (!statsEl || !searchEl || !filterTipoEl) {
+    console.warn('ECAs elements not found, retrying...');
+    setTimeout(initECAS, 100);
+    return;
+  }
+
   renderECASStats();
   buildECASFilters();
   applyECASFilters();
 
-  document.getElementById('ecas-search').addEventListener('input', function () {
+  searchEl.addEventListener('input', function () {
     ecasSearch = this.value.trim().toLowerCase();
-    document.getElementById('ecas-clear-search').style.display = ecasSearch ? 'flex' : 'none';
-    applyECASFilters();
-  });
-  document.getElementById('ecas-clear-search').addEventListener('click', function () {
-    ecasSearch = '';
-    document.getElementById('ecas-search').value = '';
-    this.style.display = 'none';
-    applyECASFilters();
-  });
-  document.getElementById('ecas-filter-tipo').addEventListener('change', function () {
-    ecasTipoFilter = this.value;
-    applyECASFilters();
-  });
-  document.getElementById('ecas-filter-sistema').addEventListener('change', function () {
-    ecasSistemaFilter = this.value;
-    applyECASFilters();
-  });
-  document.getElementById('ecas-filter-piso').addEventListener('change', function () {
-    ecasPisoFilter = this.value;
+    const clearBtn = document.getElementById('ecas-clear-search');
+    if (clearBtn) clearBtn.style.display = ecasSearch ? 'flex' : 'none';
     applyECASFilters();
   });
 
-  document.querySelectorAll('.aac-view-btn').forEach(btn => {
+  const clearSearchEl = document.getElementById('ecas-clear-search');
+  if (clearSearchEl) {
+    clearSearchEl.addEventListener('click', function () {
+      ecasSearch = '';
+      searchEl.value = '';
+      this.style.display = 'none';
+      applyECASFilters();
+    });
+  }
+
+  filterTipoEl.addEventListener('change', function () {
+    ecasTipoFilter = this.value;
+    applyECASFilters();
+  });
+
+  const filterSistemaEl = document.getElementById('ecas-filter-sistema');
+  if (filterSistemaEl) {
+    filterSistemaEl.addEventListener('change', function () {
+      ecasSistemaFilter = this.value;
+      applyECASFilters();
+    });
+  }
+
+  const filterPisoEl = document.getElementById('ecas-filter-piso');
+  if (filterPisoEl) {
+    filterPisoEl.addEventListener('change', function () {
+      ecasPisoFilter = this.value;
+      applyECASFilters();
+    });
+  }
+
+  document.querySelectorAll('#page-ecas .aac-view-btn').forEach(btn => {
     btn.addEventListener('click', function () {
-      document.querySelectorAll('.aac-view-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#page-ecas .aac-view-btn').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       ecasView = this.dataset.view;
       renderECAS();
     });
   });
-})();
+
+  ecasInitialized = true;
+  console.log('ECAs initialized with', ECAS_DATA.length, 'items');
+}
+
+// Inicializar cuando el DOM está listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initECAS);
+} else {
+  initECAS();
+}
 
 /* ─── Stats ──────────────────────────────────────────────── */
 function renderECASStats() {
