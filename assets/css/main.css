@@ -293,6 +293,15 @@ body {
   position: relative; overflow: hidden;
   transition: box-shadow .2s, transform .2s;
 }
+
+.stat-card-clickable {
+  cursor: pointer;
+}
+
+.stat-card-clickable:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,.12), 0 0 0 1px var(--stat-color, var(--color-sky));
+  transform: translateY(-2px);
+}
 .stat-card::after {
   content: '';
   position: absolute; inset: 0;
