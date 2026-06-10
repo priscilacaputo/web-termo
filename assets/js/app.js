@@ -12,7 +12,9 @@ const PAGE_TITLES = {
   personal:    ["Personal",          "AEP — Composición de guardias · Termomecánica"],
   puertas:     ["Puertas Automáticas", "AEP — Puertas automáticas corredizas · Manusa · Audoor"],
   aac:         ["Equipos de Aire",     "AEP — Aire acondicionado · Splits · VRF · Roof Tops · UTAs · Chillers"],
+  ecas:        ["Incendios (ECAs)",    "AEP — Equipos de detección y extinción de incendios · Sprinklers · Hidrantes"],
   otros:       ["Otros Equipos",       "AEP — Arcos de lectura · Cisternas · Compresores"],
+  analytics:   ["Distribución de Equipos", "AEP — Análisis de distribución por edificio y piso · Todos los equipos"],
 };
 
 function showPage(pageId) {
