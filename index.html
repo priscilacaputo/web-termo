@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Termomecánica — Portal Interno</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+</head>
+<body>
+  <nav class="sidebar" id="sidebar">
+
+    <!-- ── Branding ── -->
+    <div class="sidebar-header">
+      <div class="brand-row">
+        <div class="brand-icon-wrap">✈</div>
+        <div class="brand-text">
+          <span class="brand-title">TERMOMECÁNICA</span>
+          <span class="brand-sub">Portal Interno</span>
+        </div>
+      </div>
+      <div class="brand-airport-row">
+        <span class="brand-iata">AEP</span>
+        <div class="brand-airport-info">
+          <span class="brand-airport-name">Aeroparque Jorge Newbery</span>
+          <span class="brand-company">Aeropuertos Argentina</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Navegación ── -->
+    <ul class="nav-menu">
+
+      <li class="nav-section-label">Gestión</li>
+      <li class="nav-item active" data-page="personal">
+        <span class="nav-icon">👷</span>
+        <span class="nav-label">Personal</span>
+      </li>
+
+      <li class="nav-section-label">Equipos e Instalaciones</li>
+      <li class="nav-item" data-page="flota">
+        <span class="nav-icon">🚐</span>
+        <span class="nav-label">Flota Vehicular</span>
+      </li>
+      <li class="nav-item" data-page="mangas">
+        <span class="nav-icon">🛬</span>
+        <span class="nav-label">Mangas de Embarque</span>
+      </li>
+      <li class="nav-item" data-page="ascensores">
+        <span class="nav-icon">🛗</span>
+        <span class="nav-label">Ascensores</span>
+      </li>
+      <li class="nav-item" data-page="escaleras">
+        <span class="nav-icon">🪜</span>
+        <span class="nav-label">Escaleras Mecánicas</span>
+      </li>
+      <li class="nav-item" data-page="extractores">
+        <span class="nav-icon">💨</span>
+        <span class="nav-label">Extractores</span>
+      </li>
+      <li class="nav-item" data-page="persianas">
+        <span class="nav-icon">🪟</span>
+        <span class="nav-label">Persianas de Gatera</span>
+      </li>
+      <li class="nav-item" data-page="cortinas">
+        <span class="nav-icon">🌬️</span>
+        <span class="nav-label">Cortinas de Aire</span>
+      </li>
+      <li class="nav-item" data-page="bombas">
+        <span class="nav-icon">💧</span>
+        <span class="nav-label">Bombas</span>
+      </li>
+      <li class="nav-item" data-page="patio">
+        <span class="nav-icon">🧳</span>
+        <span class="nav-label">Patio de Valijas</span>
+      </li>
+      <li class="nav-item" data-page="puertas">
+        <span class="nav-icon">🚪</span>
+        <span class="nav-label">Puertas Automáticas</span>
+      </li>
+      <li class="nav-item" data-page="aac">
+        <span class="nav-icon">❄️</span>
+        <span class="nav-label">Equipos de Aire</span>
+      </li>
+      <li class="nav-item" data-page="otros">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Otros Equipos</span>
+      </li>
+
+      <li class="nav-section-label">Recursos</li>
+      <li class="nav-item disabled" data-page="documentos">
+        <span class="nav-icon">📄</span>
+        <span class="nav-label">Documentos</span>
+        <span class="badge">Próx.</span>
+      </li>
+
+    </ul>
+
+    <!-- ── Footer ── -->
+    <div class="sidebar-footer">
+      <span class="sidebar-footer-text">Termomecánica S.A. · 2026</span>
+    </div>
+
+  </nav>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="nav-toggle-btn" id="nav-toggle" aria-label="Menú">
+          <span></span><span></span><span></span>
+        </button>
+        <div>
+          <h1 class="page-title" id="page-title">Personal</h1>
+          <span class="page-sub" id="page-sub">AEP — Composición de guardias · Termomecánica</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="gs-trigger-btn" id="gs-trigger" title="Buscar equipos (Ctrl+K)">
+          <span class="gs-trigger-icon">🔍</span>
+          <span class="gs-trigger-label">Buscar equipos</span>
+          <kbd>Ctrl K</kbd>
+        </button>
+        <div class="topbar-airport-badge">
+          <span class="topbar-iata">AEP</span>
+          <span class="topbar-airport-label">Aeroparque</span>
+        </div>
+        <span class="date-badge" id="current-date"></span>
+      </div>
+    </header>
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- ── Bottom Navigation (solo mobile) ── -->
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Navegación rápida">
+      <button class="mbn-item active" data-mbn-page="personal">
+        <span class="mbn-icon">👷</span>
+        <span class="mbn-label">Personal</span>
+      </button>
+      <button class="mbn-item" data-mbn-page="aac">
+        <span class="mbn-icon">❄️</span>
+        <span class="mbn-label">Aire</span>
+      </button>
+      <button class="mbn-item" data-mbn-page="mangas">
+        <span class="mbn-icon">🛬</span>
+        <span class="mbn-label">Mangas</span>
+      </button>
+      <button class="mbn-item" data-mbn-page="patio">
+        <span class="mbn-icon">🧳</span>
+        <span class="mbn-label">Patio</span>
+      </button>
+      <button class="mbn-item" id="mbn-search-btn">
+        <span class="mbn-icon">🔍</span>
+        <span class="mbn-label">Buscar</span>
+      </button>
+    </nav>
+
+    <!-- ─── PÁGINA: FLOTA ─── -->
+    <div class="page hidden" id="page-flota">
+
+      <div class="mant-tabs">
+        <button class="mant-tab active" data-ftab="vehiculos">🚐 Vehículos</button>
+        <button class="mant-tab" data-ftab="mantenimiento">🔧 Mantenimiento</button>
+      </div>
+
+      <!-- Panel: Vehículos -->
+      <div id="ftab-vehiculos">
+        <div class="stats-grid" id="stats-grid"></div>
+
+        <div class="toolbar">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" class="search-input" placeholder="Buscar por equipo, dominio, fabricante, denominación..." />
+            <button class="clear-btn" id="clearSearch" title="Limpiar">✕</button>
+          </div>
+          <div class="filter-group">
+            <select id="filterFabricante" class="filter-select">
+              <option value="">Todos los fabricantes</option>
+            </select>
+            <select id="filterAnio" class="filter-select">
+              <option value="">Todos los años</option>
+            </select>
+            <button class="btn-export" id="btnExport">⬇ Exportar CSV</button>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-wrap">
+            <table id="flotaTable">
+              <thead>
+                <tr>
+                  <th data-col="equipo" class="sortable">Equipo <span class="sort-arrow">↕</span></th>
+                  <th data-col="dominio" class="sortable">Dominio <span class="sort-arrow">↕</span></th>
+                  <th data-col="denominacion" class="sortable">Denominación <span class="sort-arrow">↕</span></th>
+                  <th data-col="anio" class="sortable">Año <span class="sort-arrow">↕</span></th>
+                  <th data-col="fabricante" class="sortable">Fabricante <span class="sort-arrow">↕</span></th>
+                  <th data-col="tipo" class="sortable">Tipo <span class="sort-arrow">↕</span></th>
+                  <th>N° Pieza Motor</th>
+                  <th>N° Serie Chasis</th>
+                </tr>
+              </thead>
+              <tbody id="flotaBody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span id="resultCount"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel: Mantenimiento -->
+      <div id="ftab-mantenimiento" class="hidden">
+        <div class="mant-tabs" style="margin-top:4px">
+          <button class="mant-tab active" data-tab="calendario">📅 Plan Mensual (Calendario)</button>
+          <button class="mant-tab" data-tab="km">🛣️ Planes por Kilómetros</button>
+          <button class="mant-tab" data-tab="por-vehiculo">🚐 Buscar por Vehículo</button>
+        </div>
+
+        <div class="mant-panel" id="tab-calendario">
+          <div class="mant-section-header">
+            <div>
+              <h2 class="mant-section-title">Mantenimiento Mensual por Calendario</h2>
+              <p class="mant-section-desc">Aplica a <strong>todos los vehículos operativos</strong>. Frecuencia: <span class="freq-badge">Mensual</span></p>
+            </div>
+          </div>
+          <div class="table-card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th style="width:48px">#</th><th>Tarea de verificación / acción</th></tr></thead>
+                <tbody id="calBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="mant-panel hidden" id="tab-km">
+          <div class="mant-km-selector">
+            <label class="mant-selector-label">Seleccioná el modelo:</label>
+            <div class="mant-model-cards" id="modelCards"></div>
+          </div>
+          <div id="kmPlanContent"></div>
+        </div>
+
+        <div class="mant-panel hidden" id="tab-por-vehiculo">
+          <div class="mant-section-header">
+            <div>
+              <h2 class="mant-section-title">Consulta por Vehículo</h2>
+              <p class="mant-section-desc">Seleccioná un vehículo para ver su plan de mantenimiento por KM asignado.</p>
+            </div>
+          </div>
+          <div class="toolbar" style="margin-bottom:16px">
+            <div class="search-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="vehiculoSearch" class="search-input" placeholder="Buscar por equipo, dominio o denominación..." />
+            </div>
+          </div>
+          <div class="vehiculo-grid" id="vehiculoGrid"></div>
+          <div id="vehiculoPlanContent"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ─── PÁGINA: MANGAS ─── -->
+    <div class="page hidden" id="page-mangas">
+
+      <!-- Stats -->
+      <div class="stats-grid" id="mangas-stats"></div>
+
+      <!-- Toolbar -->
+      <div class="toolbar" style="margin-bottom:16px">
+        <div class="mangas-view-toggle">
+          <button class="mangas-view-btn active" data-view="grid">⊞ Posiciones</button>
+          <button class="mangas-view-btn" data-view="table">☰ Tabla</button>
+          <button class="mangas-view-btn" data-view="planes">📋 Planes</button>
+        </div>
+        <div class="filter-group">
+          <select id="mangasFabFilter" class="filter-select">
+            <option value="">Todos los fabricantes</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Vista: Grid de posiciones -->
+      <div id="mangas-grid-view">
+        <div class="mangas-airport-label">
+          <span class="airport-code">AEP</span>
+          <span class="airport-name">Aeroparque Jorge Newbery — Plataforma Comercial</span>
+        </div>
+        <div class="mangas-grid" id="mangas-grid"></div>
+      </div>
+
+      <!-- Vista: Tabla -->
+      <div id="mangas-table-view" class="hidden">
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Equipo</th>
+                  <th>POS</th>
+                  <th>Denominación</th>
+                  <th>Fabricante</th>
+                  <th>Tipo / Modelo</th>
+                  <th>Especificación</th>
+                  <th>Ubicación SAP</th>
+                </tr>
+              </thead>
+              <tbody id="mangasBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista: Planes Preventivos -->
+      <div id="mangas-planes-view" class="hidden">
+        <div class="mant-section-header">
+          <div>
+            <h2 class="mant-section-title">Planes Preventivos de Mangas</h2>
+            <p class="mant-section-desc">Seleccioná una manga para ver su plan preventivo asignado.</p>
+          </div>
+        </div>
+        <div class="manga-planes-selector" id="mangaPlanesSelector"></div>
+        <div id="mangaPlanContent"></div>
+      </div>
+
+    </div>
+
+    <!-- ─── PÁGINA: ASCENSORES ─── -->
+    <div class="page hidden" id="page-ascensores">
+
+      <div class="stats-grid" id="asc-stats"></div>
+
+      <!-- Contactos de servicio -->
+      <div class="asc-contactos-bar">
+        <div class="asc-contacto-card" style="border-left-color:#1a56a4">
+          <span class="asc-contacto-icon">📞</span>
+          <span class="asc-contacto-fab" style="color:#1a56a4">THYSSEN</span>
+          <div class="asc-contacto-body">
+            <span>Reclamos — llamar al cliente</span>
+            <strong>246</strong>
+          </div>
+        </div>
+        <div class="asc-contacto-card" style="border-left-color:#7c3aed">
+          <span class="asc-contacto-icon">📞</span>
+          <span class="asc-contacto-fab" style="color:#7c3aed">FUJITEC</span>
+          <div class="asc-contacto-body">
+            <span>Reclamos — llamar al cliente</span>
+            <strong>200</strong>
+          </div>
+        </div>
+        <div class="asc-contacto-card" style="border-left-color:#10b981">
+          <span class="asc-contacto-icon">☎️</span>
+          <span class="asc-contacto-fab" style="color:#10b981">TELÉFONOS</span>
+          <div class="asc-contacto-body">
+            <span>Líneas para reclamos</span>
+            <strong>11-4342-2363 / 11-3157-0192</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="toolbar" style="margin-bottom:16px">
+        <div class="mangas-view-toggle">
+          <button class="asc-view-btn active" data-view="grid">⊞ Grilla</button>
+          <button class="asc-view-btn" data-view="table">☰ Tabla</button>
+          <button class="asc-view-btn" data-view="planes">📋 Planes</button>
+          <button class="asc-view-btn" data-view="plano">📄 Plano</button>
+        </div>
+        <div class="filter-group">
+          <select id="ascFabFilter" class="filter-select">
+            <option value="">Todos los fabricantes</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Vista: Grilla -->
+      <div id="asc-grid-view">
+        <div class="mangas-airport-label">
+          <span class="airport-code">AEP</span>
+          <span class="airport-name">Aeroparque Jorge Newbery — Ascensores electromecánicos</span>
+        </div>
+        <div class="asc-grid" id="asc-grid"></div>
+      </div>
+
+      <!-- Vista: Tabla -->
+      <div id="asc-table-view" class="hidden">
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Equipo</th>
+                  <th>Denominación</th>
+                  <th>Fabricante</th>
+                  <th>Tipo / Modelo</th>
+                  <th>Dimensión</th>
+                  <th>Sector</th>
+                </tr>
+              </thead>
+              <tbody id="ascBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista: Planes Preventivos -->
+      <div id="asc-planes-view" class="hidden">
+        <div class="mant-section-header">
+          <div>
+            <h2 class="mant-section-title">Planes Preventivos de Ascensores</h2>
+            <p class="mant-section-desc">Seleccioná un ascensor para ver su plan de mantenimiento asignado.</p>
+          </div>
+        </div>
+        <div class="manga-planes-selector" id="ascPlanesSelector"></div>
+        <div id="ascPlanContent"></div>
+      </div>
+
+      <!-- Vista: Plano -->
+      <div id="asc-plano-view" class="hidden">
+        <div class="asc-plano-header">
+          <span class="asc-plano-title">📄 Plano de Ubicación — Ascensores y Escaleras · AEP</span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="asc-plano-zoom-btn" id="planoZoomOut" title="Alejar">−</button>
+            <span class="asc-plano-zoom-label" id="planoZoomLabel">100%</span>
+            <button class="asc-plano-zoom-btn" id="planoZoomIn" title="Acercar">+</button>
+            <button class="asc-plano-zoom-btn" id="planoZoomFit" title="Ajustar">⊡ Ajustar</button>
+            <a href="assets/ASC-ESC.pdf" target="_blank" class="asc-plano-btn-open">↗ PDF original</a>
+          </div>
+        </div>
+        <div class="asc-plano-wrap" id="ascPlanoWrap">
+          <img src="assets/plano-asc/plano-01.jpg"
+               id="planoImg"
+               class="asc-plano-img"
+               alt="Plano de Ascensores y Escaleras AEP"
+               draggable="false" />
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ─── PÁGINA: ESCALERAS ─── -->
+    <div class="page hidden" id="page-escaleras">
+
+      <div class="stats-grid" id="esc-stats"></div>
+
+      <!-- Contactos de servicio -->
+      <div class="asc-contactos-bar">
+        <div class="asc-contacto-card" style="border-left-color:#1a56a4">
+          <span class="asc-contacto-icon">📞</span>
+          <span class="asc-contacto-fab" style="color:#1a56a4">THYSSEN</span>
+          <div class="asc-contacto-body">
+            <span>Reclamos — llamar al cliente</span>
+            <strong>246</strong>
+          </div>
+        </div>
+        <div class="asc-contacto-card" style="border-left-color:#7c3aed">
+          <span class="asc-contacto-icon">📞</span>
+          <span class="asc-contacto-fab" style="color:#7c3aed">FUJITEC</span>
+          <div class="asc-contacto-body">
+            <span>Reclamos — llamar al cliente</span>
+            <strong>200</strong>
+          </div>
+        </div>
+        <div class="asc-contacto-card" style="border-left-color:#10b981">
+          <span class="asc-contacto-icon">☎️</span>
+          <span class="asc-contacto-fab" style="color:#10b981">TELÉFONOS</span>
+          <div class="asc-contacto-body">
+            <span>Líneas para reclamos</span>
+            <strong>11-4342-2363 / 11-3157-0192</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="toolbar" style="margin-bottom:16px">
+        <div class="mangas-view-toggle">
+          <button class="esc-view-btn active" data-view="grid">⊞ Grilla</button>
+          <button class="esc-view-btn" data-view="table">☰ Tabla</button>
+          <button class="esc-view-btn" data-view="planes">📋 Planes</button>
+          <button class="esc-view-btn" data-view="plano">📄 Plano</button>
+        </div>
+        <div class="filter-group">
+          <select id="escFabFilter" class="filter-select">
+            <option value="">Todos los fabricantes</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Vista: Grilla -->
+      <div id="esc-grid-view">
+        <div class="mangas-airport-label">
+          <span class="airport-code">AEP</span>
+          <span class="airport-name">Aeroparque Jorge Newbery — Escaleras mecánicas electromecánicas</span>
+        </div>
+        <div class="asc-grid" id="esc-grid"></div>
+      </div>
+
+      <!-- Vista: Tabla -->
+      <div id="esc-table-view" class="hidden">
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Equipo</th>
+                  <th>Denominación</th>
+                  <th>Fabricante</th>
+                  <th>Dirección</th>
+                  <th>Tipo / Modelo</th>
+                  <th>Sector</th>
+                </tr>
+              </thead>
+              <tbody id="escBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista: Planes Preventivos -->
+      <div id="esc-planes-view" class="hidden">
+        <div class="mant-section-header">
+          <div>
+            <h2 class="mant-section-title">Planes Preventivos de Escaleras Mecánicas</h2>
+            <p class="mant-section-desc">Seleccioná una escalera para ver su plan de mantenimiento asignado.</p>
+          </div>
+        </div>
+        <div class="manga-planes-selector" id="escPlanesSelector"></div>
+        <div id="escPlanContent"></div>
+      </div>
+
+      <!-- Vista: Plano -->
+      <div id="esc-plano-view" class="hidden">
+        <div class="asc-plano-header">
+          <span class="asc-plano-title">📄 Plano de Ubicación — Ascensores y Escaleras · AEP</span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="asc-plano-zoom-btn" id="escPlanoZoomOut" title="Alejar">−</button>
+            <span class="asc-plano-zoom-label" id="escPlanoZoomLabel">100%</span>
+            <button class="asc-plano-zoom-btn" id="escPlanoZoomIn" title="Acercar">+</button>
+            <button class="asc-plano-zoom-btn" id="escPlanoZoomFit" title="Ajustar">⊡ Ajustar</button>
+            <a href="assets/ASC-ESC.pdf" target="_blank" class="asc-plano-btn-open">↗ PDF original</a>
+          </div>
+        </div>
+        <div class="asc-plano-wrap" id="escPlanoWrap">
+          <img src="assets/plano-asc/plano-01.jpg"
+               id="escPlanoImg"
+               class="asc-plano-img"
+               alt="Plano de Ascensores y Escaleras AEP"
+               draggable="false" />
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ─── PÁGINA: EXTRACTORES ─── -->
+    <div class="page hidden" id="page-extractores">
+
+      <div class="stats-grid" id="ext-stats"></div>
+
+      <div class="toolbar" style="margin-bottom:16px">
+        <div class="mangas-view-toggle">
+          <button class="ext-view-btn active" data-view="grid">⊞ Grilla</button>
+          <button class="ext-view-btn" data-view="table">☰ Tabla</button>
+          <button class="ext-view-btn" data-view="planes">📋 Planes</button>
+        </div>
+        <div class="filter-group">
+          <select id="extTipoFilter" class="filter-select">
+            <option value="">Todos los tipos</option>
+            <option value="extractor">Extractores</option>
+            <option value="ventilador">Ventiladores</option>
+            <option value="presurizador">Presurizadores</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Vista: Grilla -->
+      <div id="ext-grid-view">
+        <div class="mangas-airport-label">
+          <span class="airport-code">AEP</span>
+          <span class="airport-name">Aeroparque Jorge Newbery — Extractores, ventiladores y presurizadores</span>
+        </div>
+        <div class="asc-grid" id="ext-grid"></div>
+      </div>
+
+      <!-- Vista: Tabla -->
+      <div id="ext-table-view" class="hidden">
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Equipo</th>
+                  <th>Denominación</th>
+                  <th>Tipo</th>
+                  <th>Sector</th>
+                  <th>Ubicación técnica (SAP)</th>
+                </tr>
+              </thead>
+              <tbody id="extBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista: Planes Preventivos -->
+      <div id="ext-planes-view" class="hidden">
+        <div class="mant-section-header">
+          <div>
+            <h2 class="mant-section-title">Planes Preventivos de Extractores y Ventiladores</h2>
+            <p class="mant-section-desc">Seleccioná un equipo para ver su plan de mantenimiento asignado.</p>
+          </div>
+        </div>
+        <div class="manga-planes-selector" id="extPlanesSelector"></div>
+        <div id="extPlanContent"></div>
+      </div>
+
+    </div>
+
+    <!-- ─── PÁGINA: PERSIANAS ─── -->
+    <div class="page hidden" id="page-persianas">
+
+      <div class="stats-grid" id="pers-stats"></div>
+
+      <div class="toolbar" style="margin-bottom:16px">
+        <div class="mangas-view-toggle">
+          <button class="pers-view-btn active" data-view="grid">⊞ Grilla</button>
+          <button class="pers-view-btn" data-view="table">☰ Tabla</button>
+          <button class="pers-view-btn" data-view="planes">📋 Planes</button>
+        </div>
+        <div class="filter-group">
+          <select id="persSectorFilter" class="filter-select">
+            <option value="">Todos los sectores</option>
+            <option value="checkin">Check In Edificio VI</option>
+            <option value="nacional">Arribos Nacionales</option>
+            <option value="internacional">Arribos Internacionales</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Vista: Grilla -->
+      <div id="pers-grid-view">
+        <div class="mangas-airport-label">
+          <span class="airport-code">AEP</span>
+          <span class="airport-name">Aeroparque Jorge Newbery — Persianas de gatera</span>
+        </div>
+        <div class="asc-grid" id="pers-grid"></div>
+      </div>
+
+      <!-- Vista: Tabla -->
+      <div id="pers-table-view" class="hidden">
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Equipo</th>
+                  <th>Denominación</th>
+                  <th>Sector</th>
+                  <th>Posición</th>
+                  <th>Ubicación técnica</th>
+                </tr>
+              </thead>
+              <tbody id="persBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista: Planes Preventivos -->
+      <div id="pers-planes-view" class="hidden">
+        <div class="mant-section-header">
+          <div>
+            <h2 class="mant-section-title">Planes Preventivos de Persianas de Gatera</h2>
+            <p class="mant-section-desc">Seleccioná una persiana para ver su plan de mantenimiento asignado.</p>
+          </div>
+        </div>
+        <div class="manga-planes-selector" id="persPlanesSelector"></div>
+        <div id="persPlanContent"></div>
+      </div>
+
+    </div>
+
+    <!-- ─── PÁGINA: CORTINAS ─── -->
+    <div class="page hidden" id="page-cortinas">
+
+      <div class="stats-grid" id="cor-stats"></div>
+
+      <div class="toolbar" style="margin-bottom:16px">
+        <div class="mangas-view-toggle">
+          <button class="cor-view-btn active" data-view="grid">⊞ Grilla</button>
+          <button class="cor-view-btn" data-view="table">☰ Tabla</button>
+          <button class="cor-view-btn" data-view="planes">📋 Planes</button>
+        </div>
+        <div class="filter-group">
+          <select id="corGrupoFilter" class="filter-select">
+            <option value="">Todos los sectores</option>
+            <option value="gatera">Gateras</option>
+            <option value="checkin">Check In</option>
+            <option value="internacional">Internacional</option>
+            <option value="acceso">Accesos</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Vista: Grilla -->
+      <div id="cor-grid-view">
+        <div class="mangas-airport-label">
+          <span class="airport-code">AEP</span>
+          <span class="airport-name">Aeroparque Jorge Newbery — Cortinas de aire forzado con calefacción</span>
+        </div>
+        <div class="asc-grid" id="cor-grid"></div>
+      </div>
+
+      <!-- Vista: Tabla -->
+      <div id="cor-table-view" class="hidden">
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Equipo</th>
+                  <th>Denominación</th>
+                  <th>Grupo</th>
+                  <th>Sector</th>
+                  <th>Ubicación técnica (SAP)</th>
+                </tr>
+              </thead>
+              <tbody id="corBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista: Planes Preventivos -->
+      <div id="cor-planes-view" class="hidden">
+        <div class="mant-section-header">
+          <div>
+            <h2 class="mant-section-title">Planes Preventivos de Cortinas de Aire</h2>
+            <p class="mant-section-desc">Seleccioná un equipo para ver su plan de mantenimiento asignado.</p>
+          </div>
+        </div>
+        <div class="manga-planes-selector" id="corPlanesSelector"></div>
+        <div id="corPlanContent"></div>
+      </div>
+
+    </div>
+
+    <!-- ─── PÁGINA: PATIO DE VALIJAS ─── -->
+    <div class="page hidden" id="page-patio">
+
+      <div class="stats-grid" id="patio-stats"></div>
+
+      <div class="toolbar" style="margin-bottom:16px">
+        <div class="mangas-view-toggle">
+          <button class="patio-view-btn active" data-view="grid">⊞ Grilla</button>
+          <button class="patio-view-btn" data-view="table">☰ Tabla</button>
+          <button class="patio-view-btn" data-view="planes">📋 Planes</button>
+        </div>
+        <div class="filter-group patio-filters" style="display:flex;gap:8px;flex-wrap:wrap">
+          <select id="patioClaseFilter" class="filter-select">
+            <option value="">Todos los tipos</option>
+            <option value="BF">Cintas BF</option>
+            <option value="BFR">Cintas Retorno BFR</option>
+            <option value="BC">Cintas Curvas BC</option>
+            <option value="VB">Brazos Desviadores VB</option>
+            <option value="GR">Camas de Rodillos GR</option>
+            <option value="SCAN">Scanner</option>
+          </select>
+          <select id="patioSistemaFilter" class="filter-select">
+            <option value="">Todos los sistemas</option>
+            <option value="Sistema 200">Sistema 200</option>
+            <option value="Sistema 300">Sistema 300</option>
+            <option value="Sistema 400">Sistema 400</option>
+            <option value="Sistema 500">Sistema 500</option>
+            <option value="HBS Elevado">HBS Elevado</option>
+            <option value="HBS 1200">HBS 1200</option>
+            <option value="HBS 1300">HBS 1300</option>
+            <option value="HBS 1400">HBS 1400</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Vista: Grilla -->
+      <div id="patio-grid-view">
+        <div class="mangas-airport-label">
+          <span class="airport-code">AEP</span>
+          <span class="airport-name">Aeroparque Jorge Newbery — Patio de Valijas · Sistema BHS · Edificio VI</span>
+        </div>
+        <div class="asc-grid" id="patio-grid"></div>
+      </div>
+
+      <!-- Vista: Tabla -->
+      <div id="patio-table-view" class="hidden">
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Equipo</th>
+                  <th>Denominación</th>
+                  <th>Tipo</th>
+                  <th>Subsistema</th>
+                  <th>Potencia</th>
+                </tr>
+              </thead>
+              <tbody id="patioBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista: Planes Preventivos -->
+      <div id="patio-planes-view" class="hidden">
+        <div class="mant-section-header">
+          <div>
+            <h2 class="mant-section-title">Planes Preventivos — Patio de Valijas (BHS)</h2>
+            <p class="mant-section-desc">Seleccioná un equipo para ver su plan de mantenimiento asignado.</p>
+          </div>
+        </div>
+        <div class="manga-planes-selector" id="patioPlanesSelector"></div>
+        <div id="patioPlanContent"></div>
+      </div>
+
+    </div>
+
+    <!-- ─── PÁGINA: BOMBAS ─── -->
+    <div class="page hidden" id="page-bombas">
+
+      <div class="stats-grid" id="bom-stats"></div>
+
+      <div class="toolbar" style="margin-bottom:16px">
+        <div class="mangas-view-toggle">
+          <button class="bom-view-btn active" data-view="grid">⊞ Grilla</button>
+          <button class="bom-view-btn" data-view="table">☰ Tabla</button>
+          <button class="bom-view-btn" data-view="planes">📋 Planes</button>
+        </div>
+        <div class="filter-group">
+          <select id="bomTipoFilter" class="filter-select">
+            <option value="">Todos los tipos</option>
+            <option value="incendio">Incendio</option>
+            <option value="cloacal">Cloacal</option>
+            <option value="pluvial">Pluvial / Napa</option>
+            <option value="agua">Agua</option>
+            <option value="achique">Achique</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Vista: Grilla -->
+      <div id="bom-grid-view">
+        <div class="mangas-airport-label">
+          <span class="airport-code">AEP</span>
+          <span class="airport-name">Aeroparque Jorge Newbery — Bombas de agua, cloacales, pluviales e incendio</span>
+        </div>
+        <div class="asc-grid" id="bom-grid"></div>
+      </div>
+
+      <!-- Vista: Tabla -->
+      <div id="bom-table-view" class="hidden">
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Equipo</th>
+                  <th>Denominación</th>
+                  <th>Tipo</th>
+                  <th>Fabricante</th>
+                  <th>Modelo</th>
+                  <th>Sector</th>
+                </tr>
+              </thead>
+              <tbody id="bomBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista: Planes Preventivos -->
+      <div id="bom-planes-view" class="hidden">
+        <div class="mant-section-header">
+          <div>
+            <h2 class="mant-section-title">Planes Preventivos de Bombas</h2>
+            <p class="mant-section-desc">Seleccioná una bomba para ver su plan de mantenimiento asignado.</p>
+          </div>
+        </div>
+        <div class="manga-planes-selector" id="bomPlanesSelector"></div>
+        <div id="bomPlanContent"></div>
+      </div>
+
+    </div>
+
+    <!-- ─── PÁGINA: PUERTAS AUTOMÁTICAS ─── -->
+    <div class="page hidden" id="page-puertas">
+
+      <!-- Stats -->
+      <div class="stats-grid" id="puertas-stats" style="margin-bottom:16px"></div>
+
+      <!-- Toolbar — fila 1: vista siempre visible -->
+      <div class="puertas-toolbar-top">
+        <div class="mangas-view-toggle">
+          <button class="puertas-view-btn active" data-view="grid">⊞ Grilla</button>
+          <button class="puertas-view-btn" data-view="table">☰ Tabla</button>
+          <button class="puertas-view-btn" data-view="plano">📄 Plano</button>
+          <button class="puertas-view-btn" data-view="planes">📋 Planes</button>
+          <button class="puertas-view-btn" data-view="guia">📖 Guía técnica</button>
+        </div>
+        <span id="puertas-result-count" class="puertas-result-count"></span>
+      </div>
+
+      <!-- Toolbar — fila 2: filtros (solo en grilla/tabla) -->
+      <div class="toolbar puertas-toolbar-filters" id="puertas-toolbar-filters" style="margin-bottom:16px">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="puertas-search" class="search-input" placeholder="Buscar por código, denominación, serie, modelo..." />
+          <button class="clear-btn" id="puertas-clear-search" title="Limpiar" style="display:none">✕</button>
+        </div>
+        <div class="filter-group">
+          <select id="puertas-filter-fab" class="filter-select">
+            <option value="">Todos los fabricantes</option>
+          </select>
+          <select id="puertas-filter-zona" class="filter-select">
+            <option value="">Todas las zonas</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Vista: Grilla -->
+      <div id="puertas-grid" class="puertas-grid"></div>
+
+      <!-- Vista: Tabla -->
+      <div id="puertas-table-wrap" class="hidden">
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Equipo</th>
+                  <th>Denominación</th>
+                  <th>Zona</th>
+                  <th>Fabricante</th>
+                  <th>N° Serie</th>
+                  <th>Modelo</th>
+                  <th>Ubicación SAP</th>
+                </tr>
+              </thead>
+              <tbody id="puertas-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista: Plano -->
+      <div id="puertas-plano-wrap" class="hidden">
+        <div class="asc-plano-header">
+          <span class="asc-plano-title">📄 Plano de Ubicación — Puertas Automáticas · AEP</span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="asc-plano-zoom-btn" id="puertasPlanoZoomOut" title="Alejar">−</button>
+            <span class="asc-plano-zoom-label" id="puertasPlanoZoomLabel">100%</span>
+            <button class="asc-plano-zoom-btn" id="puertasPlanoZoomIn" title="Acercar">+</button>
+            <button class="asc-plano-zoom-btn" id="puertasPlanoZoomFit" title="Ajustar">⊡ Ajustar</button>
+            <a href="AEP - Plano PPA-Layout2.pdf" target="_blank" class="asc-plano-btn-open">↗ PDF original</a>
+          </div>
+        </div>
+        <div class="asc-plano-wrap" id="puertasPlanoContainer">
+          <img src="assets/plano-ppa/plano-01.jpg"
+               id="puertasPlanoImg"
+               class="asc-plano-img"
+               alt="Plano de Puertas Automáticas AEP"
+               draggable="false" />
+        </div>
+      </div>
+
+      <!-- Vista: Planes preventivos -->
+      <div id="puertas-planes-wrap" class="hidden">
+        <div class="mant-section-header">
+          <div>
+            <h2 class="mant-section-title">Plan Preventivo — Puertas Automáticas</h2>
+            <p class="mant-section-desc">Plan de mantenimiento según contrato MOEX · <strong>§ 9.2.1.9</strong></p>
+          </div>
+        </div>
+        <div id="puertas-plan-content"></div>
+      </div>
+
+      <!-- Vista: Guía técnica -->
+      <div id="puertas-guia-wrap" class="hidden puertas-guia">
+
+        <!-- Intro -->
+        <div class="pguia-intro-card">
+          <div class="pguia-intro-logo">M</div>
+          <div>
+            <div class="pguia-intro-title">Selector Optima+ — Manusa</div>
+            <div class="pguia-intro-sub">
+              El Selector Optima+ permite controlar el funcionamiento de la puerta automática Manusa y visualizar el estado operativo del equipo.
+              La comunicación entre el selector y la electrónica de la puerta se realiza mediante <strong>Bus Manusa</strong>.
+              Desde este dispositivo se pueden seleccionar los modos de apertura y cierre, bloquear el teclado, acceder a funciones de configuración y visualizar avisos de falla o anomalías.
+            </div>
+          </div>
+        </div>
+
+        <!-- Modos de funcionamiento -->
+        <div class="pguia-section-title">Modos de funcionamiento</div>
+        <div class="pguia-modos-grid">
+          <div class="pguia-modo-card" style="--mc:var(--color-primary)">
+            <div class="pguia-modo-icon">🔄</div>
+            <div class="pguia-modo-name">Automático</div>
+            <div class="pguia-modo-desc">Abre al detectar presencia desde radar interior o exterior.</div>
+            <div class="pguia-modo-uso">Operación normal</div>
+          </div>
+          <div class="pguia-modo-card" style="--mc:#dc2626">
+            <div class="pguia-modo-icon">🔒</div>
+            <div class="pguia-modo-name">Cerrado</div>
+            <div class="pguia-modo-desc">Permanece cerrada. Sin cerrojo: hojas liberadas. Con cerrojo: hojas bloqueadas.</div>
+            <div class="pguia-modo-uso">Fuera de servicio · Sectores restringidos</div>
+          </div>
+          <div class="pguia-modo-card" style="--mc:#059669">
+            <div class="pguia-modo-icon">🔓</div>
+            <div class="pguia-modo-name">Abierto</div>
+            <div class="pguia-modo-desc">Permanece abierta. Permite mover manualmente las hojas.</div>
+            <div class="pguia-modo-uso">Mantenimiento · Limpieza · Alto tránsito</div>
+          </div>
+          <div class="pguia-modo-card" style="--mc:#d97706">
+            <div class="pguia-modo-icon">🚪</div>
+            <div class="pguia-modo-name">Sólo salida</div>
+            <div class="pguia-modo-desc">Abre únicamente al detectar presencia desde el lado interior.</div>
+            <div class="pguia-modo-uso">Control de egreso sin ingreso exterior</div>
+          </div>
+          <div class="pguia-modo-card" style="--mc:#7c3aed">
+            <div class="pguia-modo-icon">↔</div>
+            <div class="pguia-modo-name">Apertura reducida</div>
+            <div class="pguia-modo-desc">Abre sólo un porcentaje del recorrido total (configurable desde funciones avanzadas).</div>
+            <div class="pguia-modo-uso">Ahorro energético · Condiciones climáticas adversas</div>
+          </div>
+        </div>
+
+        <div class="pguia-two-col">
+
+          <!-- Bloqueo de teclado -->
+          <div class="pguia-card">
+            <div class="pguia-card-title">🔑 Bloqueo y desbloqueo del teclado</div>
+            <div class="pguia-steps">
+              <div class="pguia-step">
+                <span class="pguia-step-num">1</span>
+                <span>Para <strong>bloquear</strong>, mantener presionada la tecla de modo cerrado durante <strong>3 segundos</strong>.</span>
+              </div>
+              <div class="pguia-step">
+                <span class="pguia-step-num">2</span>
+                <span>Cuando el teclado está bloqueado, al presionar cualquier tecla aparece el mensaje <code class="pguia-code">Lo</code> en pantalla.</span>
+              </div>
+              <div class="pguia-step">
+                <span class="pguia-step-num">3</span>
+                <span>Para <strong>desbloquear</strong>, mantener presionada nuevamente la tecla de modo cerrado 3 segundos. El display solicitará el código de usuario.</span>
+              </div>
+              <div class="pguia-step">
+                <span class="pguia-step-num">4</span>
+                <span>El <strong>código de usuario por defecto</strong> es presionar la tecla <code class="pguia-code">OK</code> cuatro veces.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conexionado -->
+          <div class="pguia-card">
+            <div class="pguia-card-title">⚡ Conexionado general</div>
+            <p class="pguia-card-text">El selector Optima+ se conecta a la electrónica <strong>Visio+</strong> mediante Bus Manusa. Se puede utilizar cualquiera de los conectores Bus Manusa disponibles. La instalación eléctrica debe contemplar:</p>
+            <ul class="pguia-list">
+              <li>Entrada de corriente</li>
+              <li>Radares</li>
+              <li>Fotocélulas</li>
+              <li>Sensor de hojas fijas</li>
+              <li>Señal de alarma de incendio</li>
+              <li>Llave exterior</li>
+              <li>Pulsador de apertura</li>
+              <li>Detector de proximidad</li>
+              <li>Selector Optima+</li>
+              <li>Selector Smart (si aplica)</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <!-- Tabla de códigos de error -->
+        <div class="pguia-section-title" style="margin-top:8px">Autodiagnóstico — Códigos de aviso</div>
+        <p class="pguia-section-sub">Cuando la puerta detecta una anomalía, el selector muestra un código numérico acompañado del icono de llave fija.</p>
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:60px">Código</th>
+                  <th style="width:180px">Aviso</th>
+                  <th>Causa posible</th>
+                  <th>Acción recomendada</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><span class="pguia-code-badge pguia-code-warn">02</span></td><td>SOS</td><td>Señal de emergencia activada</td><td>Verificar hojas abatibles y pulsador de emergencia</td></tr>
+                <tr><td><span class="pguia-code-badge pguia-code-warn">03</span></td><td>Obstáculo al cerrar</td><td>Obstáculo en ciclo de cierre</td><td>Revisar zona de cierre y guías de suelo</td></tr>
+                <tr><td><span class="pguia-code-badge">04</span></td><td>Llave exterior</td><td>Llave no retirada luego de 1 minuto</td><td>Retirar la llave</td></tr>
+                <tr><td><span class="pguia-code-badge pguia-code-crit">05</span></td><td>Error de parámetros</td><td>Falla en parámetros de puerta</td><td>Avisar al servicio técnico</td></tr>
+                <tr><td><span class="pguia-code-badge pguia-code-warn">06</span></td><td>Obstáculo al abrir</td><td>Obstáculo en ciclo de apertura</td><td>Revisar zona de apertura y guías de suelo</td></tr>
+                <tr><td><span class="pguia-code-badge">07</span></td><td>Fotocélula interior</td><td>Fotocélula obturada más de 1 minuto</td><td>Limpiar fotocélula</td></tr>
+                <tr><td><span class="pguia-code-badge">08</span></td><td>Fotocélula exterior</td><td>Fotocélula obturada más de 1 minuto</td><td>Limpiar fotocélula</td></tr>
+                <tr><td><span class="pguia-code-badge pguia-code-crit">09</span></td><td>Incendio</td><td>Señal de alarma de incendio activa</td><td>Verificar si es falsa alarma</td></tr>
+                <tr><td><span class="pguia-code-badge pguia-code-warn">11</span></td><td>Baterías</td><td>Batería con baja carga</td><td>Conectar y esperar carga de batería</td></tr>
+                <tr><td><span class="pguia-code-badge">12</span></td><td>Radar interior</td><td>Detección interior permanente</td><td>Revisar radar o avisar a servicio técnico</td></tr>
+                <tr><td><span class="pguia-code-badge">13</span></td><td>Radar exterior</td><td>Detección exterior permanente</td><td>Revisar radar o avisar a servicio técnico</td></tr>
+                <tr><td><span class="pguia-code-badge pguia-code-crit">15</span></td><td>Procesador auxiliar</td><td>Falla de comunicación</td><td>Avisar al servicio técnico</td></tr>
+                <tr><td><span class="pguia-code-badge">16</span></td><td>Seguridad lateral</td><td>Presencia en zona de paso más de 1 minuto</td><td>Verificar que no haya objetos en el área</td></tr>
+                <tr><td><span class="pguia-code-badge pguia-code-warn">17</span></td><td>Cerrojo</td><td>Cerrojo bloqueado</td><td>Revisar cerrojo</td></tr>
+                <tr><td><span class="pguia-code-badge pguia-code-crit">22</span></td><td>Falta seguridad abrir</td><td>No detecta sensores de seguridad de apertura</td><td>Avisar al servicio técnico</td></tr>
+                <tr><td><span class="pguia-code-badge pguia-code-crit">23</span></td><td>Falta seguridad cerrar</td><td>No detecta sensores de seguridad de cierre</td><td>Avisar al servicio técnico</td></tr>
+                <tr><td><span class="pguia-code-badge pguia-code-warn">24</span></td><td>Seguridad cerrar</td><td>Falla sensor de seguridad de cierre</td><td>Revisar zona de detección</td></tr>
+                <tr><td><span class="pguia-code-badge pguia-code-crit">33</span></td><td>Corriente de fugas</td><td>Falla de aislamiento en motor</td><td>Avisar al servicio técnico</td></tr>
+                <tr><td><span class="pguia-code-badge pguia-code-crit">34</span></td><td>Módulo de potencia</td><td>Sobrecorriente o falla de aislamiento</td><td>Verificar SOS y avisar al servicio técnico</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Recomendaciones -->
+        <div class="pguia-card" style="margin-top:16px">
+          <div class="pguia-card-title">🔧 Recomendaciones para técnicos</div>
+          <p class="pguia-card-text">Antes de intervenir una puerta automática:</p>
+          <div class="pguia-steps">
+            <div class="pguia-step"><span class="pguia-step-num">1</span><span>Verificar el modo de operación seleccionado.</span></div>
+            <div class="pguia-step"><span class="pguia-step-num">2</span><span>Confirmar si el teclado está bloqueado.</span></div>
+            <div class="pguia-step"><span class="pguia-step-num">3</span><span>Revisar si existe código de aviso en pantalla.</span></div>
+            <div class="pguia-step"><span class="pguia-step-num">4</span><span>Comprobar que no haya obstáculos en la zona de apertura o cierre.</span></div>
+            <div class="pguia-step"><span class="pguia-step-num">5</span><span>Revisar fotocélulas, radares y sensores de seguridad.</span></div>
+            <div class="pguia-step"><span class="pguia-step-num">6</span><span>Verificar estado de batería si la puerta estuvo desconectada.</span></div>
+            <div class="pguia-step"><span class="pguia-step-num pguia-step-warn">7</span><span>Ante fallas críticas, <strong>no forzar el equipo</strong> y dar aviso al servicio técnico correspondiente.</span></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ─── PÁGINA: EQUIPOS DE AIRE ─── -->
+    <div class="page hidden" id="page-aac">
+
+      <div class="stats-grid" id="aac-stats" style="margin-bottom:16px"></div>
+
+      <!-- Toolbar fila 1: vista -->
+      <div class="puertas-toolbar-top">
+        <div class="mangas-view-toggle">
+          <button class="aac-view-btn active" data-view="grid">⊞ Grilla</button>
+          <button class="aac-view-btn" data-view="table">☰ Tabla</button>
+          <button class="aac-view-btn" data-view="planes">📋 Planes</button>
+        </div>
+        <span id="aac-result-count" class="puertas-result-count"></span>
+      </div>
+
+      <!-- Toolbar fila 2: filtros -->
+      <div id="aac-toolbar-filters" class="toolbar" style="margin-bottom:16px">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="aac-search" class="search-input" placeholder="Buscar por código, denominación, fabricante, modelo, sector..." />
+          <button class="clear-btn" id="aac-clear-search" title="Limpiar" style="display:none">✕</button>
+        </div>
+        <div class="filter-group">
+          <select id="aac-filter-tipo" class="filter-select">
+            <option value="">Todos los tipos</option>
+          </select>
+          <select id="aac-filter-fab" class="filter-select">
+            <option value="">Todos los fabricantes</option>
+          </select>
+          <select id="aac-filter-zona" class="filter-select">
+            <option value="">Todas las zonas</option>
+          </select>
+          <button class="altura-filter-toggle" id="aac-filter-altura" title="Mostrar solo equipos con pago de altura">
+            ⛰️ Solo Altura
+          </button>
+        </div>
+      </div>
+
+      <!-- Vista: Grilla -->
+      <div id="aac-grid" class="aac-grid"></div>
+
+      <!-- Vista: Tabla -->
+      <div id="aac-table-wrap" class="hidden">
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Equipo</th>
+                  <th>Denominación</th>
+                  <th>Tipo</th>
+                  <th>Fabricante</th>
+                  <th>Modelo</th>
+                  <th>Capacidad</th>
+                  <th>Zona</th>
+                </tr>
+              </thead>
+              <tbody id="aac-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista: Planes preventivos -->
+      <div id="aac-planes-wrap" class="hidden">
+        <!-- Plan selector -->
+        <div class="aac-plan-selector" id="aac-plan-selector"></div>
+        <!-- Plan content -->
+        <div id="aac-plan-content"></div>
+      </div>
+
+    </div>
+
+    <!-- ─── PÁGINA: OTROS EQUIPOS ─── -->
+    <div class="page hidden" id="page-otros">
+
+      <div class="stats-grid" id="otros-stats" style="margin-bottom:16px"></div>
+
+      <!-- Toolbar: búsqueda -->
+      <div class="toolbar" style="margin-bottom:16px">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="otros-search" class="search-input" placeholder="Buscar por código, denominación, tipo, fabricante, local..." />
+          <button class="clear-btn" id="otros-clear-search" title="Limpiar" style="display:none">✕</button>
+        </div>
+        <span id="otros-result-count" class="puertas-result-count"></span>
+      </div>
+
+      <!-- Vista: Tabla -->
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Equipo</th>
+                <th>Denominación</th>
+                <th>Tipo</th>
+                <th>Fabricante</th>
+                <th>Capacidad</th>
+                <th>Local / Sector</th>
+              </tr>
+            </thead>
+            <tbody id="otros-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ─── PÁGINA: PERSONAL ─── -->
+    <div class="page" id="page-personal">
+
+      <!-- Link a SharePoint -->
+      <div class="personal-link-banner">
+        <a href="https://caairports.sharepoint.com/:x:/s/TermomecnicaAEP848/IQC361tOTq3KRr_cb5hX95xFAWg_eMk5_PLpEPmShkAxjwg?e=W091xw" target="_blank" rel="noopener">
+          <span class="plink-icon-wrap">📊</span>
+          <div>
+            <span class="plink-label">📎 Documento SharePoint — Abrir en Excel Online</span>
+            <span class="plink-title">Grilla de Guardias — Termomecánica AEP</span>
+          </div>
+          <span class="plink-arrow">→</span>
+        </a>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="personal-stats" style="margin-bottom:24px"></div>
+
+      <!-- Guardias -->
+      <div class="personal-guardias-grid" id="personal-guardias-grid"></div>
+
+      <!-- Personal fuera de guardia -->
+      <div id="personal-extra-wrap" style="margin-top:24px"></div>
+
+    </div>
+
+  </div>
+
+  <!-- Modal flota -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <button class="modal-close" id="modalClose">✕</button>
+      <div class="modal-header" id="modalHeader"></div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal ascensores -->
+  <div class="modal-overlay" id="ascModalOverlay">
+    <div class="modal" id="ascModal">
+      <button class="modal-close" id="ascModalClose">✕</button>
+      <div class="modal-header" id="ascModalHeader"></div>
+      <div class="modal-body" id="ascModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal cortinas -->
+  <div class="modal-overlay" id="corModalOverlay">
+    <div class="modal" id="corModal">
+      <button class="modal-close" id="corModalClose">✕</button>
+      <div class="modal-header" id="corModalHeader"></div>
+      <div class="modal-body" id="corModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal persianas -->
+  <div class="modal-overlay" id="persModalOverlay">
+    <div class="modal" id="persModal">
+      <button class="modal-close" id="persModalClose">✕</button>
+      <div class="modal-header" id="persModalHeader"></div>
+      <div class="modal-body" id="persModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal extractores -->
+  <div class="modal-overlay" id="extModalOverlay">
+    <div class="modal" id="extModal">
+      <button class="modal-close" id="extModalClose">✕</button>
+      <div class="modal-header" id="extModalHeader"></div>
+      <div class="modal-body" id="extModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal escaleras -->
+  <div class="modal-overlay" id="escModalOverlay">
+    <div class="modal" id="escModal">
+      <button class="modal-close" id="escModalClose">✕</button>
+      <div class="modal-header" id="escModalHeader"></div>
+      <div class="modal-body" id="escModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal mangas -->
+  <div class="modal-overlay" id="mangaModalOverlay">
+    <div class="modal" id="mangaModal">
+      <button class="modal-close" id="mangaModalClose">✕</button>
+      <div class="modal-header" id="mangaModalHeader"></div>
+      <div class="modal-body" id="mangaModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal patio de valijas -->
+  <div class="modal-overlay" id="patioModalOverlay">
+    <div class="modal" id="patioModal">
+      <button class="modal-close" id="patioModalClose">✕</button>
+      <div class="modal-header" id="patioModalHeader"></div>
+      <div class="modal-body" id="patioModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal bombas -->
+  <div class="modal-overlay" id="bomModalOverlay">
+    <div class="modal" id="bomModal">
+      <button class="modal-close" id="bomModalClose">✕</button>
+      <div class="modal-header" id="bomModalHeader"></div>
+      <div class="modal-body" id="bomModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal equipos de aire -->
+  <div class="modal-overlay" id="aac-modal-overlay">
+    <div class="modal" id="aac-modal">
+      <button class="modal-close" id="aac-modal-close">✕</button>
+      <div class="modal-header" id="aac-modal-header"></div>
+      <div class="modal-body" id="aac-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Modal otros equipos -->
+  <div class="modal-overlay" id="otros-modal-overlay">
+    <div class="modal" id="otros-modal">
+      <button class="modal-close" id="otros-modal-close">✕</button>
+      <div class="modal-header" id="otros-modal-header"></div>
+      <div class="modal-body" id="otros-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Búsqueda Global -->
+  <div class="gs-overlay" id="gs-overlay">
+    <div class="gs-box">
+      <div class="gs-header">
+        <span class="gs-header-icon">🔍</span>
+        <input id="gs-input" class="gs-input" type="text"
+               placeholder="Código, denominación, fabricante, sector..."
+               autocomplete="off" spellcheck="false" />
+        <kbd class="gs-esc-hint">Esc</kbd>
+      </div>
+      <div id="gs-results" class="gs-results"></div>
+      <div class="gs-footer">
+        <span class="gs-footer-tip"><kbd>↑</kbd><kbd>↓</kbd> navegar</span>
+        <span class="gs-footer-sep">·</span>
+        <span class="gs-footer-tip"><kbd>↵</kbd> abrir</span>
+        <span class="gs-footer-sep">·</span>
+        <span class="gs-footer-tip"><kbd>Esc</kbd> cerrar</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal puertas automáticas -->
+  <div class="modal-overlay" id="puertas-modal-overlay">
+    <div class="modal" id="puertas-modal">
+      <button class="modal-close" id="puertas-modal-close">✕</button>
+      <div class="modal-header" id="puertas-modal-header"></div>
+      <div class="modal-body" id="puertas-modal-body"></div>
+    </div>
+  </div>
+
+  <script src="assets/js/altura-data.js?v=1"></script>
+  <script src="assets/js/data.js?v=15"></script>
+  <script src="assets/js/mant-data.js?v=15"></script>
+  <script src="assets/js/mangas-data.js?v=15"></script>
+  <script src="assets/js/ascensores-data.js?v=15"></script>
+  <script src="assets/js/escaleras-data.js?v=15"></script>
+  <script src="assets/js/extractores-data.js?v=15"></script>
+  <script src="assets/js/persianas-data.js?v=15"></script>
+  <script src="assets/js/cortinas-data.js?v=15"></script>
+  <script src="assets/js/bombas-data.js?v=15"></script>
+  <script src="assets/js/patio-extra.js?v=1"></script>
+  <script src="assets/js/patio-data.js?v=3"></script>
+  <script src="assets/js/app.js?v=16"></script>
+  <script src="assets/js/mant-app.js?v=15"></script>
+  <script src="assets/js/mangas-app.js?v=16"></script>
+  <script src="assets/js/ascensores-app.js?v=15"></script>
+  <script src="assets/js/escaleras-app.js?v=15"></script>
+  <script src="assets/js/extractores-app.js?v=15"></script>
+  <script src="assets/js/persianas-app.js?v=15"></script>
+  <script src="assets/js/cortinas-app.js?v=15"></script>
+  <script src="assets/js/bombas-app.js?v=15"></script>
+  <script src="assets/js/patio-app.js?v=2"></script>
+  <script src="assets/js/personal-app.js?v=1"></script>
+  <script src="assets/js/puertas-data.js?v=5"></script>
+  <script src="assets/js/puertas-app.js?v=5"></script>
+  <script src="assets/js/aac-data.js?v=2"></script>
+  <script src="assets/js/aac-app.js?v=4"></script>
+  <script src="assets/js/otros-data.js?v=1"></script>
+  <script src="assets/js/otros-app.js?v=1"></script>
+  <script src="assets/js/global-search.js?v=1"></script>
+</body>
+</html>
