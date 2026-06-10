@@ -2237,8 +2237,20 @@ td {
    ══════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
 
-  /* ── Show hamburger ── */
-  .nav-toggle-btn { display: flex; }
+  /* ── Show hamburger — PROMINENT for visibility ── */
+  .nav-toggle-btn {
+    display: flex;
+    width: 42px;
+    height: 42px;
+    padding: 8px;
+    background: var(--color-primary);
+    border: none;
+    border-radius: 10px;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(26,86,164,.25);
+  }
+  .nav-toggle-btn span { background: #fff; height: 2.5px; }
+  .nav-toggle-btn:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(26,86,164,.35); }
 
   /* ── Sidebar: off-screen by default, slides in when .open ── */
   .sidebar {
@@ -2252,10 +2264,19 @@ td {
   /* ── Main content takes full width ── */
   .main-content { margin-left: 0; width: 100%; }
 
-  /* ── Topbar compact ── */
-  .topbar { padding: 10px 14px; gap: 8px; }
+  /* ── Topbar compact — STICKY & PROMINENT ── */
+  .topbar {
+    padding: 12px 14px;
+    gap: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 4px 20px rgba(0,0,0,.15), 0 2px 8px rgba(11,79,158,.2);
+    background: var(--color-card);
+    border-bottom: 2px solid var(--color-sky);
+  }
   .topbar-left { gap: 10px; }
-  .page-title { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
+  .page-title { font-size: 18px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; color: var(--color-navy); }
   .page-sub { display: none; }
   .topbar-airport-badge { display: none; }
   .date-badge { display: none; }
