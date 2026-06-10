@@ -101,7 +101,7 @@ function renderPuertasStats() {
   ];
 
   document.getElementById("puertas-stats").innerHTML = cards.map(c => `
-    <div class="stat-card" style="--stat-color:${c.color}">
+    <div class="stat-card stat-card-clickable" style="--stat-color:${c.color}">
       <span class="stat-label">${c.label}</span>
       <span class="stat-value">${c.value}</span>
       <span class="stat-icon">${c.icon}</span>
