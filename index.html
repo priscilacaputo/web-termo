@@ -81,6 +81,10 @@
         <span class="nav-icon">❄️</span>
         <span class="nav-label">Equipos de Aire</span>
       </li>
+      <li class="nav-item" data-page="ecas">
+        <span class="nav-icon">🔥</span>
+        <span class="nav-label">Incendios (ECAs)</span>
+      </li>
       <li class="nav-item" data-page="otros">
         <span class="nav-icon">⚙️</span>
         <span class="nav-label">Otros Equipos</span>
@@ -1204,6 +1208,63 @@
 
     </div>
 
+    <!-- ─── PÁGINA: ECAs — Incendios ─── -->
+    <div class="page hidden" id="page-ecas">
+
+      <div class="stats-grid" id="ecas-stats" style="margin-bottom:16px"></div>
+
+      <!-- Toolbar: búsqueda y filtros -->
+      <div class="toolbar" style="margin-bottom:16px">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input id="ecas-search" class="search-input" type="text" placeholder="Código, ubicación, sistema..." />
+          <button id="ecas-clear-search" class="clear-btn" style="display:none">✕</button>
+        </div>
+        <div class="filter-group">
+          <select id="ecas-filter-tipo" class="filter-select">
+            <option value="">Todos los tipos</option>
+            <option value="Sprinkler">Sprinklers</option>
+            <option value="Hidrante">Hidrantes</option>
+          </select>
+          <select id="ecas-filter-sistema" class="filter-select">
+            <option value="">Todos los sistemas</option>
+          </select>
+          <select id="ecas-filter-piso" class="filter-select">
+            <option value="">Todos los pisos</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Vista: Grid y Tabla -->
+      <div class="mangas-view-toggle" style="margin-bottom:16px">
+        <button class="aac-view-btn active" data-view="grid">⊞ Grilla</button>
+        <button class="aac-view-btn" data-view="table">≡ Tabla</button>
+      </div>
+
+      <div id="ecas-result-count" style="margin-bottom:12px;font-size:12px;color:#888"></div>
+
+      <!-- Grilla -->
+      <div id="ecas-grid" class="aac-grid"></div>
+
+      <!-- Tabla -->
+      <div id="ecas-table-wrap" class="table-card hidden">
+        <table style="width:100%">
+          <thead>
+            <tr>
+              <th>Equipo</th>
+              <th>Tipo</th>
+              <th>Ubicación</th>
+              <th>Piso</th>
+              <th>Sistema</th>
+              <th>Alimenta</th>
+            </tr>
+          </thead>
+          <tbody id="ecas-tbody"></tbody>
+        </table>
+      </div>
+
+    </div>
+
     <!-- ─── PÁGINA: OTROS EQUIPOS ─── -->
     <div class="page hidden" id="page-otros">
 
@@ -1426,6 +1487,8 @@
   <script src="assets/js/aac-app.js?v=4"></script>
   <script src="assets/js/otros-data.js?v=1"></script>
   <script src="assets/js/otros-app.js?v=1"></script>
+  <script src="assets/js/ecas-data.js?v=1"></script>
+  <script src="assets/js/ecas-app.js?v=1"></script>
   <script src="assets/js/global-search.js?v=1"></script>
 </body>
 </html>
