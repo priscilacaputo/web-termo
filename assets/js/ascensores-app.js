@@ -281,10 +281,17 @@ function initPlanoViewer() {
   }
 
   function fitToWrap() {
-    const wrapW = wrap.clientWidth - 32;
-    const imgNatW = img.naturalWidth || 5960;
-    const s = wrapW / imgNatW;
-    setScale(s);
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      // En mobile: zoom al 100% (tamaño natural)
+      setScale(1);
+    } else {
+      // En desktop: ajustar al ancho del contenedor
+      const wrapW = wrap.clientWidth - 32;
+      const imgNatW = img.naturalWidth || 5960;
+      const s = wrapW / imgNatW;
+      setScale(s);
+    }
     wrap.scrollLeft = 0;
     wrap.scrollTop  = 0;
   }
