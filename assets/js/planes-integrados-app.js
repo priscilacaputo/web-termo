@@ -2,22 +2,31 @@
 
 let selectedPlanType = null;
 
-const PLAN_SOURCES = [
-  {
-    name: 'Mangas de Embarque',
-    icon: '🛬',
-    color: '#0891b2',
-    getData: () => MANGAS_PLANS_EXTENDED ? Object.entries(MANGAS_PLANS_EXTENDED).map(([key, val]) => ({...val, sourceKey: key})) : [],
-    renderPlan: (plan) => renderMangaPlan(plan)
-  },
-  {
-    name: 'Vehículos (Por KM)',
-    icon: '🚐',
-    color: '#1a56a4',
-    getData: () => MANT_KM || [],
-    renderPlan: (plan) => renderFlotaPlan(plan)
+const PLAN_SOURCES = (function() {
+  const sources = [];
+
+  if (typeof MANGAS_PLANS_EXTENDED !== 'undefined' && MANGAS_PLANS_EXTENDED) {
+    sources.push({
+      name: 'Mangas de Embarque',
+      icon: '🛬',
+      color: '#0891b2',
+      getData: () => Object.entries(MANGAS_PLANS_EXTENDED).map(([key, val]) => ({...val, sourceKey: key})) || [],
+      renderPlan: (plan) => renderMangaPlan(plan)
+    });
   }
-];
+
+  if (typeof MANT_KM !== 'undefined' && MANT_KM) {
+    sources.push({
+      name: 'Vehículos (Por KM)',
+      icon: '🚐',
+      color: '#1a56a4',
+      getData: () => MANT_KM || [],
+      renderPlan: (plan) => renderFlotaPlan(plan)
+    });
+  }
+
+  return sources;
+})();
 
 function initPlanesIntegrados() {
   const tabsContainer = document.getElementById('maint-planes-tabs');
@@ -46,8 +55,23 @@ function initPlanesIntegrados() {
 }
 
 function renderPlanesTab(tabIndex, container) {
+  if (!PLAN_SOURCES || !PLAN_SOURCES[tabIndex]) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <p>Planes no disponibles</p>
+      </div>
+    `;
+    return;
+  }
+
   const source = PLAN_SOURCES[tabIndex];
-  const planes = source.getData();
+  let planes = [];
+  try {
+    planes = source.getData() || [];
+  } catch (e) {
+    console.error('Error loading planes:', e);
+  }
 
   if (!planes || planes.length === 0) {
     container.innerHTML = `
