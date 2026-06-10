@@ -84,35 +84,6 @@ if (document.readyState === 'loading') {
   initECAS();
 }
 
-/* ─── Análisis de datos ──────────────────────────────────── */
-function analyzeECASData() {
-  const byBuilding = {};
-  const byFloor = {};
-
-  ECAS_DATA.forEach(e => {
-    // Extraer edificio del ubicacion
-    const ubicMatch = e.ubicacion.match(/Ed[^P]*/i) || e.ubicacion.match(/Hall/i) || ['Otro'];
-    const building = ubicMatch[0].trim();
-
-    // Usar piso del registro
-    const floor = e.piso;
-
-    // Contar por edificio
-    byBuilding[building] = (byBuilding[building] || 0) + 1;
-
-    // Contar por piso
-    byFloor[floor] = (byFloor[floor] || 0) + 1;
-  });
-
-  return {
-    byBuilding: Object.entries(byBuilding).sort((a, b) => b[1] - a[1]),
-    byFloor: Object.entries(byFloor).sort((a, b) => {
-      const order = ['PB', '1', '2', '3', '4', '5', '6'];
-      return order.indexOf(a[0]) - order.indexOf(b[0]);
-    })
-  };
-}
-
 /* ─── Stats ──────────────────────────────────────────────── */
 function renderECASStats() {
   const total      = ECAS_DATA.length;
@@ -132,9 +103,6 @@ function renderECASStats() {
       <span class="stat-icon">${c.icon}</span>
     </div>
   `).join('');
-
-  // Renderizar análisis
-  renderAnalysisSection();
 }
 
 /* ─── Filters ────────────────────────────────────────────── */
@@ -244,82 +212,4 @@ function renderECASTable() {
       <td>${e.alimenta}</td>
     </tr>`;
   }).join('');
-}
-
-/* ─── Análisis visual ────────────────────────────────────── */
-function renderAnalysisSection() {
-  const container = document.getElementById('ecas-analysis-section');
-  if (!container) return;
-
-  const analysis = analyzeECASData();
-
-  let html = `
-    <div style="margin-top:32px; padding-top:24px; border-top:2px solid var(--color-border)">
-      <h3 style="color:var(--color-navy); font-weight:700; margin-bottom:20px; font-size:18px">📊 Distribución de ECAs</h3>
-
-      <!-- Por Edificio -->
-      <div style="margin-bottom:32px">
-        <h4 style="color:var(--color-text); font-weight:600; margin-bottom:12px; font-size:15px">🏢 Por Edificio</h4>
-        <div style="display:grid; gap:8px">
-  `;
-
-  const maxBuilding = Math.max(...analysis.byBuilding.map(([_, count]) => count));
-
-  analysis.byBuilding.forEach(([building, count]) => {
-    const percentage = Math.round((count / maxBuilding) * 100);
-    html += `
-      <div style="padding:12px; background:var(--color-surface); border-radius:8px; border-left:3px solid #3b82f6">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
-          <span style="font-weight:600; color:var(--color-text)">${building}</span>
-          <span style="font-weight:700; font-size:16px; color:#3b82f6">${count}</span>
-        </div>
-        <div style="width:100%; height:6px; background:var(--color-border); border-radius:3px; overflow:hidden">
-          <div style="height:100%; background:linear-gradient(90deg,#3b82f6,#60a5fa); width:${percentage}%"></div>
-        </div>
-      </div>
-    `;
-  });
-
-  html += `
-        </div>
-      </div>
-
-      <!-- Por Piso -->
-      <div>
-        <h4 style="color:var(--color-text); font-weight:600; margin-bottom:12px; font-size:15px">🏗️ Por Piso</h4>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px">
-  `;
-
-  const maxFloor = Math.max(...analysis.byFloor.map(([_, count]) => count));
-  const floorColors = {
-    'PB': '#ef4444',
-    '1': '#f97316',
-    '2': '#eab308',
-    '3': '#84cc16',
-    '4': '#22c55e',
-    '5': '#10b981',
-    '6': '#14b8a6'
-  };
-
-  analysis.byFloor.forEach(([floor, count]) => {
-    const percentage = Math.round((count / maxFloor) * 100);
-    const color = floorColors[floor] || '#6b7280';
-    html += `
-      <div style="padding:14px; background:var(--color-surface); border-radius:10px; border-top:3px solid ${color}; text-align:center">
-        <div style="font-weight:700; font-size:24px; color:${color}; margin-bottom:6px">${floor}</div>
-        <div style="font-weight:600; color:var(--color-text); font-size:14px">${count} equipos</div>
-        <div style="width:100%; height:4px; background:var(--color-border); border-radius:2px; margin-top:8px; overflow:hidden">
-          <div style="height:100%; background:${color}; width:${percentage}%"></div>
-        </div>
-      </div>
-    `;
-  });
-
-  html += `
-        </div>
-      </div>
-    </div>
-  `;
-
-  container.innerHTML = html;
 }
