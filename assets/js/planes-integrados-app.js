@@ -251,46 +251,70 @@ function renderPlanesTab(tabIndex, container) {
 
 function renderMangaPlan(plan) {
   if (!plan || !plan.frecuenciasDetalladas || plan.frecuenciasDetalladas.length === 0) {
-    return `<div style="padding: 20px; color: #999;">No hay datos disponibles para este plan</div>`;
+    return '<div style="padding: 20px; color: #999;">No hay datos disponibles para este plan</div>';
   }
 
   const title = plan.id || plan.sourceKey || 'Plan de Manga';
 
-  return `
+  let html = `
     <div class="mant-section-header">
       <div>
         <h2 class="mant-section-title">${title}</h2>
         <p class="mant-section-desc">Mantenimiento preventivo por frecuencia</p>
       </div>
     </div>
-    ${plan.frecuenciasDetalladas.map(frec => {
-      if (!frec || !frec.grupos) return '';
-      const totalTareas = frec.grupos.reduce((sum, g) => sum + (g.tareas || []).length, 0);
-      return `
-        <div class="manga-freq-section" style="margin-bottom: 20px">
-          <div class="manga-freq-header" style="background: ${frec.color}; padding: 12px 16px; border-radius: 8px 8px 0 0;">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div>
-                <span class="manga-freq-label" style="display: block; font-size: 11px; color: rgba(255,255,255,0.7); margin-bottom: 4px;">Frecuencia</span>
-                <span class="manga-freq-badge" style="display: block; font-size: 16px; font-weight: 700; color: #fff;">${frec.label}</span>
-              </div>
-              <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; color: #fff; font-size: 12px; font-weight: 600;">${totalTareas} tarea${totalTareas !== 1 ? 's' : ''}</span>
+  `;
+
+  // Procesar cada frecuencia
+  plan.frecuenciasDetalladas.forEach(frec => {
+    if (!frec) return;
+
+    const grupos = frec.grupos || [];
+    const totalTareas = grupos.reduce((sum, g) => sum + ((g.tareas || []).length || 0), 0);
+
+    html += `
+      <div class="manga-freq-section" style="margin-bottom: 20px">
+        <div class="manga-freq-header" style="background: ${frec.color}; padding: 12px 16px; border-radius: 8px 8px 0 0;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <span class="manga-freq-label" style="display: block; font-size: 11px; color: rgba(255,255,255,0.7); margin-bottom: 4px;">Frecuencia</span>
+              <span class="manga-freq-badge" style="display: block; font-size: 16px; font-weight: 700; color: #fff;">${frec.label}</span>
             </div>
-          </div>
-          <div class="manga-grupo-grid" style="background: #f9fafb; padding: 16px; border-radius: 0 0 8px 8px;">
-            ${frec.grupos.map(grupo => `
-              <div class="manga-grupo" style="margin-bottom: 16px; background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid ${frec.color}">
-                <div class="manga-grupo-nombre" style="font-weight: 700; margin-bottom: 8px; color: #1f2937;">${grupo.nombre}</div>
-                <ul class="km-task-list" style="margin: 0; padding-left: 20px; list-style: disc;">
-                  ${(grupo.tareas || []).map(tarea => `<li style="margin-bottom: 4px; color: #555; font-size: 13px;">${tarea}</li>`).join('')}
-                </ul>
-              </div>
-            `).join('')}
+            <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; color: #fff; font-size: 12px; font-weight: 600;">${totalTareas} tarea${totalTareas !== 1 ? 's' : ''}</span>
           </div>
         </div>
+        <div class="manga-grupo-grid" style="background: #f9fafb; padding: 16px; border-radius: 0 0 8px 8px;">
+    `;
+
+    // Procesar cada grupo
+    grupos.forEach(grupo => {
+      if (!grupo) return;
+      const tareas = grupo.tareas || [];
+
+      html += `
+        <div class="manga-grupo" style="margin-bottom: 16px; background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid ${frec.color}">
+          <div class="manga-grupo-nombre" style="font-weight: 700; margin-bottom: 8px; color: #1f2937;">${grupo.nombre}</div>
+          <ul class="km-task-list" style="margin: 0; padding-left: 20px; list-style: disc;">
       `;
-    }).join('')}
-  `;
+
+      // Procesar cada tarea
+      tareas.forEach(tarea => {
+        html += `<li style="margin-bottom: 4px; color: #555; font-size: 13px;">${tarea}</li>`;
+      });
+
+      html += `
+          </ul>
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+  });
+
+  return html;
 }
 
 function renderStandardPlan(plan) {
