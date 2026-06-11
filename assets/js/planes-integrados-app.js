@@ -150,6 +150,96 @@ const PLAN_SOURCES = (function() {
     });
   }
 
+  // Cintas Transportadoras Plans
+  if (typeof CINTAS_TRANSPORTADORAS_PLANS !== 'undefined' && CINTAS_TRANSPORTADORAS_PLANS && Object.keys(CINTAS_TRANSPORTADORAS_PLANS).length > 0) {
+    sources.push({
+      name: 'Cintas Transportadoras',
+      icon: '🎠',
+      color: '#ec4899',
+      getData: () => {
+        try {
+          return Object.entries(CINTAS_TRANSPORTADORAS_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading cintas transportadoras plans:', e);
+          return [];
+        }
+      },
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
+  // Sistemas de Extinción Plans
+  if (typeof SISTEMAS_EXTINCION_PLANS !== 'undefined' && SISTEMAS_EXTINCION_PLANS && Object.keys(SISTEMAS_EXTINCION_PLANS).length > 0) {
+    sources.push({
+      name: 'Sistemas de Extinción',
+      icon: '🚒',
+      color: '#dc2626',
+      getData: () => {
+        try {
+          return Object.entries(SISTEMAS_EXTINCION_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading sistemas extincion plans:', e);
+          return [];
+        }
+      },
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
+  // Medios de Elevación Plans
+  if (typeof MEDIOS_ELEVACION_PLANS !== 'undefined' && MEDIOS_ELEVACION_PLANS && Object.keys(MEDIOS_ELEVACION_PLANS).length > 0) {
+    sources.push({
+      name: 'Medios de Elevación',
+      icon: '🛗',
+      color: '#0891b2',
+      getData: () => {
+        try {
+          return Object.entries(MEDIOS_ELEVACION_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading medios elevacion plans:', e);
+          return [];
+        }
+      },
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
+  // Bombas de Agua Plans
+  if (typeof BOMBAS_AGUA_PLANS !== 'undefined' && BOMBAS_AGUA_PLANS && Object.keys(BOMBAS_AGUA_PLANS).length > 0) {
+    sources.push({
+      name: 'Bombas de Agua',
+      icon: '💧',
+      color: '#06b6d4',
+      getData: () => {
+        try {
+          return Object.entries(BOMBAS_AGUA_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading bombas agua plans:', e);
+          return [];
+        }
+      },
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
+  // Otros Sistemas Plans
+  if (typeof OTROS_SISTEMAS_PLANS !== 'undefined' && OTROS_SISTEMAS_PLANS && Object.keys(OTROS_SISTEMAS_PLANS).length > 0) {
+    sources.push({
+      name: 'Otros Sistemas',
+      icon: '⚙️',
+      color: '#64748b',
+      getData: () => {
+        try {
+          return Object.entries(OTROS_SISTEMAS_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading otros sistemas plans:', e);
+          return [];
+        }
+      },
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
   return sources;
 })();
 
@@ -294,12 +384,12 @@ function renderMangaPlan(plan) {
       html += `
         <div class="manga-grupo" style="margin-bottom: 16px; background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid ${frec.color}">
           <div class="manga-grupo-nombre" style="font-weight: 700; margin-bottom: 8px; color: #1f2937;">${grupo.nombre}</div>
-          <ul class="km-task-list" style="margin: 0; padding-left: 20px; list-style: disc;">
+          <ul class="km-task-list" style="margin: 0; padding-left: 24px; list-style: disc;">
       `;
 
       // Procesar cada tarea
       tareas.forEach(tarea => {
-        html += `<li style="margin-bottom: 4px; color: #555; font-size: 13px;">${tarea}</li>`;
+        html += `<li style="margin-bottom: 4px; color: #555; font-size: 13px; margin-left: 0;">${tarea}</li>`;
       });
 
       html += `
@@ -345,8 +435,8 @@ function renderStandardPlan(plan) {
               <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; color: #fff; font-size: 12px; font-weight: 600;">${tareaCount} tarea${tareaCount !== 1 ? 's' : ''}</span>
             </div>
           </div>
-          <ul class="km-task-list" style="padding: 16px; margin: 0; background: #f9fafb; border-radius: 0 0 8px 8px; list-style: disc;">
-            ${(frec.tareas || []).map(tarea => `<li style="margin-bottom: 6px; color: #555; font-size: 13px;">${tarea}</li>`).join('')}
+          <ul class="km-task-list" style="padding: 16px 16px 16px 28px; margin: 0; background: #f9fafb; border-radius: 0 0 8px 8px; list-style: disc;">
+            ${(frec.tareas || []).map(tarea => `<li style="margin-bottom: 6px; color: #555; font-size: 13px; margin-left: 0;">${tarea}</li>`).join('')}
           </ul>
         </div>
       `;
@@ -374,13 +464,13 @@ function renderFlotaPlan(plan) {
           <span class="km-badge">${int.km ? int.km.toLocaleString('es-AR') + ' km' : int.nombre || 'Intervalo'}</span>
           <span class="km-count">${(int.tareas || []).length} tarea${(int.tareas || []).length !== 1 ? 's' : ''}</span>
         </div>
-        <ul class="km-task-list">
+        <ul class="km-task-list" style="padding-left: 24px; list-style: disc;">
           ${(int.tareas || []).map(t => {
             const parts = t.split(': ');
             if (parts.length > 1) {
-              return `<li><span class="task-cat">${parts[0]}:</span> ${parts.slice(1).join(': ')}</li>`;
+              return `<li style="margin-left: 0;"><span class="task-cat">${parts[0]}:</span> ${parts.slice(1).join(': ')}</li>`;
             }
-            return `<li>${t}</li>`;
+            return `<li style="margin-left: 0;">${t}</li>`;
           }).join('')}
         </ul>
       </div>
