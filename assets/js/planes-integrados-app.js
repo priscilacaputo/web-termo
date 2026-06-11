@@ -384,12 +384,12 @@ function renderMangaPlan(plan) {
       html += `
         <div class="manga-grupo" style="margin-bottom: 16px; background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid ${frec.color}">
           <div class="manga-grupo-nombre" style="font-weight: 700; margin-bottom: 8px; color: #1f2937;">${grupo.nombre}</div>
-          <ul class="km-task-list" style="margin: 0; padding-left: 20px; list-style: disc;">
+          <ul class="km-task-list" style="margin: 0; padding-left: 24px; list-style: disc;">
       `;
 
       // Procesar cada tarea
       tareas.forEach(tarea => {
-        html += `<li style="margin-bottom: 4px; color: #555; font-size: 13px;">${tarea}</li>`;
+        html += `<li style="margin-bottom: 4px; color: #555; font-size: 13px; margin-left: 0;">${tarea}</li>`;
       });
 
       html += `
@@ -435,8 +435,8 @@ function renderStandardPlan(plan) {
               <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; color: #fff; font-size: 12px; font-weight: 600;">${tareaCount} tarea${tareaCount !== 1 ? 's' : ''}</span>
             </div>
           </div>
-          <ul class="km-task-list" style="padding: 16px; margin: 0; background: #f9fafb; border-radius: 0 0 8px 8px; list-style: disc;">
-            ${(frec.tareas || []).map(tarea => `<li style="margin-bottom: 6px; color: #555; font-size: 13px;">${tarea}</li>`).join('')}
+          <ul class="km-task-list" style="padding: 16px 16px 16px 28px; margin: 0; background: #f9fafb; border-radius: 0 0 8px 8px; list-style: disc;">
+            ${(frec.tareas || []).map(tarea => `<li style="margin-bottom: 6px; color: #555; font-size: 13px; margin-left: 0;">${tarea}</li>`).join('')}
           </ul>
         </div>
       `;
@@ -464,13 +464,13 @@ function renderFlotaPlan(plan) {
           <span class="km-badge">${int.km ? int.km.toLocaleString('es-AR') + ' km' : int.nombre || 'Intervalo'}</span>
           <span class="km-count">${(int.tareas || []).length} tarea${(int.tareas || []).length !== 1 ? 's' : ''}</span>
         </div>
-        <ul class="km-task-list">
+        <ul class="km-task-list" style="padding-left: 24px; list-style: disc;">
           ${(int.tareas || []).map(t => {
             const parts = t.split(': ');
             if (parts.length > 1) {
-              return `<li><span class="task-cat">${parts[0]}:</span> ${parts.slice(1).join(': ')}</li>`;
+              return `<li style="margin-left: 0;"><span class="task-cat">${parts[0]}:</span> ${parts.slice(1).join(': ')}</li>`;
             }
-            return `<li>${t}</li>`;
+            return `<li style="margin-left: 0;">${t}</li>`;
           }).join('')}
         </ul>
       </div>
