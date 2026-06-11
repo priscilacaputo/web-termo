@@ -656,18 +656,20 @@ td {
   list-style: none;
   padding: 10px 14px;
   display: flex; flex-direction: column; gap: 7px;
+  margin: 0;
 }
 
 .km-task-list li {
   font-size: 12px; color: var(--color-text);
-  padding-left: 14px;
+  padding-left: 20px;
   position: relative;
   line-height: 1.45;
+  margin: 0;
 }
 
 .km-task-list li::before {
   content: '•';
-  position: absolute; left: 0;
+  position: absolute; left: 4px;
   color: var(--color-primary); font-weight: 700;
 }
 
