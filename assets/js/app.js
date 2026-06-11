@@ -9,7 +9,7 @@ const PAGE_TITLES = {
   cortinas:    ["Cortinas de Aire",  "AEP — Cortinas de aire forzado con calefacción"],
   bombas:      ["Bombas",            "AEP — Bombas de agua, cloacales, pluviales e incendio"],
   patio:       ["Patio de Valijas",  "AEP — Sistema BHS · Cintas, curvas, desviadores y scanner · Edificio VI"],
-  personal:    ["Personal",          "AEP — Composición de guardias · Termomecánica"],
+  personal:    ["Personal Mantenimiento Termomecánica - AEP",          "AEP — Composición de guardias · Termomecánica"],
   puertas:     ["Puertas Automáticas", "AEP — Puertas automáticas corredizas · Manusa · Audoor"],
   aac:         ["Equipos de Aire",     "AEP — Aire acondicionado · Splits · VRF · Roof Tops · UTAs · Chillers"],
   ecas:        ["Incendios (ECAs)",    "AEP — Equipos de detección y extinción de incendios · Sprinklers · Hidrantes"],
