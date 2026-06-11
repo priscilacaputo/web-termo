@@ -6,89 +6,146 @@ const PLAN_SOURCES = (function() {
   const sources = [];
 
   // Mangas de Embarque
-  if (typeof MANGAS_PLANS_EXTENDED !== 'undefined' && MANGAS_PLANS_EXTENDED) {
+  if (typeof MANGAS_PLANS_EXTENDED !== 'undefined' && MANGAS_PLANS_EXTENDED && Object.keys(MANGAS_PLANS_EXTENDED).length > 0) {
     sources.push({
       name: 'Mangas de Embarque',
       icon: '🛬',
       color: '#0891b2',
-      getData: () => Object.entries(MANGAS_PLANS_EXTENDED).map(([key, val]) => ({...val, sourceKey: key})) || [],
+      getData: () => {
+        try {
+          const plans = Object.entries(MANGAS_PLANS_EXTENDED).map(([key, val]) => ({...val, sourceKey: key}));
+          return plans || [];
+        } catch (e) {
+          console.error('Error loading mangas plans:', e);
+          return [];
+        }
+      },
       renderPlan: (plan) => renderMangaPlan(plan)
     });
   }
 
   // HVAC Plans
-  if (typeof HVAC_PLANS !== 'undefined' && HVAC_PLANS) {
+  if (typeof HVAC_PLANS !== 'undefined' && HVAC_PLANS && Object.keys(HVAC_PLANS).length > 0) {
     sources.push({
       name: 'HVAC (VRF, Roof Tops, Splits)',
       icon: '❄️',
       color: '#3b82f6',
-      getData: () => Object.entries(HVAC_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [],
+      getData: () => {
+        try {
+          return Object.entries(HVAC_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading HVAC plans:', e);
+          return [];
+        }
+      },
       renderPlan: (plan) => renderStandardPlan(plan)
     });
   }
 
   // Cooling Plans
-  if (typeof COOLING_PLANS !== 'undefined' && COOLING_PLANS) {
+  if (typeof COOLING_PLANS !== 'undefined' && COOLING_PLANS && Object.keys(COOLING_PLANS).length > 0) {
     sources.push({
       name: 'Chillers',
       icon: '❄️',
       color: '#06b6d4',
-      getData: () => Object.entries(COOLING_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [],
+      getData: () => {
+        try {
+          return Object.entries(COOLING_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading cooling plans:', e);
+          return [];
+        }
+      },
       renderPlan: (plan) => renderStandardPlan(plan)
     });
   }
 
   // Air Treatment Plans
-  if (typeof AIRTREATMENT_PLANS !== 'undefined' && AIRTREATMENT_PLANS) {
+  if (typeof AIRTREATMENT_PLANS !== 'undefined' && AIRTREATMENT_PLANS && Object.keys(AIRTREATMENT_PLANS).length > 0) {
     sources.push({
       name: 'Tratamiento de Aire (UTAs, Cortinas)',
       icon: '🌬️',
       color: '#10b981',
-      getData: () => Object.entries(AIRTREATMENT_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [],
+      getData: () => {
+        try {
+          return Object.entries(AIRTREATMENT_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading air treatment plans:', e);
+          return [];
+        }
+      },
       renderPlan: (plan) => renderStandardPlan(plan)
     });
   }
 
   // Patio Plans
-  if (typeof PATIO_PLANS !== 'undefined' && PATIO_PLANS) {
+  if (typeof PATIO_PLANS !== 'undefined' && PATIO_PLANS && Object.keys(PATIO_PLANS).length > 0) {
     sources.push({
       name: 'Patio de Valijas (BHS)',
       icon: '🎀',
       color: '#8b5cf6',
-      getData: () => Object.entries(PATIO_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [],
+      getData: () => {
+        try {
+          return Object.entries(PATIO_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading patio plans:', e);
+          return [];
+        }
+      },
       renderPlan: (plan) => renderStandardPlan(plan)
     });
   }
 
   // Extractores Plans
-  if (typeof EXTRACTORES_PLANS !== 'undefined' && EXTRACTORES_PLANS) {
+  if (typeof EXTRACTORES_PLANS !== 'undefined' && EXTRACTORES_PLANS && Object.keys(EXTRACTORES_PLANS).length > 0) {
     sources.push({
       name: 'Extractores y Ventiladores',
       icon: '💨',
       color: '#ec4899',
-      getData: () => Object.entries(EXTRACTORES_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [],
+      getData: () => {
+        try {
+          return Object.entries(EXTRACTORES_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading extractores plans:', e);
+          return [];
+        }
+      },
       renderPlan: (plan) => renderStandardPlan(plan)
     });
   }
 
   // Puertas Plans
-  if (typeof PUERTAS_PLANS !== 'undefined' && PUERTAS_PLANS) {
+  if (typeof PUERTAS_PLANS !== 'undefined' && PUERTAS_PLANS && Object.keys(PUERTAS_PLANS).length > 0) {
     sources.push({
       name: 'Puertas Automáticas',
       icon: '🚪',
       color: '#f97316',
-      getData: () => Object.entries(PUERTAS_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [],
+      getData: () => {
+        try {
+          return Object.entries(PUERTAS_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading puertas plans:', e);
+          return [];
+        }
+      },
       renderPlan: (plan) => renderStandardPlan(plan)
     });
   }
 
   // Fleet Plans
-  if (typeof MANT_KM !== 'undefined' && MANT_KM) {
+  if (typeof MANT_KM !== 'undefined' && MANT_KM && Array.isArray(MANT_KM) && MANT_KM.length > 0) {
     sources.push({
       name: 'Flota (Por KM)',
       icon: '🚐',
       color: '#1a56a4',
-      getData: () => MANT_KM || [],
+      getData: () => {
+        try {
+          return MANT_KM || [];
+        } catch (e) {
+          console.error('Error loading fleet plans:', e);
+          return [];
+        }
+      },
       renderPlan: (plan) => renderFlotaPlan(plan)
     });
   }
@@ -153,16 +210,20 @@ function renderPlanesTab(tabIndex, container) {
 
   const html = `
     <div class="planes-grid">
-      ${planes.map((plan, idx) => `
+      ${planes.map((plan, idx) => {
+        const title = plan.modelo || plan.denominacion || plan.nombre || plan.id || 'Plan';
+        const freqCount = (plan.intervalos || plan.frecuenciasDetalladas || plan.frecuencias || []).length;
+        return `
         <div class="plan-card" data-plan-idx="${idx}">
           <div class="plan-card-header" style="background: ${source.color}20; border-left: 4px solid ${source.color}">
-            <span style="color: ${source.color}; font-weight: 700">${plan.modelo || plan.denominacion || 'Plan'}</span>
+            <span style="color: ${source.color}; font-weight: 700">${title}</span>
           </div>
           <div class="plan-card-preview">
-            ${(plan.intervalos || plan.frecuenciasDetalladas || []).length} frecuencias
+            ${freqCount} frecuencia${freqCount !== 1 ? 's' : ''}
           </div>
         </div>
-      `).join('')}
+      `;
+      }).join('')}
     </div>
     <div id="plan-detail" style="margin-top: 32px"></div>
   `;
