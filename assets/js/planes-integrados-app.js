@@ -150,6 +150,96 @@ const PLAN_SOURCES = (function() {
     });
   }
 
+  // Cintas Transportadoras Plans
+  if (typeof CINTAS_TRANSPORTADORAS_PLANS !== 'undefined' && CINTAS_TRANSPORTADORAS_PLANS && Object.keys(CINTAS_TRANSPORTADORAS_PLANS).length > 0) {
+    sources.push({
+      name: 'Cintas Transportadoras',
+      icon: '🎠',
+      color: '#ec4899',
+      getData: () => {
+        try {
+          return Object.entries(CINTAS_TRANSPORTADORAS_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading cintas transportadoras plans:', e);
+          return [];
+        }
+      },
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
+  // Sistemas de Extinción Plans
+  if (typeof SISTEMAS_EXTINCION_PLANS !== 'undefined' && SISTEMAS_EXTINCION_PLANS && Object.keys(SISTEMAS_EXTINCION_PLANS).length > 0) {
+    sources.push({
+      name: 'Sistemas de Extinción',
+      icon: '🚒',
+      color: '#dc2626',
+      getData: () => {
+        try {
+          return Object.entries(SISTEMAS_EXTINCION_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading sistemas extincion plans:', e);
+          return [];
+        }
+      },
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
+  // Medios de Elevación Plans
+  if (typeof MEDIOS_ELEVACION_PLANS !== 'undefined' && MEDIOS_ELEVACION_PLANS && Object.keys(MEDIOS_ELEVACION_PLANS).length > 0) {
+    sources.push({
+      name: 'Medios de Elevación',
+      icon: '🛗',
+      color: '#0891b2',
+      getData: () => {
+        try {
+          return Object.entries(MEDIOS_ELEVACION_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading medios elevacion plans:', e);
+          return [];
+        }
+      },
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
+  // Bombas de Agua Plans
+  if (typeof BOMBAS_AGUA_PLANS !== 'undefined' && BOMBAS_AGUA_PLANS && Object.keys(BOMBAS_AGUA_PLANS).length > 0) {
+    sources.push({
+      name: 'Bombas de Agua',
+      icon: '💧',
+      color: '#06b6d4',
+      getData: () => {
+        try {
+          return Object.entries(BOMBAS_AGUA_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading bombas agua plans:', e);
+          return [];
+        }
+      },
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
+  // Otros Sistemas Plans
+  if (typeof OTROS_SISTEMAS_PLANS !== 'undefined' && OTROS_SISTEMAS_PLANS && Object.keys(OTROS_SISTEMAS_PLANS).length > 0) {
+    sources.push({
+      name: 'Otros Sistemas',
+      icon: '⚙️',
+      color: '#64748b',
+      getData: () => {
+        try {
+          return Object.entries(OTROS_SISTEMAS_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading otros sistemas plans:', e);
+          return [];
+        }
+      },
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
   return sources;
 })();
 
