@@ -49,6 +49,39 @@ const PLAN_SOURCES = (function() {
     });
   }
 
+  // Patio Plans
+  if (typeof PATIO_PLANS !== 'undefined' && PATIO_PLANS) {
+    sources.push({
+      name: 'Patio de Valijas (BHS)',
+      icon: '🎀',
+      color: '#8b5cf6',
+      getData: () => Object.entries(PATIO_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [],
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
+  // Extractores Plans
+  if (typeof EXTRACTORES_PLANS !== 'undefined' && EXTRACTORES_PLANS) {
+    sources.push({
+      name: 'Extractores y Ventiladores',
+      icon: '💨',
+      color: '#ec4899',
+      getData: () => Object.entries(EXTRACTORES_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [],
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
+  // Puertas Plans
+  if (typeof PUERTAS_PLANS !== 'undefined' && PUERTAS_PLANS) {
+    sources.push({
+      name: 'Puertas Automáticas',
+      icon: '🚪',
+      color: '#f97316',
+      getData: () => Object.entries(PUERTAS_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [],
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
   // Fleet Plans
   if (typeof MANT_KM !== 'undefined' && MANT_KM) {
     sources.push({
