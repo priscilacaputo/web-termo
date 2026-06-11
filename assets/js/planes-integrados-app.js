@@ -5,6 +5,7 @@ let selectedPlanType = null;
 const PLAN_SOURCES = (function() {
   const sources = [];
 
+  // Mangas de Embarque
   if (typeof MANGAS_PLANS_EXTENDED !== 'undefined' && MANGAS_PLANS_EXTENDED) {
     sources.push({
       name: 'Mangas de Embarque',
@@ -15,9 +16,43 @@ const PLAN_SOURCES = (function() {
     });
   }
 
+  // HVAC Plans
+  if (typeof HVAC_PLANS !== 'undefined' && HVAC_PLANS) {
+    sources.push({
+      name: 'HVAC (VRF, Roof Tops, Splits)',
+      icon: '❄️',
+      color: '#3b82f6',
+      getData: () => Object.entries(HVAC_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [],
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
+  // Cooling Plans
+  if (typeof COOLING_PLANS !== 'undefined' && COOLING_PLANS) {
+    sources.push({
+      name: 'Chillers',
+      icon: '❄️',
+      color: '#06b6d4',
+      getData: () => Object.entries(COOLING_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [],
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
+  // Air Treatment Plans
+  if (typeof AIRTREATMENT_PLANS !== 'undefined' && AIRTREATMENT_PLANS) {
+    sources.push({
+      name: 'Tratamiento de Aire (UTAs, Cortinas)',
+      icon: '🌬️',
+      color: '#10b981',
+      getData: () => Object.entries(AIRTREATMENT_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [],
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
+  // Fleet Plans
   if (typeof MANT_KM !== 'undefined' && MANT_KM) {
     sources.push({
-      name: 'Vehículos (Por KM)',
+      name: 'Flota (Por KM)',
       icon: '🚐',
       color: '#1a56a4',
       getData: () => MANT_KM || [],
@@ -148,6 +183,32 @@ function renderMangaPlan(plan) {
             </div>
           `).join('')}
         </div>
+      </div>
+    `).join('')}
+  `;
+}
+
+function renderStandardPlan(plan) {
+  if (!plan.frecuencias) return '';
+
+  return `
+    <div class="mant-section-header">
+      <div>
+        <h2 class="mant-section-title">${plan.nombre || plan.id || 'Plan'}</h2>
+        <p class="mant-section-desc">Mantenimiento preventivo por frecuencia</p>
+      </div>
+    </div>
+    ${(plan.frecuencias || []).map(frec => `
+      <div class="manga-freq-section" style="margin-bottom: 20px">
+        <div class="manga-freq-header" style="background: ${frec.color}">
+          <div>
+            <span class="manga-freq-label">Frecuencia</span>
+            <span class="manga-freq-badge">${frec.label}</span>
+          </div>
+        </div>
+        <ul class="km-task-list" style="padding: 16px">
+          ${(frec.tareas || []).map(tarea => `<li>${tarea}</li>`).join('')}
+        </ul>
       </div>
     `).join('')}
   `;
