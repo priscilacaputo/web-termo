@@ -240,6 +240,42 @@ const PLAN_SOURCES = (function() {
     });
   }
 
+  // Mangas de Embarque Completo Plans
+  if (typeof MANGAS_EMBARQUE_COMPLETO_PLANS !== 'undefined' && MANGAS_EMBARQUE_COMPLETO_PLANS && Object.keys(MANGAS_EMBARQUE_COMPLETO_PLANS).length > 0) {
+    sources.push({
+      name: 'Mangas de Embarque (Completo)',
+      icon: '🛬',
+      color: '#0891b2',
+      getData: () => {
+        try {
+          return Object.entries(MANGAS_EMBARQUE_COMPLETO_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading mangas embarque completo plans:', e);
+          return [];
+        }
+      },
+      renderPlan: (plan) => renderMangaPlan(plan)
+    });
+  }
+
+  // Cintas Balanzas Plans
+  if (typeof CINTAS_BALANZAS_PLANS !== 'undefined' && CINTAS_BALANZAS_PLANS && Object.keys(CINTAS_BALANZAS_PLANS).length > 0) {
+    sources.push({
+      name: 'Cintas Balanzas',
+      icon: '⚖️',
+      color: '#8b5cf6',
+      getData: () => {
+        try {
+          return Object.entries(CINTAS_BALANZAS_PLANS).map(([key, val]) => ({...val, sourceKey: key})) || [];
+        } catch (e) {
+          console.error('Error loading cintas balanzas plans:', e);
+          return [];
+        }
+      },
+      renderPlan: (plan) => renderStandardPlan(plan)
+    });
+  }
+
   return sources;
 })();
 
