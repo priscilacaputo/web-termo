@@ -248,9 +248,5 @@ function renderFlotaPlan(plan) {
   `;
 }
 
-// Initialize
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initPlanesIntegrados);
-} else {
-  initPlanesIntegrados();
-}
+// Initialize se llamará desde maint-planes-app.js cuando sea necesario
+// No se inicializa automáticamente para evitar conflictos de timing
