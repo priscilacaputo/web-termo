@@ -6,19 +6,29 @@
   const intl    = PERSIANAS_DATA.filter(p => persSector(p.ubi_desc) === "internacional").length;
 
   const cards = [
-    { label: "Total persianas",  value: total,   icon: "🪟", color: "#1a56a4" },
-    { label: "Check In Ed. VI",  value: checkin, icon: "✈️", color: "#1a56a4" },
-    { label: "Arribos Nac.",     value: nac,     icon: "🏠", color: "#7c3aed" },
-    { label: "Arribos Int.",     value: intl,    icon: "🌐", color: "#0891b2" },
+    { label: "Total persianas",  value: total,   icon: "🪟", color: "#1a56a4", sector: null },
+    { label: "Check In Ed. VI",  value: checkin, icon: "✈️", color: "#1a56a4", sector: "checkin" },
+    { label: "Arribos Nac.",     value: nac,     icon: "🏠", color: "#7c3aed", sector: "nacional" },
+    { label: "Arribos Int.",     value: intl,    icon: "🌐", color: "#0891b2", sector: "internacional" },
   ];
 
   document.getElementById("pers-stats").innerHTML = cards.map(c => `
-    <div class="stat-card" style="--stat-color:${c.color}">
+    <div class="stat-card stat-card-clickable" style="--stat-color:${c.color}" data-sector="${c.sector || ''}">
       <span class="stat-label">${c.label}</span>
       <span class="stat-value">${c.value}</span>
       <span class="stat-icon">${c.icon}</span>
     </div>
   `).join("");
+
+  // Add click handlers to stat cards
+  document.querySelectorAll(".stat-card-clickable").forEach(card => {
+    card.addEventListener("click", () => {
+      const sector = card.dataset.sector;
+      persSectorFilter.value = sector;
+      renderPersianaGrid();
+      renderPersianaTable();
+    });
+  });
 })();
 
 /* ─── Vista selector ─────────────────────────────────── */

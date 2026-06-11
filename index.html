@@ -95,6 +95,10 @@
         <span class="nav-icon">📊</span>
         <span class="nav-label">Distribución de Equipos</span>
       </li>
+      <li class="nav-item" data-page="maint-planes">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Planes de Mantenimiento</span>
+      </li>
 
       <li class="nav-section-label">Recursos</li>
       <li class="nav-item disabled" data-page="documentos">
@@ -117,6 +121,9 @@
       <div class="topbar-left">
         <button class="nav-toggle-btn" id="nav-toggle" aria-label="Menú">
           <span></span><span></span><span></span>
+        </button>
+        <button class="back-btn" id="back-btn" aria-label="Volver atrás" title="Volver atrás" style="display:none">
+          ←
         </button>
         <div>
           <h1 class="page-title" id="page-title">Personal</h1>
@@ -1354,6 +1361,12 @@
       <div id="analytics-content"></div>
     </div>
 
+    <!-- ─── PÁGINA: PLANES DE MANTENIMIENTO ─── -->
+    <div class="page hidden" id="page-maint-planes">
+      <div id="maint-planes-tabs" style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap"></div>
+      <div id="maint-planes-content"></div>
+    </div>
+
     <!-- ─── PÁGINA: PERSONAL ─── -->
     <div class="page" id="page-personal">
 
@@ -1516,6 +1529,12 @@
   <script src="assets/js/mant-data.js?v=15"></script>
   <script src="assets/js/mangas-data.js?v=15"></script>
   <script src="assets/js/mangas-plans.js?v=1"></script>
+  <script src="assets/js/hvac-plans.js?v=1"></script>
+  <script src="assets/js/cooling-plans.js?v=1"></script>
+  <script src="assets/js/airtreatment-plans.js?v=1"></script>
+  <script src="assets/js/patio-plans.js?v=1"></script>
+  <script src="assets/js/extractores-plans.js?v=1"></script>
+  <script src="assets/js/puertas-plans.js?v=1"></script>
   <script src="assets/js/ascensores-data.js?v=15"></script>
   <script src="assets/js/escaleras-data.js?v=15"></script>
   <script src="assets/js/extractores-data.js?v=15"></script>
@@ -1524,28 +1543,30 @@
   <script src="assets/js/bombas-data.js?v=15"></script>
   <script src="assets/js/patio-extra.js?v=1"></script>
   <script src="assets/js/patio-data.js?v=3"></script>
-  <script src="assets/js/app.js?v=16"></script>
+  <script src="assets/js/app.js?v=17"></script>
   <script src="assets/js/mant-app.js?v=15"></script>
+  <script src="assets/js/planes-integrados-app.js?v=7"></script>
   <script src="assets/js/mangas-app.js?v=17"></script>
   <script src="assets/js/ascensores-app.js?v=17"></script>
-  <script src="assets/js/escaleras-app.js?v=15"></script>
-  <script src="assets/js/extractores-app.js?v=15"></script>
-  <script src="assets/js/persianas-app.js?v=15"></script>
-  <script src="assets/js/cortinas-app.js?v=15"></script>
-  <script src="assets/js/bombas-app.js?v=15"></script>
-  <script src="assets/js/patio-app.js?v=2"></script>
-  <script src="assets/js/personal-app.js?v=1"></script>
+  <script src="assets/js/escaleras-app.js?v=16"></script>
+  <script src="assets/js/extractores-app.js?v=16"></script>
+  <script src="assets/js/persianas-app.js?v=16"></script>
+  <script src="assets/js/cortinas-app.js?v=16"></script>
+  <script src="assets/js/bombas-app.js?v=16"></script>
+  <script src="assets/js/patio-app.js?v=3"></script>
+  <script src="assets/js/personal-app.js?v=2"></script>
   <script src="assets/js/puertas-data.js?v=5"></script>
-  <script src="assets/js/puertas-app.js?v=5"></script>
+  <script src="assets/js/puertas-app.js?v=6"></script>
   <script src="assets/js/aac-data.js?v=2"></script>
   <script src="assets/js/uta-specs.js?v=1"></script>
   <script src="assets/js/aac-app.js?v=5"></script>
   <script src="assets/js/otros-data.js?v=1"></script>
-  <script src="assets/js/otros-app.js?v=1"></script>
+  <script src="assets/js/otros-app.js?v=2"></script>
   <script src="assets/js/ecas-data.js?v=1"></script>
   <script src="assets/js/ecas-analytics.js?v=1"></script>
-  <script src="assets/js/ecas-app.js?v=1"></script>
+  <script src="assets/js/ecas-app.js?v=2"></script>
   <script src="assets/js/analytics-app.js?v=1"></script>
+  <script src="assets/js/maint-planes-app.js?v=2"></script>
   <script src="assets/js/global-search.js?v=1"></script>
 </body>
 </html>

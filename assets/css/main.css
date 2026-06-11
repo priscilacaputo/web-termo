@@ -293,6 +293,15 @@ body {
   position: relative; overflow: hidden;
   transition: box-shadow .2s, transform .2s;
 }
+
+.stat-card-clickable {
+  cursor: pointer;
+}
+
+.stat-card-clickable:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,.12), 0 0 0 1px var(--stat-color, var(--color-sky));
+  transform: translateY(-2px);
+}
 .stat-card::after {
   content: '';
   position: absolute; inset: 0;
@@ -2015,6 +2024,28 @@ td {
   transition: var(--transition);
 }
 
+/* ─── Back button (visible cuando hay historial) ─────────── */
+.back-btn {
+  display: none;
+  align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  background: var(--color-primary);
+  border: none;
+  border-radius: 8px; cursor: pointer;
+  flex-shrink: 0;
+  transition: var(--transition);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 0;
+  line-height: 1;
+}
+.back-btn:hover {
+  background: var(--color-primary-dark);
+  transform: scale(1.05);
+}
+.back-btn:active { transform: scale(0.95); }
+
 /* ─── Sidebar backdrop (mobile overlay) ─────────────────── */
 .sidebar-backdrop {
   display: none;
@@ -2252,6 +2283,16 @@ td {
   .nav-toggle-btn span { background: #fff; height: 2.5px; }
   .nav-toggle-btn:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(26,86,164,.35); }
 
+  /* ── Back button en mobile ── */
+  .back-btn {
+    display: none !important;
+    width: 42px;
+    height: 42px;
+  }
+  .back-btn[style*="display: flex"] {
+    display: flex !important;
+  }
+
   /* ── Sidebar: off-screen by default, slides in when .open ── */
   .sidebar {
     transform: translateX(-100%);
@@ -2266,7 +2307,7 @@ td {
 
   /* ── Topbar compact — FIXED & PERMANENT ── */
   .topbar {
-    padding: 12px 14px;
+    padding: 12px 12px;
     gap: 8px;
     position: fixed;
     top: 0;
@@ -2276,9 +2317,13 @@ td {
     box-shadow: 0 4px 20px rgba(0,0,0,.15), 0 2px 8px rgba(11,79,158,.2);
     background: var(--color-card);
     border-bottom: 2px solid var(--color-sky);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 56px;
   }
-  .topbar-left { gap: 10px; }
-  .page-title { font-size: 18px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; color: var(--color-navy); }
+  .topbar-left { gap: 8px; flex: 1; min-width: 0; }
+  .page-title { font-size: 16px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100vw - 220px); color: var(--color-navy); }
   .page-sub { display: none; }
   .topbar-airport-badge { display: none; }
   .date-badge { display: none; }
@@ -2287,21 +2332,22 @@ td {
   .gs-trigger-btn { padding: 9px 11px; min-height: 40px; }
 
   /* ── Page padding (extra bottom for bottom-nav + top for fixed header) ── */
-  .page { padding: 70px 14px 84px; }
+  .page { padding: 72px 16px 88px; }
 
   /* ── Stats grid: 2 columnas en mobile ── */
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 12px;
   }
-  .stat-card { padding: 16px 14px 14px; }
+  .stat-card { padding: 16px; min-height: 80px; }
   .stat-value { font-size: 28px; }
+  .stat-label { font-size: 11px; }
 
   /* ── Toolbar: apilar en vertical ── */
-  .toolbar { flex-direction: column; gap: 8px; }
+  .toolbar { flex-direction: column; gap: 10px; }
   .search-wrap { min-width: 0; width: 100%; }
   .filter-group { flex-wrap: wrap; width: 100%; }
-  .filter-select { flex: 1; min-width: 120px; }
+  .filter-select { flex: 1; min-width: 140px; }
 
   /* ── CRÍTICO: font-size ≥ 16px previene zoom automático en Android ── */
   input, select, textarea {
@@ -2309,16 +2355,18 @@ td {
   }
   .search-input, .filter-select {
     font-size: 16px !important;
-    min-height: 44px;
+    min-height: 48px;
+    padding: 12px !important;
   }
 
-  /* ── Touch targets mínimos 44px ── */
+  /* ── Touch targets mínimos 48px (aumentado para mejor UX) ── */
   button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-  .nav-item { min-height: 44px; }
-  .nav-toggle-btn { min-height: 44px; min-width: 44px; }
-  .altura-filter-toggle { min-height: 44px; padding: 10px 16px; }
-  .mangas-view-toggle button { min-height: 40px; padding: 8px 14px; font-size: 13px; }
-  .stat-card-clickable { cursor: pointer; min-height: 70px; }
+  .nav-item { min-height: 48px; padding: 12px 16px; }
+  .nav-toggle-btn { min-height: 48px; min-width: 48px; }
+  .back-btn { min-height: 48px; min-width: 48px; }
+  .altura-filter-toggle { min-height: 48px; padding: 12px 16px; }
+  .mangas-view-toggle button { min-height: 44px; padding: 10px 16px; font-size: 13px; }
+  .stat-card-clickable { cursor: pointer; min-height: 80px; }
 
   /* ── AAC grid: 1 columna ── */
   .aac-grid { grid-template-columns: 1fr; }
@@ -2327,36 +2375,88 @@ td {
   .asc-grid,
   .mangas-grid,
   .puertas-grid,
-  .vehiculo-grid { grid-template-columns: repeat(2, 1fr); }
+  .vehiculo-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
 
   /* ── Tabla scroll horizontal ── */
-  .table-wrap, .table-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table { min-width: 560px; }
+  .table-wrap, .table-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+  }
+  table {
+    min-width: 560px;
+    font-size: 13px;
+  }
+  table th, table td { padding: 12px 14px; }
 
   /* ── Modal: bottom sheet en mobile ── */
-  .modal { margin: 0; border-radius: 20px 20px 0 0; max-height: 90vh; overflow-y: auto; }
-  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal {
+    margin: 0;
+    border-radius: 20px 20px 0 0;
+    max-height: 90vh;
+    overflow-y: auto;
+    margin-top: auto;
+  }
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
   .modal-body { grid-template-columns: 1fr; }
+  .modal-header { padding: 20px 18px 16px; }
+  .modal-close { top: 14px; right: 14px; }
 
   /* ── View toggle ── */
-  .puertas-toolbar-top { flex-wrap: wrap; gap: 8px; }
-  .mangas-view-toggle { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .puertas-toolbar-top {
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .mangas-view-toggle {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    padding-bottom: 4px;
+  }
 
   /* ── Personal cards ── */
   .personal-guardias-grid { grid-template-columns: 1fr; }
   .personal-extra-section { max-width: 100%; }
 
   /* ── Global search overlay ── */
-  .gs-overlay { padding: 12px 10px; align-items: flex-start; padding-top: 56px; }
-  .gs-box { max-height: calc(100vh - 70px); border-radius: 16px; }
-  .gs-input { font-size: 16px !important; min-height: 44px; }
+  .gs-overlay {
+    padding: 12px 12px;
+    align-items: flex-start;
+    padding-top: 60px;
+  }
+  .gs-box {
+    max-height: calc(100vh - 80px);
+    border-radius: 16px;
+  }
+  .gs-input {
+    font-size: 16px !important;
+    min-height: 48px;
+  }
+  .gs-group-label { padding: 12px 18px 6px; }
+  .gs-item { padding: 10px 18px; min-height: 48px; }
 
   /* ── Planes grid ── */
   .patio-plans-grid { grid-template-columns: 1fr; }
   .km-intervals-grid { grid-template-columns: 1fr; }
+  .planes-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
 
   /* ── Altura badge ── */
   .altura-filter-toggle { font-size: 13px; }
+
+  /* ── Card spacing ── */
+  .table-card, .card-wrap { margin-bottom: 16px; }
+
+  /* ── Mant section ── */
+  .mant-section-header { padding: 16px 0; margin-bottom: 16px; }
+  .manga-freq-section { margin-bottom: 16px; }
 }
 
 /* Extra small (≤ 480px) */
@@ -2457,4 +2557,47 @@ td {
 
 .ecas-stat-card:active {
   transform: translateY(0);
+}
+
+/* ─── Planes Integrados ──────────────────────────────── */
+.planes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.plan-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plan-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  transform: translateY(-2px);
+}
+
+.plan-card.active {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 16px rgba(26,86,164,.2);
+}
+
+.plan-card-header {
+  padding: 12px;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.plan-card-preview {
+  padding: 0 12px 12px;
+  font-size: 12px;
+  color: var(--color-muted);
 }

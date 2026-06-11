@@ -15,7 +15,19 @@ const PAGE_TITLES = {
   ecas:        ["Incendios (ECAs)",    "AEP — Equipos de detección y extinción de incendios · Sprinklers · Hidrantes"],
   otros:       ["Otros Equipos",       "AEP — Arcos de lectura · Cisternas · Compresores"],
   analytics:   ["Distribución de Equipos", "AEP — Análisis de distribución por edificio y piso · Todos los equipos"],
+  "maint-planes": ["Planes de Mantenimiento", "AEP — Planes preventivos consolidados de todos los equipos"],
 };
+
+/* ─── Page History (para botón de atrás) ──────────── */
+let pageHistory = ["personal"];
+let currentPageIndex = 0;
+
+function updateBackButtonState() {
+  const backBtn = document.getElementById("back-btn");
+  if (backBtn) {
+    backBtn.style.display = currentPageIndex > 0 ? "flex" : "none";
+  }
+}
 
 function showPage(pageId) {
   document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
@@ -35,6 +47,14 @@ function showPage(pageId) {
   document.querySelectorAll(".mbn-item[data-mbn-page]").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.mbnPage === pageId);
   });
+
+  // Agregar al historial si no es la página actual
+  if (!pageHistory[currentPageIndex] || pageHistory[currentPageIndex] !== pageId) {
+    pageHistory = pageHistory.slice(0, currentPageIndex + 1);
+    pageHistory.push(pageId);
+    currentPageIndex = pageHistory.length - 1;
+  }
+  updateBackButtonState();
 }
 
 /* ─── Bottom Navigation (mobile) ────────────────────── */
@@ -90,6 +110,35 @@ if (navToggle) {
   });
   document.getElementById("sidebar-backdrop")
     ?.addEventListener("click", closeMobileNav);
+}
+
+/* ─── Back button handler ────────────────────────────── */
+const backBtn = document.getElementById("back-btn");
+if (backBtn) {
+  backBtn.addEventListener("click", () => {
+    if (currentPageIndex > 0) {
+      currentPageIndex--;
+      const previousPage = pageHistory[currentPageIndex];
+      // No agregar nuevo historial, solo navegar
+      const currentIndex = currentPageIndex;
+      const currentHist = pageHistory;
+      document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
+      document.querySelectorAll(".nav-item:not(.disabled)").forEach(n => n.classList.remove("active"));
+      const page = document.getElementById("page-" + previousPage);
+      if (page) page.classList.remove("hidden");
+      const navItem = document.querySelector(`.nav-item[data-page="${previousPage}"]`);
+      if (navItem) navItem.classList.add("active");
+      const titles = PAGE_TITLES[previousPage] || ["", ""];
+      document.getElementById("page-title").textContent = titles[0];
+      document.getElementById("page-sub").textContent = titles[1];
+      document.querySelectorAll(".mbn-item[data-mbn-page]").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.mbnPage === previousPage);
+      });
+      updateBackButtonState();
+      closeMobileNav();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
 }
 
 document.querySelectorAll(".mant-tab[data-ftab]").forEach(tab => {
