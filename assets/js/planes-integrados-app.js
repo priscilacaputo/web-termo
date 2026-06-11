@@ -250,61 +250,83 @@ function renderPlanesTab(tabIndex, container) {
 }
 
 function renderMangaPlan(plan) {
-  if (!plan.frecuenciasDetalladas) return '';
+  if (!plan || !plan.frecuenciasDetalladas || plan.frecuenciasDetalladas.length === 0) {
+    return `<div style="padding: 20px; color: #999;">No hay datos disponibles para este plan</div>`;
+  }
+
+  const title = plan.id || plan.sourceKey || 'Plan de Manga';
 
   return `
     <div class="mant-section-header">
       <div>
-        <h2 class="mant-section-title">${plan.id || 'Plan de Manga'}</h2>
+        <h2 class="mant-section-title">${title}</h2>
         <p class="mant-section-desc">Mantenimiento preventivo por frecuencia</p>
       </div>
     </div>
-    ${plan.frecuenciasDetalladas.map(frec => `
-      <div class="manga-freq-section" style="margin-bottom: 20px">
-        <div class="manga-freq-header" style="background: ${frec.color}">
-          <div>
-            <span class="manga-freq-label">Frecuencia</span>
-            <span class="manga-freq-badge">${frec.label}</span>
+    ${plan.frecuenciasDetalladas.map(frec => {
+      if (!frec || !frec.grupos) return '';
+      const totalTareas = frec.grupos.reduce((sum, g) => sum + (g.tareas || []).length, 0);
+      return `
+        <div class="manga-freq-section" style="margin-bottom: 20px">
+          <div class="manga-freq-header" style="background: ${frec.color}; padding: 12px 16px; border-radius: 8px 8px 0 0;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <span class="manga-freq-label" style="display: block; font-size: 11px; color: rgba(255,255,255,0.7); margin-bottom: 4px;">Frecuencia</span>
+                <span class="manga-freq-badge" style="display: block; font-size: 16px; font-weight: 700; color: #fff;">${frec.label}</span>
+              </div>
+              <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; color: #fff; font-size: 12px; font-weight: 600;">${totalTareas} tarea${totalTareas !== 1 ? 's' : ''}</span>
+            </div>
+          </div>
+          <div class="manga-grupo-grid" style="background: #f9fafb; padding: 16px; border-radius: 0 0 8px 8px;">
+            ${frec.grupos.map(grupo => `
+              <div class="manga-grupo" style="margin-bottom: 16px; background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid ${frec.color}">
+                <div class="manga-grupo-nombre" style="font-weight: 700; margin-bottom: 8px; color: #1f2937;">${grupo.nombre}</div>
+                <ul class="km-task-list" style="margin: 0; padding-left: 20px; list-style: disc;">
+                  ${(grupo.tareas || []).map(tarea => `<li style="margin-bottom: 4px; color: #555; font-size: 13px;">${tarea}</li>`).join('')}
+                </ul>
+              </div>
+            `).join('')}
           </div>
         </div>
-        <div class="manga-grupo-grid">
-          ${frec.grupos.map(grupo => `
-            <div class="manga-grupo">
-              <div class="manga-grupo-nombre">${grupo.nombre}</div>
-              <ul class="km-task-list">
-                ${grupo.tareas.map(tarea => `<li>${tarea}</li>`).join('')}
-              </ul>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `).join('')}
+      `;
+    }).join('')}
   `;
 }
 
 function renderStandardPlan(plan) {
-  if (!plan.frecuencias) return '';
+  if (!plan || !plan.frecuencias || plan.frecuencias.length === 0) {
+    return `<div style="padding: 20px; color: #999;">No hay datos disponibles para este plan</div>`;
+  }
+
+  const title = plan.nombre || plan.id || 'Plan';
 
   return `
     <div class="mant-section-header">
       <div>
-        <h2 class="mant-section-title">${plan.nombre || plan.id || 'Plan'}</h2>
+        <h2 class="mant-section-title">${title}</h2>
         <p class="mant-section-desc">Mantenimiento preventivo por frecuencia</p>
       </div>
     </div>
-    ${(plan.frecuencias || []).map(frec => `
-      <div class="manga-freq-section" style="margin-bottom: 20px">
-        <div class="manga-freq-header" style="background: ${frec.color}">
-          <div>
-            <span class="manga-freq-label">Frecuencia</span>
-            <span class="manga-freq-badge">${frec.label}</span>
+    ${(plan.frecuencias || []).map(frec => {
+      if (!frec) return '';
+      const tareaCount = (frec.tareas || []).length;
+      return `
+        <div class="manga-freq-section" style="margin-bottom: 20px">
+          <div class="manga-freq-header" style="background: ${frec.color}; padding: 12px 16px; border-radius: 8px 8px 0 0;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <span class="manga-freq-label" style="display: block; font-size: 11px; color: rgba(255,255,255,0.7); margin-bottom: 4px;">Frecuencia</span>
+                <span class="manga-freq-badge" style="display: block; font-size: 16px; font-weight: 700; color: #fff;">${frec.label}</span>
+              </div>
+              <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; color: #fff; font-size: 12px; font-weight: 600;">${tareaCount} tarea${tareaCount !== 1 ? 's' : ''}</span>
+            </div>
           </div>
+          <ul class="km-task-list" style="padding: 16px; margin: 0; background: #f9fafb; border-radius: 0 0 8px 8px; list-style: disc;">
+            ${(frec.tareas || []).map(tarea => `<li style="margin-bottom: 6px; color: #555; font-size: 13px;">${tarea}</li>`).join('')}
+          </ul>
         </div>
-        <ul class="km-task-list" style="padding: 16px">
-          ${(frec.tareas || []).map(tarea => `<li>${tarea}</li>`).join('')}
-        </ul>
-      </div>
-    `).join('')}
+      `;
+    }).join('')}
   `;
 }
 
