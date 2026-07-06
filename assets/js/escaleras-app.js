@@ -34,9 +34,11 @@ document.querySelectorAll(".esc-view-btn").forEach(btn => {
     document.getElementById("esc-planes-view").classList.toggle("hidden", !planesVisible);
     document.getElementById("esc-plano-view").classList.toggle("hidden", !planoVisible);
     document.getElementById("escFabFilter").closest(".filter-group").classList.toggle("hidden", planoVisible || planesVisible);
-    if (planoVisible && !window._escPlanoInit) {
-      window._escPlanoInit = true;
-      initEscPlanoViewer();
+    if (planoVisible) {
+      const iframe = document.getElementById('esc-plano-iframe');
+      if (iframe && !iframe.src) {
+        iframe.src = 'assets/ASC-ESC.pdf?v=' + Date.now();
+      }
     }
   });
 });
