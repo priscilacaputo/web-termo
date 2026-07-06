@@ -1,21 +1,20 @@
 const ESCALERAS_DATA = [
-  { equipo:"MES101", denominacion:"Escalera Mecánica - Preembarque Inter",     dimension:"", ubicacion:"AEP-ED7-NIVEL0-UBITEC049", fabricante:"THYSSEN", tipo:"",           ubi_desc:"Migraciones Internacionales" },
-  { equipo:"MES104", denominacion:"Escalera Mec - Subida hall 1°P cruzada",    dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"",           ubi_desc:"Hall Público Check in" },
-  { equipo:"MES105", denominacion:"Escalera Mec - Bajada hall 1°P cruzada",    dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"",           ubi_desc:"Hall Público Check in" },
-  { equipo:"MES107", denominacion:"Escalera Mec - Bajada hall 1°P paralela",   dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"",           ubi_desc:"Hall Público Check in" },
-  { equipo:"MES108", denominacion:"Escalera Mec - Subida hall 1°P paralela",   dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"",           ubi_desc:"Hall Público Check in" },
-  { equipo:"MES117", denominacion:"Escalera Mecánica - Partidas Inter",        dimension:"", ubicacion:"AEP-ED7-NIVEL0-UBITEC049", fabricante:"FUJITEC", tipo:"",           ubi_desc:"Migraciones Internacionales" },
-  { equipo:"MES118", denominacion:"Escalera Mecánica Desc - Hall Sur Ed IV",   dimension:"", ubicacion:"AEP-ED4-NIVEL0-UBITEC105", fabricante:"FUJITEC", tipo:"",           ubi_desc:"Hall Público" },
-  { equipo:"MES119", denominacion:"Escalera Mecánica Asc - Hall Norte Ed IV",  dimension:"", ubicacion:"AEP-ED4-NIVEL0-UBITEC105", fabricante:"FUJITEC", tipo:"",           ubi_desc:"Hall Público" },
-  { equipo:"MES120", denominacion:"Escalera Mecánica - Arribos Nacional N°1",  dimension:"", ubicacion:"AEP-ED4-NIVEL0-UBITEC105", fabricante:"FUJITEC", tipo:"GS8000-HV10", ubi_desc:"Hall Público" },
-  { equipo:"MES121", denominacion:"Escalera Mecánica - Arribos Nacional N°2",  dimension:"", ubicacion:"AEP-ED4-NIVEL0-UBITEC105", fabricante:"FUJITEC", tipo:"GS8000-HV10", ubi_desc:"Hall Público" },
+  { equipo:"MES101", denominacion:"Escalera - Preembarque Inter N°5",          dimension:"", ubicacion:"AEP-ED7-NIVEL0-UBITEC049", fabricante:"THYSSEN", tipo:"",            ubi_desc:"Migraciones Internacionales" },
+  { equipo:"MES104", denominacion:"Escalera Cruzada (Lado Pista) - N°4",       dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"",            ubi_desc:"Hall Publico Check in" },
+  { equipo:"MES105", denominacion:"Escalera Cruzada (Lado Rio) - N°3",         dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"",            ubi_desc:"Hall Publico Check in" },
+  { equipo:"MES107", denominacion:"Escalera Paralela (Lado Pista) - N°2",      dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"",            ubi_desc:"Hall Publico Check in" },
+  { equipo:"MES108", denominacion:"Escalera Paralela (Lado Rio) - N°1",        dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"",            ubi_desc:"Hall Publico Check in" },
+  { equipo:"MES117", denominacion:"Escalera - Preembarque Inter N°5",          dimension:"", ubicacion:"AEP-ED7-NIVEL0-UBITEC049", fabricante:"FUJITEC", tipo:"",            ubi_desc:"Migraciones Internacionales" },
+  { equipo:"MES118", denominacion:"Escalera - Hall Sur Ed IV N°4",             dimension:"", ubicacion:"AEP-ED4-NIVEL0-UBITEC105", fabricante:"FUJITEC", tipo:"",            ubi_desc:"Hall Publico" },
+  { equipo:"MES120", denominacion:"Escalera - Arribos Nac. N°3 (Lado Pista)", dimension:"", ubicacion:"AEP-ED4-NIVEL0-UBITEC105", fabricante:"FUJITEC", tipo:"GS8000-HV10", ubi_desc:"Hall Publico" },
+  { equipo:"MES121", denominacion:"Escalera - Arribos Nac. N°4 (Lado Rio)",   dimension:"", ubicacion:"AEP-ED4-NIVEL0-UBITEC105", fabricante:"FUJITEC", tipo:"GS8000-HV10", ubi_desc:"Hall Publico" },
 ];
 
 const ESCALERAS_PLANES = [
   {
     id: "electromecanica",
     denominacion: "Escaleras Mecánicas / Caminos Rodantes",
-    escaleras: ["MES101","MES104","MES105","MES107","MES108","MES117","MES118","MES119","MES120","MES121"],
+    escaleras: ["MES101","MES104","MES105","MES107","MES108","MES117","MES118","MES120","MES121"],
     frecuencias: [
       {
         id: "mensual", label: "MENSUAL", sublabel: "MOEX", color: "#1a56a4",

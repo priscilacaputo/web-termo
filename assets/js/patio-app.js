@@ -42,12 +42,22 @@ const patioSistemaFilter = document.getElementById("patioSistemaFilter");
 patioClaseFilter.addEventListener("change",   () => { renderPatioGrid(); renderPatioTable(); });
 patioSistemaFilter.addEventListener("change", () => { renderPatioGrid(); renderPatioTable(); });
 
+/* ─── Altura filter ──────────────────────────────────────── */
+let patioAlturaOnly = false;
+document.getElementById("patio-altura-btn").addEventListener("click", function () {
+  patioAlturaOnly = !patioAlturaOnly;
+  this.classList.toggle("active", patioAlturaOnly);
+  renderPatioGrid();
+  renderPatioTable();
+});
+
 function getFilteredPatio() {
   const clase   = patioClaseFilter.value;
   const sistema = patioSistemaFilter.value;
   return PATIO_DATA.filter(e => {
     if (clase   && e.clase !== clase) return false;
     if (sistema && patioSubsistema(e.denominacion) !== sistema) return false;
+    if (patioAlturaOnly && !ALTURA_EQUIPOS.has(e.equipo)) return false;
     return true;
   });
 }

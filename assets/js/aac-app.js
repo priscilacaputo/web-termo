@@ -54,6 +54,12 @@ let aacActivePlanId  = AAC_PLANES[0].id;
     });
   });
 
+  document.getElementById('aac-altura-btn').addEventListener('click', function () {
+    aacAlturaOnly = !aacAlturaOnly;
+    this.classList.toggle('active', aacAlturaOnly);
+    applyAACFilters();
+  });
+
   document.getElementById('aac-modal-close').addEventListener('click', closeAACModal);
   document.getElementById('aac-modal-overlay').addEventListener('click', function (e) {
     if (e.target === this) closeAACModal();
@@ -72,7 +78,7 @@ function renderAACStats() {
   const utas     = AAC_DATA.filter(e => e.tipo === 'UTA').length;
   const chillers = AAC_DATA.filter(e => e.tipo === 'Chiller').length;
 
-  const alturaCount = AAC_DATA.filter(e => ALTURA_SET.has(e.equipo)).length;
+  const alturaCount = AAC_DATA.filter(e => ALTURA_EQUIPOS.has(e.equipo)).length;
 
   const cards = [
     { label: 'Total equipos',  value: total,           icon: '❄️',  color: '#1a56a4', tipo: ''        },
@@ -147,7 +153,7 @@ function applyAACFilters() {
     if (aacTipoFilter && e.tipo !== aacTipoFilter) return false;
     if (aacFabFilter  && e.fabricante !== aacFabFilter) return false;
     if (aacZonaFilter && aacZona(e.ubicacion) !== aacZonaFilter) return false;
-    if (aacAlturaOnly && !ALTURA_SET.has(e.equipo)) return false;
+    if (aacAlturaOnly && !ALTURA_EQUIPOS.has(e.equipo)) return false;
     if (aacSearch) {
       const hay = [e.equipo, e.denominacion, e.capacidad, e.fabricante, e.modelo, e.sector, aacZona(e.ubicacion)]
         .join(' ').toLowerCase();
@@ -194,7 +200,7 @@ function renderAACGrid() {
     const tipoColor = AAC_TIPO_COLORS[e.tipo]  || '#6b7280';
     const zonaColor = AAC_ZONA_COLORS[zona]     || '#6b7280';
     const fab       = e.fabricante || '—';
-    const esAltura  = ALTURA_SET.has(e.equipo);
+    const esAltura  = ALTURA_EQUIPOS.has(e.equipo);
     return `<div class="aac-card" data-equipo="${e.equipo}" title="${e.denominacion}" style="--tipo-color:${tipoColor}">
       <div class="aac-card-header">
         <span class="aac-card-code">${e.equipo}</span>
@@ -234,7 +240,7 @@ function renderAACTable() {
     const zona      = aacZona(e.ubicacion);
     const tipoColor = AAC_TIPO_COLORS[e.tipo]  || '#6b7280';
     const zonaColor = AAC_ZONA_COLORS[zona]     || '#6b7280';
-    const esAltura  = ALTURA_SET.has(e.equipo);
+    const esAltura  = ALTURA_EQUIPOS.has(e.equipo);
     return `<tr data-equipo="${e.equipo}">
       <td><span class="equipo-tag">${e.equipo}</span>${esAltura ? ' <span class="altura-badge">⛰️ Altura</span>' : ''}</td>
       <td>${e.denominacion}</td>

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Termomecánica — Portal Interno</title>
   <link rel="stylesheet" href="assets/css/main.css" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
   <nav class="sidebar" id="sidebar">
@@ -112,11 +113,19 @@
     <!-- ── Footer ── -->
     <div class="sidebar-footer">
       <span class="sidebar-footer-text">Aeropuertos Argentina</span>
+      <button id="admin-lock-btn" class="admin-lock-btn" title="Acceso administrador">🔒</button>
     </div>
 
   </nav>
 
   <div class="main-content">
+
+    <!-- Admin banner -->
+    <div id="admin-banner" class="admin-banner hidden">
+      <span>🔓 Modo Administrador activo</span>
+      <button id="admin-banner-logout" class="admin-banner-logout">Salir</button>
+    </div>
+
     <header class="topbar">
       <div class="topbar-left">
         <button class="nav-toggle-btn" id="nav-toggle" aria-label="Menú">
@@ -288,11 +297,13 @@
           <button class="mangas-view-btn" data-view="table">☰ Tabla</button>
           <button class="mangas-view-btn" data-view="planes">📋 Planes</button>
         </div>
+        <button class="altura-toggle-btn" id="mangas-altura-btn" title="Filtrar equipos que requieren trabajo en altura">🏔 Altura</button>
         <div class="filter-group">
           <select id="mangasFabFilter" class="filter-select">
             <option value="">Todos los fabricantes</option>
           </select>
         </div>
+        <button class="export-btn" id="mangas-export-btn">⬇ Excel</button>
       </div>
 
       <!-- Vista: Grid de posiciones -->
@@ -373,6 +384,18 @@
         </div>
       </div>
 
+      <!-- Link reclamos Fujitec -->
+      <div class="personal-link-banner" style="margin-bottom:16px">
+        <a href="https://reclamos.fujitec.com.ar/client" target="_blank" rel="noopener">
+          <span class="plink-icon-wrap">🔧</span>
+          <div>
+            <span class="plink-label">🔗 Portal web de reclamos</span>
+            <span class="plink-title">Fujitec — Sistema de reclamos online</span>
+          </div>
+          <span class="plink-arrow">→</span>
+        </a>
+      </div>
+
       <div class="toolbar" style="margin-bottom:16px">
         <div class="mangas-view-toggle">
           <button class="asc-view-btn active" data-view="grid">⊞ Grilla</button>
@@ -385,6 +408,7 @@
             <option value="">Todos los fabricantes</option>
           </select>
         </div>
+        <button class="export-btn" id="ascensores-export-btn">⬇ Excel</button>
       </div>
 
       <!-- Vista: Grilla -->
@@ -485,6 +509,18 @@
         </div>
       </div>
 
+      <!-- Link reclamos Fujitec -->
+      <div class="personal-link-banner" style="margin-bottom:16px">
+        <a href="https://reclamos.fujitec.com.ar/client" target="_blank" rel="noopener">
+          <span class="plink-icon-wrap">🔧</span>
+          <div>
+            <span class="plink-label">🔗 Portal web de reclamos</span>
+            <span class="plink-title">Fujitec — Sistema de reclamos online</span>
+          </div>
+          <span class="plink-arrow">→</span>
+        </a>
+      </div>
+
       <div class="toolbar" style="margin-bottom:16px">
         <div class="mangas-view-toggle">
           <button class="esc-view-btn active" data-view="grid">⊞ Grilla</button>
@@ -497,6 +533,7 @@
             <option value="">Todos los fabricantes</option>
           </select>
         </div>
+        <button class="export-btn" id="escaleras-export-btn">⬇ Excel</button>
       </div>
 
       <!-- Vista: Grilla -->
@@ -583,6 +620,7 @@
             <option value="presurizador">Presurizadores</option>
           </select>
         </div>
+        <button class="export-btn" id="extractores-export-btn">⬇ Excel</button>
       </div>
 
       <!-- Vista: Grilla -->
@@ -647,6 +685,7 @@
             <option value="internacional">Arribos Internacionales</option>
           </select>
         </div>
+        <button class="export-btn" id="persianas-export-btn">⬇ Excel</button>
       </div>
 
       <!-- Vista: Grilla -->
@@ -712,6 +751,7 @@
             <option value="acceso">Accesos</option>
           </select>
         </div>
+        <button class="export-btn" id="cortinas-export-btn">⬇ Excel</button>
       </div>
 
       <!-- Vista: Grilla -->
@@ -768,6 +808,7 @@
           <button class="patio-view-btn" data-view="table">☰ Tabla</button>
           <button class="patio-view-btn" data-view="planes">📋 Planes</button>
         </div>
+        <button class="altura-toggle-btn" id="patio-altura-btn" title="Filtrar equipos que requieren trabajo en altura">🏔 Altura</button>
         <div class="filter-group patio-filters" style="display:flex;gap:8px;flex-wrap:wrap">
           <select id="patioClaseFilter" class="filter-select">
             <option value="">Todos los tipos</option>
@@ -790,6 +831,7 @@
             <option value="HBS 1400">HBS 1400</option>
           </select>
         </div>
+        <button class="export-btn" id="patio-export-btn">⬇ Excel</button>
       </div>
 
       <!-- Vista: Grilla -->
@@ -856,6 +898,7 @@
             <option value="achique">Achique</option>
           </select>
         </div>
+        <button class="export-btn" id="bombas-export-btn">⬇ Excel</button>
       </div>
 
       <!-- Vista: Grilla -->
@@ -917,6 +960,7 @@
           <button class="puertas-view-btn" data-view="planes">📋 Planes</button>
           <button class="puertas-view-btn" data-view="guia">📖 Guía técnica</button>
         </div>
+        <button class="export-btn" id="puertas-export-btn">⬇ Excel</button>
         <span id="puertas-result-count" class="puertas-result-count"></span>
       </div>
 
@@ -1160,6 +1204,8 @@
           <button class="aac-view-btn" data-view="table">☰ Tabla</button>
           <button class="aac-view-btn" data-view="planes">📋 Planes</button>
         </div>
+        <button class="altura-toggle-btn" id="aac-altura-btn" title="Filtrar equipos que requieren trabajo en altura">🏔 Altura</button>
+        <button class="export-btn" id="aac-export-btn">⬇ Excel</button>
         <span id="aac-result-count" class="puertas-result-count"></span>
       </div>
 
@@ -1287,6 +1333,7 @@
             <option value="">Todos los pisos</option>
           </select>
         </div>
+        <button class="export-btn" id="ecas-export-btn">⬇ Excel</button>
       </div>
 
       <!-- Vista: Grid y Tabla -->
@@ -1331,6 +1378,7 @@
           <input type="text" id="otros-search" class="search-input" placeholder="Buscar por código, denominación, tipo, fabricante, local..." />
           <button class="clear-btn" id="otros-clear-search" title="Limpiar" style="display:none">✕</button>
         </div>
+        <button class="export-btn" id="otros-export-btn">⬇ Excel</button>
         <span id="otros-result-count" class="puertas-result-count"></span>
       </div>
 
@@ -1372,10 +1420,10 @@
 
       <!-- Link a SharePoint -->
       <div class="personal-link-banner">
-        <a href="https://caairports.sharepoint.com/:x:/s/TermomecnicaAEP848/IQC361tOTq3KRr_cb5hX95xFAWg_eMk5_PLpEPmShkAxjwg?e=W091xw" target="_blank" rel="noopener">
+        <a href="https://grilla-inteligente-termo.vercel.app" target="_blank" rel="noopener">
           <span class="plink-icon-wrap">📊</span>
           <div>
-            <span class="plink-label">📎 Documento SharePoint — Abrir en Excel Online</span>
+            <span class="plink-label">🔗 Abrir aplicación web</span>
             <span class="plink-title">Grilla de Guardias — Termomecánica AEP</span>
           </div>
           <span class="plink-arrow">→</span>
@@ -1575,5 +1623,53 @@
   <script src="assets/js/analytics-app.js?v=1"></script>
   <script src="assets/js/maint-planes-app.js?v=2"></script>
   <script src="assets/js/global-search.js?v=1"></script>
+  <script src="assets/js/export-utils.js?v=1"></script>
+
+  <!-- ── Admin login modal ──────────────────────────────── -->
+  <div id="admin-login-modal" class="admin-overlay">
+    <div class="admin-modal-box admin-login-box">
+      <h2 class="admin-modal-title">🔒 Acceso Administrador</h2>
+      <p class="admin-login-hint">Ingresá la contraseña para activar el modo administrador.</p>
+      <input id="admin-pwd-input" class="admin-field-input" type="password" placeholder="Contraseña" autocomplete="current-password" />
+      <p id="admin-login-error" class="admin-modal-error"></p>
+      <div class="admin-modal-actions">
+        <button class="admin-btn-secondary" onclick="document.getElementById('admin-login-modal').classList.remove('open')">Cancelar</button>
+        <button class="admin-btn-primary" onclick="adminSubmitLogin()">Ingresar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Admin upload confirm modal ─────────────────────── -->
+  <div id="admin-confirm-modal" class="admin-overlay">
+    <div class="admin-modal-box admin-confirm-box">
+      <h2 class="admin-modal-title">📤 Confirmar actualización</h2>
+      <p id="admin-confirm-msg" class="admin-confirm-msg"></p>
+      <div class="admin-modal-actions">
+        <button id="admin-cancel-btn"  class="admin-btn-secondary">Cancelar</button>
+        <button id="admin-confirm-btn" class="admin-btn-primary">Confirmar y guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Admin edit modal ──────────────────────────────────── -->
+  <div id="admin-edit-modal" class="admin-overlay">
+    <div class="admin-modal-box admin-edit-box">
+      <h2 id="admin-edit-title" class="admin-modal-title">Editar equipo</h2>
+      <div id="admin-edit-fields" class="admin-edit-fields"></div>
+      <button class="admin-add-field-btn" onclick="adminAddCustomField()">+ Agregar campo</button>
+      <div class="admin-modal-actions" style="margin-top:16px">
+        <button class="admin-btn-secondary" onclick="adminCloseEditModal()">Cancelar</button>
+        <button class="admin-btn-primary"   onclick="adminSaveEdit()">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Hidden file input ───────────────────────────────── -->
+  <input id="admin-file-input" type="file" accept=".xlsx" style="display:none" />
+
+  <!-- ── Admin toast ─────────────────────────────────────── -->
+  <div id="admin-toast" class="admin-toast"></div>
+
+  <script src="assets/js/admin-app.js?v=2"></script>
 </body>
 </html>

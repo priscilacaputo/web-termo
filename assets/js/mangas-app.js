@@ -33,6 +33,15 @@ document.querySelectorAll(".mangas-view-btn").forEach(btn => {
   });
 });
 
+/* ─── Altura filter ──────────────────────────────────── */
+let mangasAlturaOnly = false;
+document.getElementById("mangas-altura-btn").addEventListener("click", function () {
+  mangasAlturaOnly = !mangasAlturaOnly;
+  this.classList.toggle("active", mangasAlturaOnly);
+  renderMangasGrid();
+  renderMangasTable();
+});
+
 /* ─── Fabricante filter ──────────────────────────────── */
 const mangasFabFilter = document.getElementById("mangasFabFilter");
 [...new Set(MANGAS_DATA.map(m => m.fabricante))].sort().forEach(f => {
@@ -49,7 +58,11 @@ mangasFabFilter.addEventListener("change", () => {
 /* ─── Grid de posiciones ─────────────────────────────── */
 function getFiltered() {
   const fab = mangasFabFilter.value;
-  return fab ? MANGAS_DATA.filter(m => m.fabricante === fab) : MANGAS_DATA;
+  return MANGAS_DATA.filter(m => {
+    if (fab && m.fabricante !== fab) return false;
+    if (mangasAlturaOnly && !ALTURA_EQUIPOS.has(m.equipo)) return false;
+    return true;
+  });
 }
 
 function renderMangasGrid() {
@@ -69,7 +82,7 @@ function renderMangasGrid() {
           <span class="gate-fab" style="color:${color}">${m.fabricante}</span>
           <span class="gate-tipo">${m.tipo}</span>
           ${m.dimension ? `<span class="gate-dim">${m.dimension}</span>` : ''}
-          ${ALTURA_SET.has(m.equipo) ? `<span class="altura-badge" style="margin-top:4px">⛰️ Altura</span>` : ''}
+          ${ALTURA_EQUIPOS.has(m.equipo) ? `<span class="altura-badge" style="margin-top:4px">⛰️ Altura</span>` : ''}
         </div>
       </div>
     `;
@@ -94,7 +107,7 @@ function renderMangasTable() {
     const color = FAB_COLORS_MANGAS[m.fabricante] || "#888";
     return `
       <tr data-equipo="${m.equipo}" style="cursor:pointer">
-        <td><span class="manga-equipo-tag" style="background:${color}">${m.equipo}</span>${ALTURA_SET.has(m.equipo) ? ' <span class="altura-badge">⛰️ Altura</span>' : ''}</td>
+        <td><span class="manga-equipo-tag" style="background:${color}">${m.equipo}</span>${ALTURA_EQUIPOS.has(m.equipo) ? ' <span class="altura-badge">⛰️ Altura</span>' : ''}</td>
         <td style="font-weight:700;font-size:15px;color:var(--color-primary)">POS N°${m.pos}</td>
         <td>${m.denominacion}</td>
         <td><span class="fab-badge"><span class="fab-dot" style="background:${color}"></span>${m.fabricante}</span></td>
