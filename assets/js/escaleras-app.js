@@ -36,7 +36,7 @@ document.querySelectorAll(".esc-view-btn").forEach(btn => {
     document.getElementById("escFabFilter").closest(".filter-group").classList.toggle("hidden", planoVisible || planesVisible);
     if (planoVisible) {
       const iframe = document.getElementById('esc-plano-iframe');
-      if (iframe && !iframe.src) {
+      if (iframe) {
         iframe.src = 'assets/ASC-ESC.pdf?v=' + Date.now();
       }
     }
