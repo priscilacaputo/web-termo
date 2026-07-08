@@ -48,10 +48,10 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const token  = process.env.GITHUB_TOKEN;
-    const owner  = process.env.GITHUB_OWNER;
-    const repo   = process.env.GITHUB_REPO;
-    const branch = process.env.GITHUB_BRANCH || 'main';
+    const token  = (process.env.GITHUB_TOKEN  || '').trim();
+    const owner  = (process.env.GITHUB_OWNER  || '').trim();
+    const repo   = (process.env.GITHUB_REPO   || '').trim();
+    const branch = (process.env.GITHUB_BRANCH || 'main').trim();
     const FILE   = 'data/ots-historico.json';
 
     if (!token)  { res.status(500).json({ error: 'Config incompleta', detail: 'GITHUB_TOKEN no configurado en Vercel' }); return; }
