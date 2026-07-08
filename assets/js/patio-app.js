@@ -85,7 +85,7 @@ function renderPatioGrid() {
             <span class="asc-location" style="font-size:10px;color:${subCol};font-weight:600">${sub}</span>
             ${kwBadge}
           </div>
-          ${ALTURA_SET.has(eq.equipo) ? `<span class="altura-badge" style="margin-top:6px">⛰️ Altura</span>` : ''}
+          ${ALTURA_EQUIPOS.has(eq.equipo) ? `<span class="altura-badge" style="margin-top:6px">⛰️ Altura</span>` : ''}
         </div>
       </div>`;
   }).join("");
@@ -110,7 +110,7 @@ function renderPatioTable() {
     const sub   = patioSubsistema(eq.denominacion);
     return `
       <tr data-equipo="${eq.equipo}" style="cursor:pointer">
-        <td><span class="manga-equipo-tag" style="background:${color}">${eq.equipo}</span>${ALTURA_SET.has(eq.equipo) ? ' <span class="altura-badge">⛰️ Altura</span>' : ''}</td>
+        <td><span class="manga-equipo-tag" style="background:${color}">${eq.equipo}</span>${ALTURA_EQUIPOS.has(eq.equipo) ? ' <span class="altura-badge">⛰️ Altura</span>' : ''}</td>
         <td>${eq.denominacion}</td>
         <td><span class="fab-badge"><span class="fab-dot" style="background:${color}"></span>${patioClaseLabel(eq.clase)}</span></td>
         <td style="font-size:11px;color:var(--color-muted)">${sub}</td>
