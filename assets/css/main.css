@@ -3293,3 +3293,151 @@ tr:hover .admin-edit-btn { opacity: 1; }
   .kpis-chart-card, .ots-rec-card { break-inside: avoid; }
 }
 
+
+/* ── Botones de servidor ──────────────────────────────── */
+.ots-server-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+.ots-server-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition);
+}
+.ots-server-save {
+  background: var(--color-sky);
+  color: #fff;
+}
+.ots-server-save:hover { background: var(--color-sky-dark); }
+.ots-server-load {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+.ots-server-load:hover { background: var(--color-border); }
+.ots-server-hint {
+  font-size: 12px;
+  color: var(--color-muted);
+  max-width: 360px;
+  line-height: 1.4;
+}
+
+/* ── Badge "Gestionado" ────────────────────────────────── */
+.ots-gestionado-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: #f3e8ff;
+  color: #7e22ce;
+  border-radius: 99px;
+  border: 1px solid #d8b4fe;
+  white-space: nowrap;
+}
+
+/* ── Sección de override manual en modal ──────────────── */
+.ots-override-section {
+  border-top: 2px solid #ede9fe;
+  margin-top: 16px;
+  padding-top: 14px;
+  background: #faf8ff;
+  border-radius: 0 0 10px 10px;
+  padding: 16px;
+  margin: 16px -16px -4px;
+}
+.ots-override-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.ots-override-meta {
+  font-size: 11px;
+  color: var(--color-muted);
+}
+.ots-override-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ots-override-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ots-override-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.ots-override-select {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  font-size: 13px;
+  background: #fff;
+  color: var(--color-text);
+  cursor: pointer;
+  max-width: 360px;
+}
+.ots-override-textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  background: #fff;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+.ots-override-textarea:focus,
+.ots-override-select:focus {
+  outline: none;
+  border-color: var(--color-sky);
+  box-shadow: 0 0 0 3px rgba(0,150,214,.1);
+}
+.ots-override-full { grid-column: 1 / -1; }
+.ots-override-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.ots-override-save-btn {
+  padding: 8px 18px;
+  background: var(--color-sky);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.ots-override-save-btn:hover { background: var(--color-sky-dark); }
+.ots-override-clear-btn {
+  padding: 8px 14px;
+  background: #fff;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.ots-override-clear-btn:hover { background: #fef2f2; }

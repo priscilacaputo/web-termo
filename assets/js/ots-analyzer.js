@@ -221,3 +221,71 @@ const OTS_TIPO_META = {
   correctivo: { label:'Correctivo', emoji:'🔧', cls:'ots-tipo-corr', color:'#9a3412' },
   otro:       { label:'Otro',       emoji:'📌', cls:'ots-tipo-otro', color:'#6b7280' }
 };
+
+/* ── Estado efectivo (manual > automático) ──────────────── */
+function getEffectiveEstado(o) {
+  return o.estado_manual || o.estado;
+}
+
+/* ── Override manual de una OT ─────────────────────────── */
+function updateOTManual(ot_num, changes) {
+  const all = getOTs();
+  const idx = all.findIndex(o => (o.ot_num || o.ot) === String(ot_num));
+  if (idx === -1) return false;
+  Object.assign(all[idx], changes);
+  saveOTs(all);
+  return true;
+}
+
+/* ── Persistencia en servidor (GitHub vía API) ──────────── */
+function decompressOT(r) {
+  return {
+    ot_num:      r.n,
+    ot:          r.n,
+    ot_nombre:   '',
+    tipo:        r.t === 'p' ? 'preventivo' : r.t === 'c' ? 'correctivo' : 'otro',
+    equipo:      r.e,
+    equipo_desc: '',
+    fecha:       r.f,
+    tecnico:     r.tc,
+    tiempo:      r.h,
+    comentario:  r.c,
+    motivo:      '',
+    estado_orden:'',
+    estado:      r.s,
+    accion:      r.a,
+    ...(r.sm ? { estado_manual: r.sm } : {}),
+    ...(r.nn ? { nota_manual:   r.nn } : {}),
+    ...(r.fr ? { fecha_revision:r.fr } : {}),
+  };
+}
+
+async function loadOTsFromServer() {
+  try {
+    const resp = await fetch('/data/ots-historico.json?t=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (!data.ots || !Array.isArray(data.ots) || data.ots.length === 0) return null;
+    return data.ots.map(decompressOT);
+  } catch(e) {
+    console.warn('No se pudo cargar desde servidor:', e.message);
+    return null;
+  }
+}
+
+async function saveOTsToServer(password) {
+  const ots = getOTs();
+  if (!ots.length) return { ok: false, error: 'No hay datos para guardar.' };
+  try {
+    const resp = await fetch('/api/save-ots', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, ots })
+    });
+    const json = await resp.json();
+    if (!resp.ok) return { ok: false, error: json.error || 'Error ' + resp.status };
+    return { ok: true, total: json.total };
+  } catch(e) {
+    return { ok: false, error: e.message };
+  }
+}

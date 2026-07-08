@@ -2,6 +2,17 @@
    OTs App — Historial SAP · UI + carga + modal injection
    ═══════════════════════════════════════════════════════ */
 
+/* ── Init: cargar desde servidor si localStorage está vacío ── */
+async function initOTsFromServer() {
+  if (getOTs().length > 0) return;  // ya hay datos locales
+  const serverOTs = await loadOTsFromServer();
+  if (serverOTs && serverOTs.length > 0) {
+    saveOTs(serverOTs);
+    showOTsToast(`✓ ${serverOTs.length} OTs cargadas desde el servidor.`, 'success');
+    renderOTsSection();
+  }
+}
+
 /* ── Render sección principal ──────────────────────────── */
 function renderOTsSection() {
   const section = document.getElementById('ots-section');
@@ -30,6 +41,11 @@ function renderOTsSection() {
             <span class="ots-loaded-badge">✓ ${ots.length} OTs · ${equiposList.length} equipos</span>
             <button class="ots-clear-btn" onclick="confirmClearOTs()">🗑 Limpiar todo</button>
           ` : ''}
+        </div>
+        <div class="ots-server-row">
+          <button class="ots-server-btn ots-server-save" onclick="promptSaveToServer()">💾 Guardar permanentemente</button>
+          <button class="ots-server-btn ots-server-load" onclick="promptLoadFromServer()">☁ Cargar desde servidor</button>
+          <span class="ots-server-hint">Los datos se guardan en el navegador. Usá "Guardar permanentemente" para que persistan entre dispositivos y limpiezas de caché.</span>
         </div>
       </div>
     </div>
@@ -191,11 +207,15 @@ function renderOTsTable() {
   }
 
   tbody.innerHTML = ots.map((o, i) => {
-    const em      = OTS_ESTADO_META[o.estado] || OTS_ESTADO_META.ok;
-    const tm      = OTS_TIPO_META[o.tipo]     || OTS_TIPO_META.otro;
-    const preview = (o.comentario||'').length > 55
+    const efectivo = getEffectiveEstado(o);
+    const em       = OTS_ESTADO_META[efectivo] || OTS_ESTADO_META.ok;
+    const tm       = OTS_TIPO_META[o.tipo]     || OTS_TIPO_META.otro;
+    const preview  = (o.comentario||'').length > 55
       ? (o.comentario||'').substring(0, 55) + '…'
       : (o.comentario||'—');
+    const gestionado = o.estado_manual
+      ? `<span class="ots-gestionado-badge" title="${o.nota_manual||''}">✏ Gestionado</span>`
+      : '';
     return `
       <tr class="ots-row" data-ot-idx="${i}" style="cursor:pointer">
         <td><span class="ots-equipo-tag">${o.equipo}</span></td>
@@ -208,7 +228,7 @@ function renderOTsTable() {
           ${preview}
           ${(o.comentario||'').length > 55 ? `<button class="ots-ver-mas" onclick="openOTDetail(event,${i})">ver todo</button>` : ''}
         </td>
-        <td><span class="ots-badge ${em.cls}">${em.emoji} ${em.label}</span></td>
+        <td><span class="ots-badge ${em.cls}">${em.emoji} ${em.label}</span>${gestionado}</td>
         <td class="ots-accion-cell">${o.accion||'—'}</td>
       </tr>
     `;
@@ -246,8 +266,18 @@ function openOTDetail(event, idx) {
     document.addEventListener('keydown', e => { if (e.key === 'Escape') modal.classList.remove('open'); });
   }
 
-  const em = OTS_ESTADO_META[o.estado] || OTS_ESTADO_META.ok;
+  const efectivo = getEffectiveEstado(o);
+  const em = OTS_ESTADO_META[efectivo] || OTS_ESTADO_META.ok;
   const tm = OTS_TIPO_META[o.tipo]     || OTS_TIPO_META.otro;
+  const otKey = o.ot_num || o.ot || '';
+
+  const estadoOpts = [
+    { v:'',            label:'— Sin cambio (usar detección automática) —' },
+    { v:'urgente',     label:'🔴 Urgente' },
+    { v:'correctivo',  label:'🟠 Correctivo sugerido' },
+    { v:'seguimiento', label:'🟡 Seguimiento' },
+    { v:'ok',          label:'🟢 OK / Resuelto' },
+  ];
 
   document.getElementById('ots-detail-content').innerHTML = `
     <div class="ots-detail-header">
@@ -255,6 +285,7 @@ function openOTDetail(event, idx) {
         <span class="ots-equipo-tag" style="font-size:16px;padding:4px 12px">${o.equipo}</span>
         <span class="ots-tipo-badge ${tm.cls}" style="font-size:13px">${tm.emoji} ${tm.label}</span>
         <span class="ots-badge ${em.cls}">${em.emoji} ${em.label}</span>
+        ${o.estado_manual ? `<span class="ots-gestionado-badge">✏ Gestionado manualmente</span>` : ''}
       </div>
       <div class="ots-detail-ot-name">${o.ot_nombre || o.ot_num || o.ot || ''}</div>
     </div>
@@ -300,9 +331,35 @@ function openOTDetail(event, idx) {
 
     ${o.accion && o.accion !== 'Sin observaciones relevantes detectadas.' ? `
     <div class="ots-detail-section">
-      <div class="ots-detail-label">🔍 Acción sugerida por análisis</div>
+      <div class="ots-detail-label">🔍 Acción sugerida por análisis automático</div>
       <div class="ots-detail-accion ots-detail-accion-${o.estado}">${o.accion}</div>
     </div>` : ''}
+
+    <!-- ── Gestión manual ── -->
+    <div class="ots-detail-section ots-override-section">
+      <div class="ots-override-header">
+        <span class="ots-detail-label">✏ Gestión manual</span>
+        ${o.estado_manual && o.fecha_revision ? `<span class="ots-override-meta">Última revisión: ${o.fecha_revision}</span>` : ''}
+      </div>
+      <div class="ots-override-form">
+        <div class="ots-override-field">
+          <label class="ots-override-label">Estado</label>
+          <select class="ots-override-select" id="ots-override-estado">
+            ${estadoOpts.map(opt =>
+              `<option value="${opt.v}"${o.estado_manual===opt.v?' selected':''}>${opt.label}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="ots-override-field ots-override-full">
+          <label class="ots-override-label">Nota / Comentario personal</label>
+          <textarea class="ots-override-textarea" id="ots-override-nota" rows="3" placeholder="Ej: Se verificó con técnico, equipo reparado el 15/07...">${o.nota_manual||''}</textarea>
+        </div>
+        <div class="ots-override-actions">
+          <button class="ots-override-save-btn" onclick="saveOTOverride('${otKey}')">💾 Guardar gestión</button>
+          ${o.estado_manual || o.nota_manual ? `<button class="ots-override-clear-btn" onclick="clearOTOverride('${otKey}')">✕ Quitar gestión manual</button>` : ''}
+        </div>
+      </div>
+    </div>
   `;
 
   modal.classList.add('open');
@@ -316,20 +373,26 @@ function renderOTsRecommendations() {
   const equipos= [...new Set(ots.map(o => o.equipo))].sort();
 
   const items = equipos.map(eq => {
-    const eqOTs = ots.filter(o => o.equipo === eq);
-    return { equipo: eq, analysis: analyzeEquipmentHistory(eqOTs) };
+    /* Para el análisis de recomendación, aplicar estado efectivo */
+    const eqOTs = ots.filter(o => o.equipo === eq).map(o => ({
+      ...o,
+      estado: getEffectiveEstado(o)
+    }));
+    return { equipo: eq, analysis: analyzeEquipmentHistory(eqOTs), rawOTs: ots.filter(o => o.equipo === eq) };
   }).sort((a,b) => {
     const ord = { urgente:0, correctivo:1, seguimiento:2, ok:3 };
     return (ord[a.analysis.nivel]||3) - (ord[b.analysis.nivel]||3);
   });
 
-  grid.innerHTML = items.map(({equipo, analysis:a}) => {
+  grid.innerHTML = items.map(({equipo, analysis:a, rawOTs}) => {
     const m = OTS_ESTADO_META[a.nivel] || OTS_ESTADO_META.ok;
+    const gestionadas = rawOTs.filter(o => o.estado_manual).length;
     return `
       <div class="ots-rec-card ots-rec-${a.nivel}">
         <div class="ots-rec-header">
           <span class="ots-equipo-tag">${equipo}</span>
           <span class="ots-badge ${m.cls}">${m.emoji} ${m.label}</span>
+          ${gestionadas > 0 ? `<span class="ots-gestionado-badge" title="${gestionadas} OT(s) gestionadas manualmente">✏ ${gestionadas} gestionada${gestionadas>1?'s':''}</span>` : ''}
         </div>
         <p class="ots-rec-text">${a.recomendacion}</p>
         <div class="ots-rec-meta">
@@ -577,6 +640,79 @@ function confirmClearOTs() {
   }
 }
 
+/* ── Override manual de OT ──────────────────────────────── */
+function saveOTOverride(otKey) {
+  const estado = document.getElementById('ots-override-estado')?.value || '';
+  const nota   = document.getElementById('ots-override-nota')?.value.trim() || '';
+  const fecha  = new Date().toISOString().slice(0,10);
+
+  const changes = {
+    ...(estado ? { estado_manual: estado } : { estado_manual: '' }),
+    nota_manual:    nota,
+    fecha_revision: fecha,
+  };
+  if (!changes.estado_manual && !changes.nota_manual) {
+    changes.estado_manual = '';
+    changes.nota_manual   = '';
+    changes.fecha_revision= '';
+  }
+
+  const ok = updateOTManual(otKey, changes);
+  if (ok) {
+    showOTsToast('Gestión guardada correctamente.', 'success');
+    document.getElementById('ots-detail-modal')?.classList.remove('open');
+    renderOTsTable();
+    renderOTsRecommendations();
+  } else {
+    showOTsToast('No se encontró la OT para actualizar.', 'error');
+  }
+}
+
+function clearOTOverride(otKey) {
+  const ok = updateOTManual(otKey, { estado_manual:'', nota_manual:'', fecha_revision:'' });
+  if (ok) {
+    showOTsToast('Gestión manual eliminada.', 'success');
+    document.getElementById('ots-detail-modal')?.classList.remove('open');
+    renderOTsTable();
+    renderOTsRecommendations();
+  }
+}
+
+/* ── Guardar / cargar desde servidor ───────────────────── */
+async function promptSaveToServer() {
+  const password = prompt('Ingresá la contraseña de administrador para guardar en el servidor:');
+  if (!password) return;
+  showOTsToast('Guardando en servidor…', 'success');
+  const result = await saveOTsToServer(password);
+  if (result.ok) {
+    showOTsToast(`✓ ${result.total} OTs guardadas en el servidor correctamente.`, 'success');
+  } else {
+    showOTsToast('Error al guardar: ' + result.error, 'error');
+  }
+}
+
+async function promptLoadFromServer() {
+  const ots = getOTs();
+  if (ots.length > 0) {
+    const ok = confirm(
+      `Hay ${ots.length} OTs en el navegador.\n` +
+      '¿Cargar desde servidor y FUSIONAR con los datos locales?\n' +
+      '(Los datos locales más recientes tienen prioridad.)'
+    );
+    if (!ok) return;
+  }
+  showOTsToast('Cargando desde servidor…', 'success');
+  const serverOTs = await loadOTsFromServer();
+  if (!serverOTs || serverOTs.length === 0) {
+    showOTsToast('No hay datos en el servidor todavía.', 'error');
+    return;
+  }
+  const merged = ots.length > 0 ? mergeOTs(serverOTs, ots) : serverOTs;
+  saveOTs(merged);
+  showOTsToast(`✓ ${serverOTs.length} OTs del servidor fusionadas. Total: ${merged.length} OTs.`, 'success');
+  setTimeout(renderOTsSection, 400);
+}
+
 /* ── Toast ─────────────────────────────────────────────── */
 function showOTsToast(msg, type='success') {
   let toast = document.getElementById('admin-toast');
@@ -734,6 +870,10 @@ function buildModalOTHistory(equipoId) {
 const _origShowPage = window.showPage;
 window.showPage = function(pageId) {
   _origShowPage(pageId);
-  if (pageId === 'historial') renderOTsSection();
-  if (pageId === 'kpis')      renderKPIsSection();
+  if (pageId === 'historial') {
+    renderOTsSection();
+    /* Si no hay datos locales, intentar cargar desde servidor */
+    if (getOTs().length === 0) initOTsFromServer();
+  }
+  if (pageId === 'kpis') renderKPIsSection();
 };
