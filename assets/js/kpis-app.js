@@ -30,14 +30,17 @@ function renderKPIsSection() {
   const tecnicos   = [...new Set(ots.map(o => o.tecnico).filter(Boolean))];
   const preventivos= ots.filter(o => o.tipo === 'preventivo').length;
   const correctivos= ots.filter(o => o.tipo === 'correctivo').length;
-  const urgentes   = ots.filter(o => o.estado === 'urgente').length;
-  const corrSug    = ots.filter(o => o.estado === 'correctivo').length;
-  const seguimiento= ots.filter(o => o.estado === 'seguimiento').length;
-  const ok         = ots.filter(o => o.estado === 'ok').length;
+  /* Usar estado efectivo (manual > automático) para todos los conteos */
+  const urgentes   = ots.filter(o => getEffectiveEstado(o) === 'urgente').length;
+  const corrSug    = ots.filter(o => getEffectiveEstado(o) === 'correctivo').length;
+  const seguimiento= ots.filter(o => getEffectiveEstado(o) === 'seguimiento').length;
+  const ok         = ots.filter(o => getEffectiveEstado(o) === 'ok').length;
   const tiempoTotal= ots.reduce((s,o) => s+(parseFloat(o.tiempo)||0), 0);
 
   const equipoAnalysis = equipos.map(eq => {
-    const eqOTs = ots.filter(o => o.equipo === eq);
+    const eqOTs = ots.filter(o => o.equipo === eq).map(o => ({
+      ...o, estado: getEffectiveEstado(o)   // estado efectivo para análisis
+    }));
     return {
       equipo: eq,
       a:      analyzeEquipmentHistory(eqOTs),
@@ -50,6 +53,9 @@ function renderKPIsSection() {
 
   const conCorrectivo = equipoAnalysis.filter(e => ['urgente','correctivo'].includes(e.a.nivel)).length;
   const criticos      = equipoAnalysis.filter(e => e.a.nivel === 'urgente').length;
+
+  /* Equipos sin OTs: cruzar todas las DATA arrays con el historial */
+  const sinOTs = getSinOTs(equipos);
 
   /* Rango de fechas */
   const fechas  = ots.map(o=>o.fecha).filter(Boolean).sort();
@@ -76,6 +82,7 @@ function renderKPIsSection() {
       ${kpiCard('Técnicos activos',         tecnicos.length,        '👷', '#059669')}
       ${kpiCard('Con correctivo sugerido',  conCorrectivo,          '🟠', '#ea580c')}
       ${kpiCard('Equipos críticos',         criticos,               '🔴', '#dc2626')}
+      ${kpiCard('Equipos sin OTs',          sinOTs.total,           '⚠️', '#6b7280')}
     </div>
 
     <!-- KPI Cards fila 2: preventivo vs correctivo -->
@@ -134,6 +141,18 @@ function renderKPIsSection() {
         <canvas id="chartTiempo"></canvas>
       </div>
     </div>
+
+    <!-- Fila 5: Equipos sin OTs -->
+    <div class="kpis-charts-row">
+      <div class="kpis-chart-card" style="flex:0 0 340px">
+        <h3 class="kpis-chart-title">Equipos sin OTs — por sección</h3>
+        <canvas id="chartSinOTs"></canvas>
+      </div>
+      <div class="kpis-chart-card">
+        <h3 class="kpis-chart-title">Equipos sin ninguna OT registrada (${sinOTs.total})</h3>
+        <div id="kpisSinOTsTable"></div>
+      </div>
+    </div>
   `;
 
   requestAnimationFrame(() => {
@@ -145,6 +164,8 @@ function renderKPIsSection() {
     buildChartFallas(ots);
     buildChartTiempo(equipoAnalysis);
     buildCriticalityTable(equipoAnalysis);
+    buildChartSinOTs(sinOTs);
+    buildSinOTsTable(sinOTs);
   });
 }
 
@@ -426,4 +447,131 @@ function exportKPIsExcel() {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tecRows), 'Por técnico');
 
   XLSX.writeFile(wb, `kpis-mantenimiento-${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+/* ═══════════════════════════════════════════════════════
+   Equipos sin OTs — cruce con catálogos de equipos
+   ═══════════════════════════════════════════════════════ */
+
+/* Secciones disponibles en el portal y su DATA array */
+const CATALOGO_SECCIONES = [
+  { label: 'Mangas de Embarque',  data: () => typeof MANGAS_DATA     !== 'undefined' ? MANGAS_DATA     : [] },
+  { label: 'Ascensores',          data: () => typeof ASCENSORES_DATA  !== 'undefined' ? ASCENSORES_DATA  : [] },
+  { label: 'Escaleras Mecánicas', data: () => typeof ESCALERAS_DATA   !== 'undefined' ? ESCALERAS_DATA   : [] },
+  { label: 'Extractores',         data: () => typeof EXTRACTORES_DATA !== 'undefined' ? EXTRACTORES_DATA : [] },
+  { label: 'Persianas de Gatera', data: () => typeof PERSIANAS_DATA   !== 'undefined' ? PERSIANAS_DATA   : [] },
+  { label: 'Cortinas de Aire',    data: () => typeof CORTINAS_DATA    !== 'undefined' ? CORTINAS_DATA    : [] },
+  { label: 'Bombas',              data: () => typeof BOMBAS_DATA      !== 'undefined' ? BOMBAS_DATA      : [] },
+  { label: 'Patio de Valijas',    data: () => typeof PATIO_DATA       !== 'undefined' ? PATIO_DATA       : [] },
+  { label: 'Puertas Automáticas', data: () => typeof PUERTAS_DATA     !== 'undefined' ? PUERTAS_DATA     : [] },
+  { label: 'Equipos de Aire',     data: () => typeof AAC_DATA         !== 'undefined' ? AAC_DATA         : [] },
+  { label: 'Incendios (ECAs)',    data: () => typeof ECAS_DATA        !== 'undefined' ? ECAS_DATA        : [] },
+  { label: 'Otros Equipos',       data: () => typeof OTROS_DATA       !== 'undefined' ? OTROS_DATA       : [] },
+];
+
+function getSinOTs(equiposConOTs) {
+  const setConOTs = new Set(equiposConOTs.map(e => String(e).toUpperCase()));
+  const secciones = [];
+  let total = 0;
+
+  CATALOGO_SECCIONES.forEach(sec => {
+    const data = sec.data();
+    if (!data.length) return;
+    const sinOT = data.filter(eq => !setConOTs.has(String(eq.equipo || '').toUpperCase()));
+    if (sinOT.length > 0) {
+      secciones.push({ label: sec.label, equipos: sinOT, count: sinOT.length, total: data.length });
+      total += sinOT.length;
+    }
+  });
+
+  return { total, secciones };
+}
+
+function buildChartSinOTs(sinOTs) {
+  const ctx = document.getElementById('chartSinOTs');
+  if (!ctx || !sinOTs.secciones.length) return;
+
+  const labels  = sinOTs.secciones.map(s => s.label);
+  const counts  = sinOTs.secciones.map(s => s.count);
+  const totals  = sinOTs.secciones.map(s => s.total);
+
+  _kpiCharts.sinOTs = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Sin OTs',
+          data: counts,
+          backgroundColor: 'rgba(107,114,128,0.7)',
+          borderColor: '#6b7280',
+          borderWidth: 1,
+          borderRadius: 5,
+        },
+        {
+          label: 'Con OTs',
+          data: totals.map((t,i) => t - counts[i]),
+          backgroundColor: 'rgba(16,185,129,0.5)',
+          borderColor: '#10b981',
+          borderWidth: 1,
+          borderRadius: 5,
+        }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const sec = sinOTs.secciones[ctx.dataIndex];
+              if (ctx.datasetIndex === 0)
+                return ` ${ctx.raw} equipos SIN OTs de ${sec.total} totales`;
+              return ` ${ctx.raw} equipos CON OTs`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true, grid: { color: 'rgba(0,0,0,.05)' } },
+        y: { stacked: true, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function buildSinOTsTable(sinOTs) {
+  const el = document.getElementById('kpisSinOTsTable');
+  if (!el) return;
+
+  if (!sinOTs.secciones.length) {
+    el.innerHTML = `<p style="color:var(--color-muted);font-size:13px;padding:16px 0">
+      ✅ Todos los equipos registrados tienen al menos una OT en el historial cargado.
+    </p>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="max-height:380px;overflow-y:auto">
+      ${sinOTs.secciones.map(sec => `
+        <div style="margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+                      color:var(--color-muted);border-bottom:1px solid var(--color-border);
+                      padding-bottom:4px;margin-bottom:8px">
+            ${sec.label} — ${sec.count} de ${sec.total} sin OTs
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${sec.equipos.map(eq => `
+              <span style="font-size:11px;font-family:monospace;background:var(--color-bg);
+                           border:1px solid var(--color-border);border-radius:5px;
+                           padding:2px 8px;color:var(--color-muted)"
+                    title="${eq.denominacion || ''}">${eq.equipo}</span>
+            `).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
 }

@@ -63,10 +63,10 @@ function renderOTsSection() {
         ${otsStatCard(equiposList.length,                            'Equipos',             '#7c3aed', '🏭')}
         ${otsStatCard(preventivos,                                   'Preventivos',         '#1a56a4', '🛡','','preventivo')}
         ${otsStatCard(correctivosT,                                  'Correctivos',         '#9a3412', '🔧','','correctivo')}
-        ${otsStatCard(ots.filter(o=>o.estado==='urgente').length,    'Urgentes',            '#dc2626', '🔴','urgente')}
-        ${otsStatCard(ots.filter(o=>o.estado==='correctivo').length, 'Correctivo sugerido', '#ea580c', '🟠','correctivo')}
-        ${otsStatCard(ots.filter(o=>o.estado==='seguimiento').length,'Seguimiento',         '#d97706', '🟡','seguimiento')}
-        ${otsStatCard(ots.filter(o=>o.estado==='ok').length,         'OK',                  '#10b981', '🟢','ok')}
+        ${otsStatCard(ots.filter(o=>getEffectiveEstado(o)==='urgente').length,    'Urgentes',            '#dc2626', '🔴','urgente')}
+        ${otsStatCard(ots.filter(o=>getEffectiveEstado(o)==='correctivo').length, 'Correctivo sugerido', '#ea580c', '🟠','correctivo')}
+        ${otsStatCard(ots.filter(o=>getEffectiveEstado(o)==='seguimiento').length,'Seguimiento',         '#d97706', '🟡','seguimiento')}
+        ${otsStatCard(ots.filter(o=>getEffectiveEstado(o)==='ok').length,         'OK',                  '#10b981', '🟢','ok')}
       </div>
 
       <!-- Filtros -->
@@ -184,7 +184,7 @@ function getFilteredOTs() {
   if (equipo)  ots = ots.filter(o => o.equipo === equipo);
   if (tipo)    ots = ots.filter(o => o.tipo   === tipo);
   if (tecnico) ots = ots.filter(o => o.tecnico=== tecnico);
-  if (estado)  ots = ots.filter(o => o.estado === estado);
+  if (estado)  ots = ots.filter(o => getEffectiveEstado(o) === estado);
   if (desde)   ots = ots.filter(o => o.fecha  >= desde);
   if (hasta)   ots = ots.filter(o => o.fecha  <= hasta);
   return ots;
