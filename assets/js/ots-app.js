@@ -679,19 +679,63 @@ function clearOTOverride(otKey) {
 }
 
 /* ── Guardar / cargar desde servidor ───────────────────── */
-async function promptSaveToServer() {
-  /* Usar la contraseña ya guardada en la sesión admin */
-  const password = sessionStorage.getItem('admin_pwd') || '';
-  if (!password) {
-    showOTsToast('Iniciá sesión como administrador primero (🔒 en la barra superior).', 'error');
-    return;
+function promptSaveToServer() {
+  /* Modal con campo de contraseña visible */
+  let dlg = document.getElementById('ots-save-dlg');
+  if (!dlg) {
+    dlg = document.createElement('div');
+    dlg.id = 'ots-save-dlg';
+    dlg.className = 'ots-save-dlg-overlay';
+    dlg.innerHTML = `
+      <div class="ots-save-dlg-box">
+        <div class="ots-save-dlg-title">💾 Guardar permanentemente</div>
+        <p class="ots-save-dlg-desc">Ingresá la contraseña de administrador para guardar los datos en el servidor.</p>
+        <input type="password" id="ots-save-pwd" class="ots-save-dlg-input" placeholder="Contraseña" autocomplete="current-password">
+        <div id="ots-save-dlg-error" class="ots-save-dlg-error" style="display:none"></div>
+        <div class="ots-save-dlg-actions">
+          <button class="ots-override-save-btn" id="ots-save-dlg-ok">Guardar</button>
+          <button class="ots-override-clear-btn" id="ots-save-dlg-cancel">Cancelar</button>
+        </div>
+      </div>`;
+    document.body.appendChild(dlg);
+
+    document.getElementById('ots-save-dlg-cancel').addEventListener('click', () => {
+      dlg.classList.remove('open');
+      document.getElementById('ots-save-pwd').value = '';
+      document.getElementById('ots-save-dlg-error').style.display = 'none';
+    });
+    dlg.addEventListener('click', e => { if (e.target === dlg) document.getElementById('ots-save-dlg-cancel').click(); });
+
+    document.getElementById('ots-save-dlg-ok').addEventListener('click', _doSaveToServer);
+    document.getElementById('ots-save-pwd').addEventListener('keydown', e => {
+      if (e.key === 'Enter') _doSaveToServer();
+    });
   }
-  showOTsToast('Guardando en servidor…', 'success');
-  const result = await saveOTsToServer(password);
+  dlg.classList.add('open');
+  setTimeout(() => document.getElementById('ots-save-pwd').focus(), 80);
+}
+
+async function _doSaveToServer() {
+  const pwd = document.getElementById('ots-save-pwd')?.value || '';
+  const errEl = document.getElementById('ots-save-dlg-error');
+  if (!pwd) { errEl.textContent = 'Ingresá la contraseña.'; errEl.style.display='block'; return; }
+
+  const btn = document.getElementById('ots-save-dlg-ok');
+  btn.textContent = 'Guardando…'; btn.disabled = true;
+
+  const result = await saveOTsToServer(pwd);
+
+  btn.textContent = 'Guardar'; btn.disabled = false;
+
   if (result.ok) {
+    document.getElementById('ots-save-dlg').classList.remove('open');
+    document.getElementById('ots-save-pwd').value = '';
+    errEl.style.display = 'none';
     showOTsToast(`✓ ${result.total} OTs guardadas en el servidor correctamente.`, 'success');
   } else {
-    showOTsToast('Error al guardar: ' + result.error, 'error');
+    errEl.textContent = result.error || 'Error al guardar.';
+    errEl.style.display = 'block';
+    document.getElementById('ots-save-pwd').select();
   }
 }
 
