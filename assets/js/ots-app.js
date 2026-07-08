@@ -680,8 +680,12 @@ function clearOTOverride(otKey) {
 
 /* ── Guardar / cargar desde servidor ───────────────────── */
 async function promptSaveToServer() {
-  const password = prompt('Ingresá la contraseña de administrador para guardar en el servidor:');
-  if (!password) return;
+  /* Usar la contraseña ya guardada en la sesión admin */
+  const password = sessionStorage.getItem('admin_pwd') || '';
+  if (!password) {
+    showOTsToast('Iniciá sesión como administrador primero (🔒 en la barra superior).', 'error');
+    return;
+  }
   showOTsToast('Guardando en servidor…', 'success');
   const result = await saveOTsToServer(password);
   if (result.ok) {
