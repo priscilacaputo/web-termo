@@ -190,23 +190,122 @@ function renderOTsTable() {
     return;
   }
 
-  tbody.innerHTML = ots.map(o => {
-    const em = OTS_ESTADO_META[o.estado] || OTS_ESTADO_META.ok;
-    const tm = OTS_TIPO_META[o.tipo]     || OTS_TIPO_META.otro;
+  tbody.innerHTML = ots.map((o, i) => {
+    const em      = OTS_ESTADO_META[o.estado] || OTS_ESTADO_META.ok;
+    const tm      = OTS_TIPO_META[o.tipo]     || OTS_TIPO_META.otro;
+    const preview = (o.comentario||'').length > 55
+      ? (o.comentario||'').substring(0, 55) + '…'
+      : (o.comentario||'—');
     return `
-      <tr>
+      <tr class="ots-row" data-ot-idx="${i}" style="cursor:pointer">
         <td><span class="ots-equipo-tag">${o.equipo}</span></td>
         <td><span class="ots-tipo-badge ${tm.cls}">${tm.emoji} ${tm.label}</span></td>
-        <td><code class="ots-ot-code" title="${o.ot_nombre||''}">${o.ot_num||o.ot||'—'}</code></td>
+        <td><code class="ots-ot-code">${o.ot_num||o.ot||'—'}</code></td>
         <td class="ots-fecha-cell">${o.fecha||'—'}</td>
         <td class="ots-tecnico-cell">${o.tecnico||'—'}</td>
         <td style="text-align:center">${o.tiempo!=null&&o.tiempo!==''?Number(o.tiempo).toFixed(1):'—'}</td>
-        <td class="ots-comentario-cell" title="${(o.comentario||'').replace(/"/g,"'")}">${o.comentario||'—'}</td>
+        <td class="ots-comentario-cell">
+          ${preview}
+          ${(o.comentario||'').length > 55 ? `<button class="ots-ver-mas" onclick="openOTDetail(event,${i})">ver todo</button>` : ''}
+        </td>
         <td><span class="ots-badge ${em.cls}">${em.emoji} ${em.label}</span></td>
         <td class="ots-accion-cell">${o.accion||'—'}</td>
       </tr>
     `;
   }).join('');
+
+  /* Clic en fila (no en el botón) → abre detalle */
+  tbody.querySelectorAll('.ots-row').forEach((tr, i) => {
+    tr.addEventListener('click', e => {
+      if (e.target.classList.contains('ots-ver-mas')) return;
+      openOTDetail(e, i);
+    });
+  });
+}
+
+/* ── Modal de detalle de OT ─────────────────────────────── */
+function openOTDetail(event, idx) {
+  event.stopPropagation();
+  const ots = getFilteredOTs().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  const o   = ots[idx];
+  if (!o) return;
+
+  let modal = document.getElementById('ots-detail-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'ots-detail-modal';
+    modal.className = 'ots-detail-overlay';
+    modal.innerHTML = `
+      <div class="ots-detail-box">
+        <button class="ots-detail-close" id="ots-detail-close">✕</button>
+        <div id="ots-detail-content"></div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+    document.getElementById('ots-detail-close').addEventListener('click', () => modal.classList.remove('open'));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') modal.classList.remove('open'); });
+  }
+
+  const em = OTS_ESTADO_META[o.estado] || OTS_ESTADO_META.ok;
+  const tm = OTS_TIPO_META[o.tipo]     || OTS_TIPO_META.otro;
+
+  document.getElementById('ots-detail-content').innerHTML = `
+    <div class="ots-detail-header">
+      <div class="ots-detail-header-top">
+        <span class="ots-equipo-tag" style="font-size:16px;padding:4px 12px">${o.equipo}</span>
+        <span class="ots-tipo-badge ${tm.cls}" style="font-size:13px">${tm.emoji} ${tm.label}</span>
+        <span class="ots-badge ${em.cls}">${em.emoji} ${em.label}</span>
+      </div>
+      <div class="ots-detail-ot-name">${o.ot_nombre || o.ot_num || o.ot || ''}</div>
+    </div>
+
+    <div class="ots-detail-grid">
+      <div class="ots-detail-field">
+        <span class="ots-detail-label">Número de OT</span>
+        <span class="ots-detail-value"><code>${o.ot_num || o.ot || '—'}</code></span>
+      </div>
+      <div class="ots-detail-field">
+        <span class="ots-detail-label">Fecha</span>
+        <span class="ots-detail-value">${o.fecha || '—'}</span>
+      </div>
+      <div class="ots-detail-field">
+        <span class="ots-detail-label">Técnico</span>
+        <span class="ots-detail-value">${o.tecnico || '—'}</span>
+      </div>
+      <div class="ots-detail-field">
+        <span class="ots-detail-label">Tiempo imputado</span>
+        <span class="ots-detail-value">${o.tiempo != null ? Number(o.tiempo).toFixed(2) + ' h' : '—'}</span>
+      </div>
+      ${o.equipo_desc ? `
+      <div class="ots-detail-field ots-detail-full">
+        <span class="ots-detail-label">Descripción del equipo</span>
+        <span class="ots-detail-value">${o.equipo_desc}</span>
+      </div>` : ''}
+      ${o.estado_orden ? `
+      <div class="ots-detail-field">
+        <span class="ots-detail-label">Estado en SAP</span>
+        <span class="ots-detail-value">${o.estado_orden}</span>
+      </div>` : ''}
+      ${o.motivo ? `
+      <div class="ots-detail-field">
+        <span class="ots-detail-label">Motivo / Resultado SAP</span>
+        <span class="ots-detail-value">${o.motivo}</span>
+      </div>` : ''}
+    </div>
+
+    <div class="ots-detail-section">
+      <div class="ots-detail-label">📝 Comentario técnico completo</div>
+      <div class="ots-detail-comentario">${o.comentario || 'Sin comentario registrado.'}</div>
+    </div>
+
+    ${o.accion && o.accion !== 'Sin observaciones relevantes detectadas.' ? `
+    <div class="ots-detail-section">
+      <div class="ots-detail-label">🔍 Acción sugerida por análisis</div>
+      <div class="ots-detail-accion ots-detail-accion-${o.estado}">${o.accion}</div>
+    </div>` : ''}
+  `;
+
+  modal.classList.add('open');
 }
 
 /* ── Recomendaciones por equipo ────────────────────────── */

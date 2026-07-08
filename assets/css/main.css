@@ -3207,6 +3207,66 @@ tr:hover .admin-edit-btn { opacity: 1; }
 .kpis-crit-table tbody td            { padding: 8px 10px; }
 .kpis-crit-rank                      { color: var(--color-muted); font-size: 11px; }
 
+/* ── Botón ver todo + Modal detalle OT ───────────────── */
+.ots-ver-mas {
+  display: inline-block; margin-left: 6px;
+  font-size: 11px; color: var(--color-sky); background: none;
+  border: none; cursor: pointer; padding: 0; text-decoration: underline;
+  white-space: nowrap;
+}
+.ots-ver-mas:hover { color: var(--color-sky-dark); }
+.ots-row:hover { background: var(--color-surface); }
+
+.ots-detail-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(11,31,53,.55); z-index: 3000;
+  align-items: center; justify-content: center;
+}
+.ots-detail-overlay.open { display: flex; }
+
+.ots-detail-box {
+  background: var(--color-card); border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  width: min(640px, 95vw); max-height: 85vh;
+  overflow-y: auto; position: relative; padding: 28px 28px 24px;
+}
+.ots-detail-close {
+  position: absolute; top: 14px; right: 16px;
+  background: none; border: none; font-size: 18px;
+  color: var(--color-muted); cursor: pointer; line-height: 1;
+}
+.ots-detail-close:hover { color: var(--color-text); }
+
+.ots-detail-header     { margin-bottom: 18px; }
+.ots-detail-header-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.ots-detail-ot-name    { font-size: 14px; color: var(--color-muted); margin-top: 4px; }
+
+.ots-detail-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px 20px; margin-bottom: 20px;
+}
+.ots-detail-full  { grid-column: 1 / -1; }
+.ots-detail-field { display: flex; flex-direction: column; gap: 3px; }
+.ots-detail-label { font-size: 11px; font-weight: 700; color: var(--color-muted); text-transform: uppercase; letter-spacing: .05em; }
+.ots-detail-value { font-size: 14px; color: var(--color-text); }
+
+.ots-detail-section    { margin-top: 18px; }
+.ots-detail-comentario {
+  margin-top: 8px; padding: 14px 16px;
+  background: var(--color-surface); border-radius: 8px;
+  font-size: 14px; line-height: 1.65; color: var(--color-text);
+  white-space: pre-wrap; word-break: break-word;
+  border-left: 3px solid var(--color-sky);
+}
+.ots-detail-accion {
+  margin-top: 8px; padding: 12px 16px;
+  border-radius: 8px; font-size: 13px; line-height: 1.5;
+}
+.ots-detail-accion-urgente     { background: #fef2f2; color: #7f1d1d; border-left: 3px solid #dc2626; }
+.ots-detail-accion-correctivo  { background: #fff7ed; color: #7c2d12; border-left: 3px solid #ea580c; }
+.ots-detail-accion-seguimiento { background: #fffbeb; color: #78350f; border-left: 3px solid #d97706; }
+.ots-detail-accion-ok          { background: #f0fdf4; color: #14532d; border-left: 3px solid #10b981; }
+
 /* ── Tipo OT badges ───────────────────────────────────── */
 .ots-tipo-badge {
   display: inline-flex; align-items: center; gap: 4px;
