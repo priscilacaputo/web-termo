@@ -283,7 +283,7 @@ async function saveOTsToServer(password) {
       body: JSON.stringify({ password, ots })
     });
     const json = await resp.json();
-    if (!resp.ok) return { ok: false, error: json.error || 'Error ' + resp.status };
+    if (!resp.ok) return { ok: false, error: (json.error || 'Error ' + resp.status) + (json.detail ? ': ' + json.detail : '') };
     return { ok: true, total: json.total };
   } catch(e) {
     return { ok: false, error: e.message };
