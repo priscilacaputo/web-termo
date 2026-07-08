@@ -36,69 +36,86 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   if (req.method !== 'POST')   { res.status(405).json({ error: 'Method not allowed' }); return; }
 
-  const { password, ots } = req.body || {};
+  try {
+    const { password, ots } = req.body || {};
 
-  if (!password || password !== process.env.ADMIN_PASSWORD) {
-    res.status(401).json({ error: 'Contraseña incorrecta' });
-    return;
-  }
-  if (!Array.isArray(ots)) {
-    res.status(400).json({ error: 'Se esperaba un array de OTs' });
-    return;
-  }
+    if (!password || password !== process.env.ADMIN_PASSWORD) {
+      res.status(401).json({ error: 'Contraseña incorrecta' });
+      return;
+    }
+    if (!Array.isArray(ots)) {
+      res.status(400).json({ error: 'Se esperaba un array de OTs' });
+      return;
+    }
 
-  const token  = process.env.GITHUB_TOKEN;
-  const owner  = process.env.GITHUB_OWNER;
-  const repo   = process.env.GITHUB_REPO;
-  const branch = process.env.GITHUB_BRANCH || 'main';
-  const FILE   = 'data/ots-historico.json';
+    const token  = process.env.GITHUB_TOKEN;
+    const owner  = process.env.GITHUB_OWNER;
+    const repo   = process.env.GITHUB_REPO;
+    const branch = process.env.GITHUB_BRANCH || 'main';
+    const FILE   = 'data/ots-historico.json';
 
-  /* Comprimir OTs al mínimo necesario para reducir tamaño */
-  const compressed = ots.map(o => {
-    const r = {
-      n:  String(o.ot_num || o.ot || ''),
-      t:  (o.tipo || 'o')[0],            // p / c / o
-      e:  String(o.equipo || ''),
-      f:  String(o.fecha  || ''),
-      tc: String(o.tecnico || '').substring(0, 50),
-      h:  Number(o.tiempo) || 0,
-      c:  String(o.comentario || '').substring(0, 250),
-      s:  String(o.estado || 'ok'),
-      a:  String(o.accion  || '').substring(0, 120),
-    };
-    /* Campos manuales — solo si tienen valor */
-    if (o.estado_manual)  r.sm = String(o.estado_manual);
-    if (o.nota_manual)    r.nn = String(o.nota_manual).substring(0, 500);
-    if (o.fecha_revision) r.fr = String(o.fecha_revision);
-    return r;
-  });
+    if (!token)  { res.status(500).json({ error: 'Config incompleta', detail: 'GITHUB_TOKEN no configurado en Vercel' }); return; }
+    if (!owner)  { res.status(500).json({ error: 'Config incompleta', detail: 'GITHUB_OWNER no configurado en Vercel' }); return; }
+    if (!repo)   { res.status(500).json({ error: 'Config incompleta', detail: 'GITHUB_REPO no configurado en Vercel' }); return; }
 
-  const content = JSON.stringify({
-    updated: new Date().toISOString().split('T')[0],
-    total:   compressed.length,
-    ots:     compressed
-  });
-  const encoded = Buffer.from(content).toString('base64');
-
-  /* Obtener SHA actual del archivo (si existe) */
-  const getResp = await githubRequest('GET',
-    `/repos/${owner}/${repo}/contents/${FILE}?ref=${branch}`,
-    token, null);
-  const sha = getResp.status === 200 ? getResp.body.sha : null;
-
-  /* PUT al archivo */
-  const putResp = await githubRequest('PUT',
-    `/repos/${owner}/${repo}/contents/${FILE}`,
-    token, {
-      message: `Historial OTs actualizado — ${compressed.length} registros`,
-      content: encoded,
-      branch,
-      ...(sha ? { sha } : {})
+    /* Comprimir OTs al mínimo necesario para reducir tamaño */
+    const compressed = ots.map(o => {
+      const r = {
+        n:  String(o.ot_num || o.ot || ''),
+        t:  (o.tipo || 'o')[0],
+        e:  String(o.equipo || ''),
+        f:  String(o.fecha  || ''),
+        tc: String(o.tecnico || '').substring(0, 50),
+        h:  Number(o.tiempo) || 0,
+        c:  String(o.comentario || '').substring(0, 250),
+        s:  String(o.estado || 'ok'),
+        a:  String(o.accion  || '').substring(0, 120),
+      };
+      if (o.estado_manual)  r.sm = String(o.estado_manual);
+      if (o.nota_manual)    r.nn = String(o.nota_manual).substring(0, 500);
+      if (o.fecha_revision) r.fr = String(o.fecha_revision);
+      return r;
     });
 
-  if (putResp.status === 200 || putResp.status === 201) {
-    res.status(200).json({ ok: true, total: compressed.length });
-  } else {
-    res.status(500).json({ error: 'Error al guardar en GitHub', detail: putResp.body?.message || putResp.body });
+    const content = JSON.stringify({
+      updated: new Date().toISOString().split('T')[0],
+      total:   compressed.length,
+      ots:     compressed
+    });
+    const encoded = Buffer.from(content).toString('base64');
+
+    /* Verificar tamaño — GitHub limita a 1 MB por archivo */
+    if (encoded.length > 900000) {
+      res.status(400).json({ error: 'Archivo demasiado grande', detail: `El historial ocupa ${Math.round(encoded.length/1024)} KB. Límite: ~900 KB.` });
+      return;
+    }
+
+    /* Obtener SHA actual del archivo (si existe) */
+    const getResp = await githubRequest('GET',
+      `/repos/${owner}/${repo}/contents/${FILE}?ref=${branch}`,
+      token, null);
+    const sha = getResp.status === 200 ? getResp.body.sha : null;
+
+    /* PUT al archivo */
+    const putResp = await githubRequest('PUT',
+      `/repos/${owner}/${repo}/contents/${FILE}`,
+      token, {
+        message: `Historial OTs actualizado — ${compressed.length} registros`,
+        content: encoded,
+        branch,
+        ...(sha ? { sha } : {})
+      });
+
+    if (putResp.status === 200 || putResp.status === 201) {
+      res.status(200).json({ ok: true, total: compressed.length });
+    } else {
+      res.status(500).json({
+        error: 'Error al guardar en GitHub',
+        detail: putResp.body?.message || JSON.stringify(putResp.body)
+      });
+    }
+
+  } catch (err) {
+    res.status(500).json({ error: 'Error interno', detail: err.message });
   }
 };
