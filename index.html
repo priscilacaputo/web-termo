@@ -6,6 +6,7 @@
   <title>Termomecánica — Portal Interno</title>
   <link rel="stylesheet" href="assets/css/main.css" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <nav class="sidebar" id="sidebar">
@@ -99,6 +100,14 @@
       <li class="nav-item" data-page="maint-planes">
         <span class="nav-icon">📋</span>
         <span class="nav-label">Planes de Mantenimiento</span>
+      </li>
+      <li class="nav-item" data-page="historial">
+        <span class="nav-icon">🗂️</span>
+        <span class="nav-label">Historial OTs / SAP</span>
+      </li>
+      <li class="nav-item" data-page="kpis">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label">KPIs de Mantenimiento</span>
       </li>
 
       <li class="nav-section-label">Recursos</li>
@@ -1383,6 +1392,16 @@
       <div id="analytics-content"></div>
     </div>
 
+    <!-- ─── PÁGINA: HISTORIAL OTs / SAP ─── -->
+    <div class="page hidden" id="page-historial">
+      <div id="ots-section"></div>
+    </div>
+
+    <!-- ─── PÁGINA: KPIs DE MANTENIMIENTO ─── -->
+    <div class="page hidden" id="page-kpis">
+      <div id="kpis-section"></div>
+    </div>
+
     <!-- ─── PÁGINA: PLANES DE MANTENIMIENTO ─── -->
     <div class="page hidden" id="page-maint-planes">
       <div id="maint-planes-tabs" style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap"></div>
@@ -1645,5 +1664,8 @@
   <div id="admin-toast" class="admin-toast"></div>
 
   <script src="assets/js/admin-app.js?v=2"></script>
+  <script src="assets/js/ots-analyzer.js?v=1"></script>
+  <script src="assets/js/ots-app.js?v=1"></script>
+  <script src="assets/js/kpis-app.js?v=1"></script>
 </body>
 </html>

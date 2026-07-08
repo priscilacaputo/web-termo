@@ -16,6 +16,8 @@ const PAGE_TITLES = {
   otros:       ["Otros Equipos",       "AEP — Arcos de lectura · Cisternas · Compresores"],
   analytics:   ["Distribución de Equipos", "AEP — Análisis de distribución por edificio y piso · Todos los equipos"],
   "maint-planes": ["Planes de Mantenimiento", "AEP — Planes preventivos consolidados de todos los equipos"],
+  historial:   ["Historial OTs / SAP", "AEP — Historial de órdenes de trabajo · Análisis automático de fallas"],
+  kpis:        ["KPIs de Mantenimiento", "AEP — Indicadores clave · Fallas frecuentes · Equipos críticos"],
 };
 
 /* ─── Page History (para botón de atrás) ──────────── */

@@ -2981,3 +2981,241 @@ tr:hover .admin-edit-btn { opacity: 1; }
 .admin-toast.success { background: #065f46; }
 .admin-toast.error   { background: #7f1d1d; }
 
+/* ═══════════════════════════════════════════════════════
+   OTs / KPIs — Módulo Historial SAP
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Upload card ──────────────────────────────────────── */
+.ots-upload-card {
+  display: flex; align-items: flex-start; gap: 18px;
+  background: var(--color-card);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius);
+  padding: 24px 28px; margin-bottom: 24px;
+  transition: border-color var(--transition);
+}
+.ots-upload-card:hover { border-color: var(--color-sky); }
+.ots-upload-icon  { font-size: 36px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+.ots-upload-title { font-size: 16px; font-weight: 700; color: var(--color-text); margin-bottom: 6px; }
+.ots-upload-desc  { font-size: 13px; color: var(--color-muted); margin-bottom: 14px; line-height: 1.5; }
+.ots-upload-row   { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ots-file-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--color-sky); color: #fff;
+  padding: 9px 18px; border-radius: 7px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background var(--transition);
+}
+.ots-file-btn:hover { background: var(--color-sky-dark); }
+.ots-loaded-badge {
+  background: #d1fae5; color: #065f46;
+  padding: 5px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+}
+.ots-clear-btn {
+  background: none; border: 1px solid #fca5a5; color: #dc2626;
+  padding: 5px 12px; border-radius: 7px;
+  font-size: 12px; cursor: pointer;
+  transition: background var(--transition);
+}
+.ots-clear-btn:hover { background: #fef2f2; }
+
+/* ── Empty state ──────────────────────────────────────── */
+.ots-empty-state {
+  text-align: center; padding: 64px 24px;
+  color: var(--color-muted); background: var(--color-card);
+  border-radius: var(--radius); border: 1px solid var(--color-border);
+}
+.ots-empty-icon { font-size: 52px; margin-bottom: 16px; }
+.ots-empty-state p { font-size: 15px; line-height: 1.7; }
+
+/* ── Stats row ────────────────────────────────────────── */
+.ots-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px; margin-bottom: 20px;
+}
+.ots-stat-card {
+  background: var(--color-card); border: 1px solid var(--color-border);
+  border-top: 3px solid var(--ots-color, var(--color-sky));
+  border-radius: var(--radius); padding: 14px 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: box-shadow var(--transition);
+}
+.ots-stat-card[data-estado] { cursor: pointer; }
+.ots-stat-card[data-estado]:hover { box-shadow: var(--shadow); }
+.ots-stat-icon { font-size: 20px; }
+.ots-stat-n    { font-size: 26px; font-weight: 800; color: var(--ots-color, var(--color-text)); }
+.ots-stat-l    { font-size: 11px; color: var(--color-muted); text-align: center; font-weight: 500; }
+
+/* ── Filters ──────────────────────────────────────────── */
+.ots-filters {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  margin-bottom: 16px; background: var(--color-card);
+  border: 1px solid var(--color-border); border-radius: var(--radius); padding: 12px 16px;
+}
+.ots-filter-sel {
+  padding: 7px 10px; border: 1px solid var(--color-border);
+  border-radius: 6px; font-size: 12px; color: var(--color-text);
+  background: var(--color-surface); cursor: pointer;
+}
+.ots-filter-sel:focus { outline: none; border-color: var(--color-sky); }
+.ots-date-group { display: flex; align-items: center; gap: 4px; }
+.ots-filter-clear-btn {
+  padding: 7px 12px; border: 1px solid var(--color-border);
+  border-radius: 6px; font-size: 12px; cursor: pointer;
+  background: var(--color-surface); color: var(--color-muted);
+}
+.ots-filter-clear-btn:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+.ots-export-btn {
+  padding: 7px 14px; background: var(--color-navy); color: #fff;
+  border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.ots-export-btn:hover { background: var(--color-navy-light); }
+
+/* ── Tabla principal ──────────────────────────────────── */
+.ots-table-wrap {
+  overflow-x: auto; border-radius: var(--radius);
+  border: 1px solid var(--color-border); box-shadow: var(--shadow); margin-bottom: 32px;
+}
+.ots-table { width: 100%; border-collapse: collapse; background: var(--color-card); font-size: 13px; }
+.ots-table thead th {
+  background: var(--color-navy); color: rgba(255,255,255,.85);
+  padding: 11px 14px; text-align: left;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .04em; white-space: nowrap;
+}
+.ots-table tbody tr   { border-bottom: 1px solid var(--color-border); }
+.ots-table tbody tr:last-child { border-bottom: none; }
+.ots-table tbody tr:hover { background: var(--color-surface); }
+.ots-table tbody td   { padding: 9px 14px; vertical-align: top; }
+.ots-empty-row        { text-align: center; padding: 40px 16px !important; color: var(--color-muted); }
+.ots-equipo-tag {
+  display: inline-block; background: var(--color-navy); color: #fff;
+  padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.ots-ot-code      { font-size: 11px; color: var(--color-muted); }
+.ots-fecha-cell   { white-space: nowrap; font-size: 12px; }
+.ots-tecnico-cell { font-size: 12px; }
+.ots-comentario-cell {
+  font-size: 12px; max-width: 260px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ots-accion-cell  { font-size: 11px; color: var(--color-muted); max-width: 220px; }
+
+/* ── Badges de estado ─────────────────────────────────── */
+.ots-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.ots-badge-sm {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 7px; border-radius: 20px;
+  font-size: 10px; font-weight: 600; white-space: nowrap;
+}
+.ots-badge-urgente,     .ots-badge-sm.ots-badge-urgente     { background: #fef2f2; color: #dc2626; }
+.ots-badge-correctivo,  .ots-badge-sm.ots-badge-correctivo  { background: #fff7ed; color: #ea580c; }
+.ots-badge-seguimiento, .ots-badge-sm.ots-badge-seguimiento { background: #fffbeb; color: #d97706; }
+.ots-badge-ok,          .ots-badge-sm.ots-badge-ok          { background: #f0fdf4; color: #16a34a; }
+
+/* ── Recomendaciones por equipo ───────────────────────── */
+.ots-recs-section { margin-top: 8px; }
+.ots-recs-header  { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.ots-recs-title   { font-size: 18px; font-weight: 700; color: var(--color-text); }
+.ots-recs-grid    { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.ots-rec-card {
+  background: var(--color-card); border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-border); border-radius: var(--radius);
+  padding: 16px 18px; box-shadow: var(--shadow);
+}
+.ots-rec-urgente     { border-left-color: #dc2626; }
+.ots-rec-correctivo  { border-left-color: #ea580c; }
+.ots-rec-seguimiento { border-left-color: #d97706; }
+.ots-rec-ok          { border-left-color: #10b981; }
+.ots-rec-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.ots-rec-text   { font-size: 13px; line-height: 1.55; color: var(--color-text); margin-bottom: 10px; }
+.ots-rec-meta   { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--color-muted); }
+.ots-rec-meta-alert { color: #dc2626; font-weight: 600; }
+.ots-rec-meta-warn  { color: #ea580c; font-weight: 600; }
+.ots-rec-meta-info  { color: #d97706; font-weight: 600; }
+
+/* ── Historial en modal ───────────────────────────────── */
+.ots-modal-section { margin-top: 4px; }
+.ots-modal-sep     { height: 1px; background: var(--color-border); margin: 20px 0 16px; }
+.ots-modal-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.ots-modal-title-text { font-size: 14px; font-weight: 700; color: var(--color-text); }
+.ots-modal-rec {
+  padding: 10px 14px; border-radius: 7px;
+  font-size: 13px; line-height: 1.5; margin-bottom: 12px;
+}
+.ots-modal-rec-urgente     { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.ots-modal-rec-correctivo  { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+.ots-modal-rec-seguimiento { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.ots-modal-empty           { font-size: 13px; color: var(--color-muted); padding: 8px 0; }
+.ots-modal-meta-row        { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--color-muted); margin-bottom: 12px; }
+.ots-modal-table-wrap      { overflow-x: auto; border-radius: 6px; border: 1px solid var(--color-border); }
+.ots-modal-table           { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--color-card); }
+.ots-modal-table thead th  {
+  background: var(--color-surface); color: var(--color-muted);
+  padding: 7px 10px; text-align: left; font-size: 10px;
+  text-transform: uppercase; letter-spacing: .04em;
+  border-bottom: 1px solid var(--color-border); white-space: nowrap;
+}
+.ots-modal-table tbody tr              { border-bottom: 1px solid var(--color-border); }
+.ots-modal-table tbody tr:last-child   { border-bottom: none; }
+.ots-modal-table tbody tr:hover        { background: var(--color-surface); }
+.ots-modal-table tbody td              { padding: 7px 10px; vertical-align: top; }
+.ots-modal-td-mono    { font-size: 11px; white-space: nowrap; font-family: monospace; color: var(--color-muted); }
+.ots-modal-comentario { font-size: 11px; max-width: 180px; color: var(--color-muted); }
+
+/* ── KPIs page ────────────────────────────────────────── */
+.kpis-export-row  { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.kpis-cards-grid  {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px; margin-bottom: 28px;
+}
+.kpis-card {
+  background: var(--color-card); border: 1px solid var(--color-border);
+  border-top: 4px solid var(--kpi-color, var(--color-sky));
+  border-radius: var(--radius); padding: 18px 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: var(--shadow);
+}
+.kpis-card-icon  { font-size: 24px; }
+.kpis-card-value { font-size: 32px; font-weight: 800; color: var(--kpi-color, var(--color-text)); line-height: 1; }
+.kpis-card-label { font-size: 11px; color: var(--color-muted); text-align: center; font-weight: 500; }
+.kpis-charts-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.kpis-chart-card {
+  flex: 1; min-width: 280px; background: var(--color-card);
+  border: 1px solid var(--color-border); border-radius: var(--radius);
+  padding: 20px 20px 16px; box-shadow: var(--shadow);
+}
+.kpis-chart-title { font-size: 14px; font-weight: 700; color: var(--color-text); margin-bottom: 16px; }
+.kpis-no-data     { color: var(--color-muted); font-size: 13px; text-align: center; padding: 24px 0; }
+.kpis-crit-table  { width: 100%; border-collapse: collapse; font-size: 12px; }
+.kpis-crit-table thead th {
+  text-align: left; padding: 7px 10px; color: var(--color-muted);
+  font-size: 11px; border-bottom: 1px solid var(--color-border);
+  text-transform: uppercase; letter-spacing: .03em;
+}
+.kpis-crit-table tbody tr            { border-bottom: 1px solid var(--color-border); }
+.kpis-crit-table tbody tr:last-child { border-bottom: none; }
+.kpis-crit-table tbody tr:hover      { background: var(--color-surface); }
+.kpis-crit-table tbody td            { padding: 8px 10px; }
+.kpis-crit-rank                      { color: var(--color-muted); font-size: 11px; }
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ots-upload-card { flex-direction: column; }
+  .ots-stats-row   { grid-template-columns: repeat(3, 1fr); }
+  .kpis-charts-row { flex-direction: column; }
+  .kpis-chart-card { min-width: unset; }
+  .ots-recs-grid   { grid-template-columns: 1fr; }
+  .kpis-cards-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media print {
+  .sidebar, .topbar, .kpis-export-row, .ots-filters, .ots-upload-card { display: none !important; }
+  .main-content  { margin-left: 0 !important; }
+  .kpis-chart-card, .ots-rec-card { break-inside: avoid; }
+}
+
