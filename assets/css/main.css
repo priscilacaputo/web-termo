@@ -588,6 +588,20 @@ td {
   box-shadow: 0 4px 12px rgba(26,86,164,.35);
 }
 
+a.mant-tab {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  border-color: var(--color-accent, #22c55e);
+  color: var(--color-accent, #22c55e);
+}
+a.mant-tab:hover {
+  background: rgba(34,197,94,.08);
+  border-color: var(--color-accent, #22c55e);
+  color: var(--color-accent, #22c55e);
+  box-shadow: 0 2px 8px rgba(34,197,94,.2);
+}
+
 /* ─── Mantenimiento — Section headers ───────────────── */
 .mant-section-header {
   display: flex;
