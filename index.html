@@ -1186,6 +1186,7 @@
           <button class="aac-view-btn active" data-view="grid">⊞ Grilla</button>
           <button class="aac-view-btn" data-view="table">☰ Tabla</button>
           <button class="aac-view-btn" data-view="planes">📋 Planes</button>
+          <button class="aac-view-btn" data-view="planos">📄 Planos</button>
         </div>
         <button class="altura-toggle-btn" id="aac-altura-btn" title="Filtrar equipos que requieren trabajo en altura">🏔 Altura</button>
         <button class="export-btn" id="aac-export-btn">⬇ Excel</button>
@@ -1242,10 +1243,26 @@
 
       <!-- Vista: Planes preventivos -->
       <div id="aac-planes-wrap" class="hidden">
-        <!-- Plan selector -->
         <div class="aac-plan-selector" id="aac-plan-selector"></div>
-        <!-- Plan content -->
         <div id="aac-plan-content"></div>
+      </div>
+
+      <!-- Vista: Planos de edificios -->
+      <div id="aac-planos-wrap" class="hidden">
+        <div class="plano-toolbar">
+          <span class="plano-toolbar-title">📄 Planos de Equipos de Aire — AEP</span>
+          <a id="aac-plano-download" href="#" target="_blank" download class="plano-download-btn">⬇ Descargar PDF</a>
+          <a id="aac-plano-open"     href="#" target="_blank"          class="plano-open-btn">↗ Abrir en nueva pestaña</a>
+        </div>
+        <div class="aac-edificio-tabs" id="aac-edificio-tabs">
+          <button class="aac-edif-btn active" data-edif="5">Edificio 5</button>
+          <button class="aac-edif-btn"        data-edif="7">Edificio 7</button>
+          <button class="aac-edif-btn"        data-edif="4">Edificio 4</button>
+        </div>
+        <iframe id="aac-plano-iframe"
+                class="plano-iframe"
+                title="Plano Equipos de Aire AEP"
+                loading="lazy"></iframe>
       </div>
 
     </div>

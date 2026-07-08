@@ -3498,3 +3498,31 @@ tr:hover .admin-edit-btn { opacity: 1; }
 .ots-save-dlg-actions {
   display: flex; gap: 10px;
 }
+
+/* ── Tabs de edificio (planos AAC) ───────────────────────── */
+.aac-edificio-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.aac-edif-btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 2px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.aac-edif-btn:hover {
+  border-color: var(--color-sky);
+  color: var(--color-sky);
+}
+.aac-edif-btn.active {
+  background: var(--color-sky);
+  border-color: var(--color-sky);
+  color: #fff;
+}

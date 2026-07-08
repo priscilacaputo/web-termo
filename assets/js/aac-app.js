@@ -168,19 +168,55 @@ function applyAACFilters() {
 function renderAAC() {
   const isData   = aacView === 'grid' || aacView === 'table';
   const isPlanes = aacView === 'planes';
+  const isPlanos = aacView === 'planos';
 
   document.getElementById('aac-result-count').textContent =
     isData ? `${aacFiltered.length} de ${AAC_DATA.length} equipos` : '';
 
   document.getElementById('aac-toolbar-filters').style.display = isData ? '' : 'none';
 
-  document.getElementById('aac-grid').classList.toggle('hidden',        aacView !== 'grid');
-  document.getElementById('aac-table-wrap').classList.toggle('hidden',  aacView !== 'table');
-  document.getElementById('aac-planes-wrap').classList.toggle('hidden', !isPlanes);
+  document.getElementById('aac-grid').classList.toggle('hidden',         aacView !== 'grid');
+  document.getElementById('aac-table-wrap').classList.toggle('hidden',   aacView !== 'table');
+  document.getElementById('aac-planes-wrap').classList.toggle('hidden',  !isPlanes);
+  document.getElementById('aac-planos-wrap').classList.toggle('hidden',  !isPlanos);
 
   if (aacView === 'grid')   renderAACGrid();
   if (aacView === 'table')  renderAACTable();
   if (isPlanes)             renderAACPlanes();
+  if (isPlanos)             initAACPlanos();
+}
+
+/* ─── Planos por edificio ─────────────────────────────────── */
+const AAC_PLANOS = {
+  '5': { file: 'AAC- Edificio 5.pdf', label: 'Edificio 5' },
+  '7': { file: 'AAC- Edificio 7.pdf', label: 'Edificio 7' },
+  '4': { file: 'AAC- Edificio 4.pdf', label: 'Edificio 4' },
+};
+let aacEdifActivo = '5';
+
+function initAACPlanos() {
+  setAACPlano(aacEdifActivo);
+
+  document.querySelectorAll('.aac-edif-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.aac-edif-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      aacEdifActivo = btn.dataset.edif;
+      setAACPlano(aacEdifActivo);
+    };
+  });
+}
+
+function setAACPlano(edif) {
+  const p = AAC_PLANOS[edif];
+  if (!p) return;
+  const url = encodeURIComponent(p.file);
+  const src = `${p.file}?t=${Date.now()}`;
+  document.getElementById('aac-plano-iframe').src    = src;
+  document.getElementById('aac-plano-download').href = p.file;
+  document.getElementById('aac-plano-open').href     = p.file;
+  document.querySelector('.plano-toolbar-title').textContent =
+    `📄 Plano Equipos de Aire — ${p.label} · AEP`;
 }
 
 /* ─── Grid ───────────────────────────────────────────────── */
