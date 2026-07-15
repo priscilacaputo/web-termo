@@ -37,6 +37,10 @@
         <span class="nav-icon">👷</span>
         <span class="nav-label">Personal Mantenimiento Termomecánica - AEP</span>
       </li>
+      <li class="nav-item" data-page="programacion">
+        <span class="nav-icon">🗓️</span>
+        <span class="nav-label">Programación de OTs</span>
+      </li>
 
       <li class="nav-section-label">Equipos e Instalaciones</li>
       <li class="nav-item" data-page="flota">
@@ -1468,6 +1472,69 @@
 
     </div>
 
+    <!-- ─── PÁGINA: Programación de OTs ─── -->
+    <div class="page hidden" id="page-programacion">
+
+      <div class="prog-upload-bar">
+        <div class="prog-mes-select">
+          <label for="prog-mes-input">Mes de programación</label>
+          <input type="month" id="prog-mes-input" />
+        </div>
+        <div class="prog-upload-actions">
+          <button class="prog-btn prog-btn-primary" id="prog-upload-btn">⬆ Cargar Excel del mes</button>
+          <input type="file" id="prog-file-input" accept=".xlsx,.xls" style="display:none" />
+          <button class="export-btn" id="prog-export-btn">⬇ Exportar programación</button>
+          <button class="prog-btn prog-btn-danger" id="prog-reset-btn">🗑 Vaciar</button>
+        </div>
+      </div>
+
+      <div class="prog-reglas-info">
+        <span class="prog-regla-chip noche">🌙 Equipos MEQ → siempre Turno Noche</span>
+        <span class="prog-regla-chip manana">☀️ Roof Top → siempre Turno Mañana</span>
+        <span class="prog-regla-chip manana">☀️ AVO → siempre Turno Mañana</span>
+        <span class="prog-regla-chip libre">✏️ El resto se sugiere y se puede reasignar a mano</span>
+      </div>
+
+      <div class="stats-grid" id="prog-stats" style="margin-bottom:20px"></div>
+
+      <div class="toolbar" id="prog-toolbar" style="margin-bottom:16px">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="prog-search" class="search-input" placeholder="Buscar por código de equipo o denominación..." />
+          <button class="clear-btn" id="prog-clear-search" title="Limpiar" style="display:none">✕</button>
+        </div>
+        <div class="filter-group">
+          <select id="prog-filter-turno" class="filter-select">
+            <option value="">Todos los turnos</option>
+            <option value="mañana">☀️ Mañana</option>
+            <option value="noche">🌙 Noche</option>
+          </select>
+          <select id="prog-filter-regla" class="filter-select">
+            <option value="">Todas las reglas</option>
+            <option value="MEQ">MEQ</option>
+            <option value="Roof Top">Roof Top</option>
+            <option value="AVO">AVO</option>
+            <option value="__sin_regla__">Sin regla fija</option>
+          </select>
+          <select id="prog-filter-zona" class="filter-select">
+            <option value="">Todas las zonas</option>
+          </select>
+          <button class="altura-filter-toggle" id="prog-filter-altura" title="Mostrar solo equipos que pagan altura">
+            ⛰️ Solo Altura
+          </button>
+        </div>
+      </div>
+
+      <div id="prog-empty-state" class="prog-empty-state hidden">
+        <span class="prog-empty-icon">🗓️</span>
+        <h3>Todavía no cargaste los preventivos de este mes</h3>
+        <p>Subí el Excel con los equipos a programar (columnas <strong>Equipo</strong> y <strong>Denominación</strong>) y te sugiero la distribución entre las 4 guardias según las reglas de turno.</p>
+      </div>
+
+      <div class="prog-guardias-wrap" id="prog-guardias-wrap"></div>
+
+    </div>
+
   </div>
 
   <!-- Modal flota -->
@@ -1652,6 +1719,7 @@
   <script src="assets/js/maint-planes-app.js?v=2"></script>
   <script src="assets/js/global-search.js?v=1"></script>
   <script src="assets/js/export-utils.js?v=1"></script>
+  <script src="assets/js/programacion-app.js?v=2"></script>
 
   <!-- ── Admin login modal ──────────────────────────────── -->
   <div id="admin-login-modal" class="admin-overlay">
