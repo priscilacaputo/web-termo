@@ -1188,6 +1188,7 @@
           <button class="aac-view-btn" data-view="table">☰ Tabla</button>
           <button class="aac-view-btn" data-view="planes">📋 Planes</button>
           <button class="aac-view-btn" data-view="planos">📄 Planos</button>
+          <button class="aac-view-btn" data-view="mapa">🗺️ Mapa</button>
         </div>
         <button class="altura-toggle-btn" id="aac-altura-btn" title="Filtrar equipos que requieren trabajo en altura">🏔 Altura</button>
         <button class="export-btn" id="aac-export-btn">⬇ Excel</button>
@@ -1264,6 +1265,21 @@
                 class="plano-iframe"
                 title="Plano Equipos de Aire AEP"
                 loading="lazy"></iframe>
+      </div>
+
+      <!-- Vista: Mapa interactivo -->
+      <div id="aac-mapa-wrap" class="hidden">
+        <div class="plano-toolbar">
+          <span class="plano-toolbar-title">🗺️ Mapa Interactivo de Equipos de Aire — AEP</span>
+        </div>
+        <div class="aac-edificio-tabs" id="aac-mapa-edificio-tabs"></div>
+        <p class="aac-mapa-hint">Pasá el mouse (o tocá) sobre un punto del plano para ver el equipo. Hacé clic para abrir su ficha técnica.</p>
+        <div class="aac-mapa-container" id="aac-mapa-container">
+          <div class="aac-mapa-scaler" id="aac-mapa-scaler">
+            <img id="aac-mapa-img" class="aac-mapa-img" alt="Plano interactivo de equipos de aire" />
+            <div class="aac-mapa-pins" id="aac-mapa-pins"></div>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -1625,7 +1641,8 @@
   <script src="assets/js/puertas-app.js?v=6"></script>
   <script src="assets/js/aac-data.js?v=2"></script>
   <script src="assets/js/uta-specs.js?v=1"></script>
-  <script src="assets/js/aac-app.js?v=5"></script>
+  <script src="assets/js/aac-mapa-data.js?v=4"></script>
+  <script src="assets/js/aac-app.js?v=9"></script>
   <script src="assets/js/otros-data.js?v=1"></script>
   <script src="assets/js/otros-app.js?v=2"></script>
   <script src="assets/js/ecas-data.js?v=1"></script>
