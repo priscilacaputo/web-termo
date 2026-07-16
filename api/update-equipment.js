@@ -116,10 +116,10 @@ module.exports = async (req, res) => {
   const config = SECTION_CONFIG[section];
   if (!config) return res.status(400).json({ error: `Sección desconocida: ${section}` });
 
-  const owner = process.env.GITHUB_OWNER;
-  const repo  = process.env.GITHUB_REPO;
-  const branch = process.env.GITHUB_BRANCH || 'main';
-  const token  = process.env.GITHUB_TOKEN;
+  const owner  = (process.env.GITHUB_OWNER  || '').trim();
+  const repo   = (process.env.GITHUB_REPO   || '').trim();
+  const branch = (process.env.GITHUB_BRANCH || 'main').trim();
+  const token  = (process.env.GITHUB_TOKEN  || '').trim();
 
   if (!owner || !repo || !token) {
     return res.status(500).json({ error: 'Configuración del servidor incompleta (env vars faltantes)' });
