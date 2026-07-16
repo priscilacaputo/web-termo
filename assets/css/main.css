@@ -3881,13 +3881,6 @@ tr:hover .admin-edit-btn { opacity: 1; }
    ═══════════════════════════════════════════════════════ */
 .estado-admin-only.hidden { display: none; }
 
-.estado-view-toggle {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
 /* ── Tarjetas por categoría ─────────────────────────────── */
 .estado-cat-card {
   background: var(--color-card);

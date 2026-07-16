@@ -13,6 +13,8 @@ const SECTION_CONFIG = {
   aac:         { file: 'assets/js/aac-data.js',         varName: 'AAC_DATA' },
   ecas:        { file: 'assets/js/ecas-data.js',        varName: 'ECAS_DATA' },
   otros:       { file: 'assets/js/otros-data.js',       varName: 'OTROS_DATA' },
+  estados:     { file: 'assets/js/estado-equipos-data.js', varName: 'ESTADO_OVERRIDES' },
+  tareas:      { file: 'assets/js/tareas-data.js',      varName: 'TAREAS_DATA' },
 };
 
 function githubRequest(method, path, token, body) {
