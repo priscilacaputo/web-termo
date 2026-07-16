@@ -7,9 +7,10 @@
 const ESTADO_OVERRIDES = [
   {
     "equipo": "PPA653",
-    "estadoManual": "reparacion",
+    "estadoManual": "ok",
     "comentarios": []
   }
 ];
+
 
 
