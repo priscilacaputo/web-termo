@@ -41,6 +41,10 @@
         <span class="nav-icon">🗓️</span>
         <span class="nav-label">Programación de OTs</span>
       </li>
+      <li class="nav-item" data-page="estado">
+        <span class="nav-icon">🚦</span>
+        <span class="nav-label">Estado de Equipos</span>
+      </li>
 
       <li class="nav-section-label">Equipos e Instalaciones</li>
       <li class="nav-item" data-page="flota">
@@ -1535,6 +1539,78 @@
 
     </div>
 
+    <!-- ─── PÁGINA: Estado de Equipos (SCADA) ─── -->
+    <div class="page hidden" id="page-estado">
+
+      <div class="stats-grid" id="estado-stats" style="margin-bottom:20px"></div>
+
+      <div class="toolbar" id="estado-toolbar" style="margin-bottom:16px">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="estado-search" class="search-input" placeholder="Buscar por código de equipo o denominación..." />
+          <button class="clear-btn" id="estado-clear-search" title="Limpiar" style="display:none">✕</button>
+        </div>
+        <div class="filter-group">
+          <select id="estado-filter-categoria" class="filter-select">
+            <option value="">Todas las categorías</option>
+          </select>
+          <select id="estado-filter-estado" class="filter-select">
+            <option value="">Todos los estados</option>
+            <option value="ok">🟢 OK</option>
+            <option value="atencion">🟡 Requiere atención</option>
+            <option value="reparacion">🔵 En reparación</option>
+            <option value="fuera_servicio">🔴 Fuera de servicio</option>
+          </select>
+        </div>
+        <button class="estado-admin-only prog-btn prog-btn-primary hidden" id="estado-nueva-tarea-btn">+ Nueva tarea</button>
+      </div>
+
+      <div class="estado-view-toggle">
+        <button class="aac-view-btn active" data-eview="categorias">📂 Por categoría</button>
+        <button class="aac-view-btn" data-eview="lista">☰ Lista</button>
+        <button class="aac-view-btn" data-eview="tareas">✅ Tareas</button>
+      </div>
+
+      <div id="estado-categorias-wrap"></div>
+      <div id="estado-lista-wrap" class="hidden"></div>
+      <div id="estado-tareas-wrap" class="hidden"></div>
+
+    </div>
+
+  </div>
+
+  <!-- Modal ficha genérica (fallback para categorías sin modal propio) -->
+  <div class="modal-overlay" id="estadoFichaModalOverlay">
+    <div class="modal" id="estadoFichaModal">
+      <button class="modal-close" id="estadoFichaModalClose">✕</button>
+      <div class="modal-header" id="estadoFichaModalHeader"></div>
+      <div class="modal-body" id="estadoFichaModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal nueva tarea -->
+  <div class="modal-overlay" id="estadoTareaModalOverlay">
+    <div class="modal" id="estadoTareaModal">
+      <button class="modal-close" id="estadoTareaModalClose">✕</button>
+      <div class="modal-header"><div class="modal-denom">✅ Nueva tarea</div></div>
+      <div class="modal-body">
+        <div class="estado-form-field">
+          <label>Título *</label>
+          <input type="text" id="estado-tarea-titulo" placeholder="Ej: Pedir repuesto para bomba jockey" />
+        </div>
+        <div class="estado-form-field">
+          <label>Descripción</label>
+          <textarea id="estado-tarea-descripcion" rows="3" placeholder="Detalle opcional..."></textarea>
+        </div>
+        <div class="estado-form-field">
+          <label>Responsable</label>
+          <input type="text" id="estado-tarea-responsable" placeholder="Nombre (opcional)" />
+        </div>
+        <div class="estado-form-actions">
+          <button class="prog-btn prog-btn-primary" id="estado-tarea-guardar-btn">Guardar tarea</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal flota -->
@@ -1770,5 +1846,8 @@
   <script src="assets/js/ots-analyzer.js?v=1"></script>
   <script src="assets/js/ots-app.js?v=1"></script>
   <script src="assets/js/kpis-app.js?v=1"></script>
+  <script src="assets/js/estado-equipos-data.js?v=1"></script>
+  <script src="assets/js/tareas-data.js?v=1"></script>
+  <script src="assets/js/estado-app.js?v=1"></script>
 </body>
 </html>
