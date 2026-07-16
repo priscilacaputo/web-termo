@@ -7,11 +7,12 @@ const TAREAS_DATA = [
     "titulo": "Reparar Valvula Hidrante VM N°2",
     "descripcion": "",
     "responsable": "",
-    "estado": "hecha",
+    "estado": "pendiente",
     "creadoPor": "admin",
     "fecha": "2026-07-16T19:09:54.238Z",
     "comentarios": []
   }
 ];
+
 
 
