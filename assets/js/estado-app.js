@@ -144,83 +144,118 @@ async function estadoCommit(section, data, successMsg) {
   }
 }
 
-function estadoGetOrCreateOverride(equipo) {
-  let ov = ESTADO_OVERRIDES.find(o => o.equipo === equipo);
-  if (!ov) { ov = { equipo, estadoManual: null, comentarios: [] }; ESTADO_OVERRIDES.push(ov); }
+/* ─── Traer la versión MÁS RECIENTE del servidor antes de guardar ──
+   Si dos ediciones se hacen seguidas (o el redeploy anterior — ~1 min —
+   todavía no terminó), guardar directo con lo que hay en memoria del
+   navegador puede pisar cambios ya guardados por otra edición. Por eso
+   cada guardado primero trae el archivo real del servidor y recién ahí
+   aplica el cambio puntual sobre esa copia fresca. */
+async function estadoFetchLatestArray(file, varName) {
+  try {
+    const resp = await fetch('/' + file + '?t=' + Date.now(), { cache: 'no-store' });
+    if (!resp.ok) return null;
+    const text = await resp.text();
+    const fn = new Function(text + `\nreturn (typeof ${varName} !== "undefined") ? ${varName} : null;`);
+    const arr = fn();
+    return Array.isArray(arr) ? arr : null;
+  } catch (e) { return null; }
+}
+
+/* Aplica `mutateFn` sobre la copia más fresca posible de ESTADO_OVERRIDES,
+   guarda, y si sale bien sincroniza la copia local (en memoria) con lo
+   que quedó realmente persistido. */
+async function estadoMutateOverrides(mutateFn, successMsg) {
+  const fresh = (await estadoFetchLatestArray('assets/js/estado-equipos-data.js', 'ESTADO_OVERRIDES')) || ESTADO_OVERRIDES;
+  const working = fresh.map(o => ({ ...o, comentarios: (o.comentarios || []).slice() }));
+
+  mutateFn(working);
+
+  const kept = working.filter(o => o.estadoManual || o.hidrolavadoManual || (o.comentarios && o.comentarios.length));
+  const ok = await estadoCommit('estados', kept, successMsg);
+  if (ok) {
+    ESTADO_OVERRIDES.length = 0;
+    ESTADO_OVERRIDES.push(...kept);
+    estadoRefreshIndices();
+  }
+  return ok;
+}
+function estadoFindOrCreate(arr, equipo) {
+  let ov = arr.find(o => o.equipo === equipo);
+  if (!ov) { ov = { equipo, estadoManual: null, comentarios: [] }; arr.push(ov); }
   if (!ov.comentarios) ov.comentarios = [];
   return ov;
 }
-function estadoPruneOverrides() {
-  const kept = ESTADO_OVERRIDES.filter(o => o.estadoManual || o.hidrolavadoManual || (o.comentarios && o.comentarios.length));
-  ESTADO_OVERRIDES.length = 0;
-  ESTADO_OVERRIDES.push(...kept);
-}
 
 async function estadoSetManual(equipo, estado) {
-  const ov = estadoGetOrCreateOverride(equipo);
-  const prev = ov.estadoManual;
-  ov.estadoManual = estado || null;
-  estadoPruneOverrides();
-  const ok = await estadoCommit('estados', ESTADO_OVERRIDES);
-  if (ok) { estadoRefreshIndices(); renderEstadoSection(); }
-  else { ov.estadoManual = prev; }
+  const ok = await estadoMutateOverrides(arr => {
+    estadoFindOrCreate(arr, equipo).estadoManual = estado || null;
+  });
+  if (ok) renderEstadoSection();
 }
 
 async function estadoSetHidrolavado(equipo, fecha) {
-  const ov = estadoGetOrCreateOverride(equipo);
-  const prev = ov.hidrolavadoManual || null;
-  ov.hidrolavadoManual = fecha || null;
-  estadoPruneOverrides();
-  const ok = await estadoCommit('estados', ESTADO_OVERRIDES, fecha ? '✓ Hidrolavado registrado.' : '✓ Registro manual quitado.');
-  if (ok) { estadoRefreshIndices(); renderEstadoHidrolavado(); }
-  else { ov.hidrolavadoManual = prev; }
+  const ok = await estadoMutateOverrides(arr => {
+    estadoFindOrCreate(arr, equipo).hidrolavadoManual = fecha || null;
+  }, fecha ? '✓ Hidrolavado registrado.' : '✓ Registro manual quitado.');
+  if (ok) renderEstadoHidrolavado();
 }
 
 async function estadoAgregarComentarioEquipo(equipo, autor, texto) {
-  const ov = estadoGetOrCreateOverride(equipo);
-  ov.comentarios.push({ autor: autor || 'Anónimo', texto, fecha: new Date().toISOString() });
-  const ok = await estadoCommit('estados', ESTADO_OVERRIDES, '✓ Comentario guardado.');
-  if (ok) {
-    try { localStorage.setItem('estado_ultimo_autor', autor || ''); } catch (e) {}
-    estadoRefreshIndices(); renderEstadoSection();
-  } else {
-    ov.comentarios.pop();
-  }
-}
-
-function estadoNuevoTareaId() {
-  const nums = TAREAS_DATA.map(t => parseInt(String(t.id || '').replace(/\D/g, ''), 10)).filter(n => !isNaN(n));
-  return 'T' + ((nums.length ? Math.max(...nums) : 0) + 1);
-}
-async function estadoCrearTarea(titulo, descripcion, responsable) {
-  const tarea = {
-    id: estadoNuevoTareaId(), titulo, descripcion: descripcion || '', responsable: responsable || '',
-    estado: 'pendiente', creadoPor: 'admin', fecha: new Date().toISOString(), comentarios: [],
-  };
-  TAREAS_DATA.push(tarea);
-  const ok = await estadoCommit('tareas', TAREAS_DATA, '✓ Tarea creada.');
-  if (ok) { renderEstadoSection(); } else { TAREAS_DATA.pop(); }
-  return ok;
-}
-async function estadoToggleTarea(id) {
-  const t = TAREAS_DATA.find(x => x.id === id);
-  if (!t) return;
-  const prev = t.estado;
-  t.estado = (t.estado === 'hecha') ? 'pendiente' : 'hecha';
-  const ok = await estadoCommit('tareas', TAREAS_DATA);
-  if (ok) renderEstadoSection(); else t.estado = prev;
-}
-async function estadoAgregarComentarioTarea(id, autor, texto) {
-  const t = TAREAS_DATA.find(x => x.id === id);
-  if (!t) return;
-  if (!t.comentarios) t.comentarios = [];
-  t.comentarios.push({ autor: autor || 'Anónimo', texto, fecha: new Date().toISOString() });
-  const ok = await estadoCommit('tareas', TAREAS_DATA, '✓ Comentario guardado.');
+  const ok = await estadoMutateOverrides(arr => {
+    estadoFindOrCreate(arr, equipo).comentarios.push({ autor: autor || 'Anónimo', texto, fecha: new Date().toISOString() });
+  }, '✓ Comentario guardado.');
   if (ok) {
     try { localStorage.setItem('estado_ultimo_autor', autor || ''); } catch (e) {}
     renderEstadoSection();
-  } else {
-    t.comentarios.pop();
+  }
+}
+
+/* ─── Tareas: mismo esquema traer-fresco → aplicar → guardar ──── */
+async function estadoMutateTareas(mutateFn, successMsg) {
+  const fresh = (await estadoFetchLatestArray('assets/js/tareas-data.js', 'TAREAS_DATA')) || TAREAS_DATA;
+  const working = fresh.map(t => ({ ...t, comentarios: (t.comentarios || []).slice() }));
+
+  mutateFn(working);
+
+  const ok = await estadoCommit('tareas', working, successMsg);
+  if (ok) {
+    TAREAS_DATA.length = 0;
+    TAREAS_DATA.push(...working);
+  }
+  return ok;
+}
+function estadoNuevoTareaId(arr) {
+  const nums = arr.map(t => parseInt(String(t.id || '').replace(/\D/g, ''), 10)).filter(n => !isNaN(n));
+  return 'T' + ((nums.length ? Math.max(...nums) : 0) + 1);
+}
+async function estadoCrearTarea(titulo, descripcion, responsable) {
+  const ok = await estadoMutateTareas(arr => {
+    arr.push({
+      id: estadoNuevoTareaId(arr), titulo, descripcion: descripcion || '', responsable: responsable || '',
+      estado: 'pendiente', creadoPor: 'admin', fecha: new Date().toISOString(), comentarios: [],
+    });
+  }, '✓ Tarea creada.');
+  if (ok) renderEstadoSection();
+  return ok;
+}
+async function estadoToggleTarea(id) {
+  const ok = await estadoMutateTareas(arr => {
+    const t = arr.find(x => x.id === id);
+    if (t) t.estado = (t.estado === 'hecha') ? 'pendiente' : 'hecha';
+  });
+  if (ok) renderEstadoSection();
+}
+async function estadoAgregarComentarioTarea(id, autor, texto) {
+  const ok = await estadoMutateTareas(arr => {
+    const t = arr.find(x => x.id === id);
+    if (t) {
+      if (!t.comentarios) t.comentarios = [];
+      t.comentarios.push({ autor: autor || 'Anónimo', texto, fecha: new Date().toISOString() });
+    }
+  }, '✓ Comentario guardado.');
+  if (ok) {
+    try { localStorage.setItem('estado_ultimo_autor', autor || ''); } catch (e) {}
+    renderEstadoSection();
   }
 }
 
