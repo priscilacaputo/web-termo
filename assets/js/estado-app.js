@@ -151,7 +151,7 @@ function estadoGetOrCreateOverride(equipo) {
   return ov;
 }
 function estadoPruneOverrides() {
-  const kept = ESTADO_OVERRIDES.filter(o => o.estadoManual || (o.comentarios && o.comentarios.length));
+  const kept = ESTADO_OVERRIDES.filter(o => o.estadoManual || o.hidrolavadoManual || (o.comentarios && o.comentarios.length));
   ESTADO_OVERRIDES.length = 0;
   ESTADO_OVERRIDES.push(...kept);
 }
@@ -164,6 +164,16 @@ async function estadoSetManual(equipo, estado) {
   const ok = await estadoCommit('estados', ESTADO_OVERRIDES);
   if (ok) { estadoRefreshIndices(); renderEstadoSection(); }
   else { ov.estadoManual = prev; }
+}
+
+async function estadoSetHidrolavado(equipo, fecha) {
+  const ov = estadoGetOrCreateOverride(equipo);
+  const prev = ov.hidrolavadoManual || null;
+  ov.hidrolavadoManual = fecha || null;
+  estadoPruneOverrides();
+  const ok = await estadoCommit('estados', ESTADO_OVERRIDES, fecha ? '✓ Hidrolavado registrado.' : '✓ Registro manual quitado.');
+  if (ok) { estadoRefreshIndices(); renderEstadoHidrolavado(); }
+  else { ov.hidrolavadoManual = prev; }
 }
 
 async function estadoAgregarComentarioEquipo(equipo, autor, texto) {
@@ -293,7 +303,7 @@ function renderEstadoStats() {
 }
 
 /* ─── Render: fila de equipo (compartida por categorías, lista e hidrolavado) ── */
-function estadoRenderFilaEquipo(e, extraBadgeHtml) {
+function estadoRenderFilaEquipo(e, extraBadgeHtml, extraDetailHtml) {
   const est = estadoDe(e.equipo);
   const meta = ESTADO_META[est];
   const manual = estadoEsManual(e.equipo);
@@ -331,6 +341,7 @@ function estadoRenderFilaEquipo(e, extraBadgeHtml) {
       <button type="button" class="estado-detalle-toggle" data-equipo="${e.equipo}">${abierto ? '▴' : '▾'}</button>
     </div>
     <div class="estado-eq-detalle ${abierto ? '' : 'hidden'}" data-detalle-de="${e.equipo}">
+      ${extraDetailHtml || ''}
       ${botonesEstado}
       <div class="estado-comentarios-list">
         ${comentarios.length ? comentarios.map(c => `
@@ -370,6 +381,21 @@ function estadoWireFilas(container) {
       const texto = row.querySelector('.estado-comentario-texto').value.trim();
       if (!texto) { estadoToast('Escribí un comentario antes de guardar.', 'error'); return; }
       estadoAgregarComentarioEquipo(btn.dataset.equipo, autor, texto);
+    });
+  });
+  container.querySelectorAll('.estado-hidro-guardar').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const row = btn.closest('.estado-eq-detalle');
+      const fecha = row.querySelector('.estado-hidro-fecha-input').value;
+      if (!fecha) { estadoToast('Elegí una fecha.', 'error'); return; }
+      estadoSetHidrolavado(btn.dataset.equipo, fecha);
+    });
+  });
+  container.querySelectorAll('.estado-hidro-quitar').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      estadoSetHidrolavado(btn.dataset.equipo, null);
     });
   });
 }
@@ -511,14 +537,26 @@ function estadoMesesDesde(fechaStr) {
   if (!fechaStr || isNaN(f.getTime())) return Infinity;
   return (Date.now() - f.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
 }
+/* Fecha efectiva de hidrolavado = la más reciente entre lo detectado
+   automáticamente en el historial de OTs y lo cargado a mano por un admin
+   (por si el hidrolavado se hizo pero no quedó bien registrado en la OT). */
+function estadoFechaHidrolavadoEfectiva(equipo, autoFecha) {
+  const ov = estadoOverridesIndex[equipo];
+  const manual = ov && ov.hidrolavadoManual;
+  if (!manual) return autoFecha;
+  if (!autoFecha) return manual;
+  return manual > autoFecha ? manual : autoFecha;
+}
 
 function renderEstadoHidrolavado() {
   const wrap = document.getElementById('estado-hidrolavado-wrap');
   const equipos = (typeof AAC_DATA !== 'undefined' ? AAC_DATA : []).filter(e => e.tipo === 'UTA' || e.tipo === 'Roof Top');
   const hidroIdx = estadoBuildHidrolavadoIndex();
+  const admin = estadoIsAdmin();
 
   const filas = equipos.map(e => {
-    const ultimaFecha = hidroIdx[e.equipo] || null;
+    const autoFecha = hidroIdx[e.equipo] || null;
+    const ultimaFecha = estadoFechaHidrolavadoEfectiva(e.equipo, autoFecha);
     const meses = estadoMesesDesde(ultimaFecha);
     return { ...e, categoriaId: 'aac', ultimaFecha, vencido: meses > ESTADO_HIDRO_MESES };
   }).sort((a, b) => {
@@ -532,8 +570,18 @@ function renderEstadoHidrolavado() {
   const filasHtml = mostrar.map(f => {
     const fechaTxt = f.ultimaFecha ? new Date(f.ultimaFecha + 'T00:00:00').toLocaleDateString('es-AR') : 'Nunca';
     const color = f.vencido ? '#dc2626' : '#10b981';
-    const hidroChip = `<span class="estado-badge" style="background:${color}18;color:${color};border:1px solid ${color}40" title="Última OT de hidrolavado registrada">🚿 ${f.vencido ? 'Vencido' : 'Al día'} · ${fechaTxt}</span>`;
-    return estadoRenderFilaEquipo(f, hidroChip);
+    const ov = estadoOverridesIndex[f.equipo];
+    const manualFecha = ov && ov.hidrolavadoManual;
+    const hidroChip = `<span class="estado-badge" style="background:${color}18;color:${color};border:1px solid ${color}40" title="Última hidrolavado registrada">🚿 ${f.vencido ? 'Vencido' : 'Al día'} · ${fechaTxt}${manualFecha ? ' · manual' : ''}</span>`;
+    const hoy = new Date().toISOString().slice(0, 10);
+    const hidroForm = admin ? `
+      <div class="estado-hidro-form">
+        <span class="estado-hidro-form-label">🚿 Marcar hidrolavado realizado</span>
+        <input type="date" class="estado-hidro-fecha-input" value="${manualFecha || hoy}" max="${hoy}" />
+        <button type="button" class="prog-btn prog-btn-primary estado-hidro-guardar" data-equipo="${f.equipo}">Guardar</button>
+        ${manualFecha ? `<button type="button" class="prog-btn prog-btn-danger estado-hidro-quitar" data-equipo="${f.equipo}">Quitar registro manual</button>` : ''}
+      </div>` : '';
+    return estadoRenderFilaEquipo(f, hidroChip, hidroForm);
   }).join('');
 
   wrap.innerHTML = `
