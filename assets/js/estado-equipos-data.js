@@ -18,12 +18,13 @@ const ESTADO_OVERRIDES = [
     "hidrolavadoManual": "2026-07-17"
   },
   {
-    "equipo": "AAC9427",
+    "equipo": "AAC9426",
     "estadoManual": null,
     "comentarios": [],
     "hidrolavadoManual": "2026-07-17"
   }
 ];
+
 
 
 
