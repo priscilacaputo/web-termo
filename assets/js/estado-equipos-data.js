@@ -26,9 +26,11 @@ const ESTADO_OVERRIDES = [
         "texto": "Equipo nuevo",
         "fecha": "2026-07-17T17:05:48.952Z"
       }
-    ]
+    ],
+    "hidrolavadoManual": "2026-07-17"
   }
 ];
+
 
 
 
