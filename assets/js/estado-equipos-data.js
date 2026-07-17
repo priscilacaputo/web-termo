@@ -5,18 +5,11 @@
    automáticamente a partir de su última OT en el historial. */
 
 const ESTADO_OVERRIDES = [
-  {
-    "equipo": "PPA653",
-    "estadoManual": "ok",
-    "comentarios": []
-  },
-  {
-    "equipo": "AAC3942",
-    "estadoManual": "reparacion",
-    "comentarios": []
-  }
+  // {
+  //   equipo: "AAC1234",
+  //   estadoManual: "reparacion",   // "ok" | "atencion" | "reparacion" | "fuera_servicio" | null
+  //   comentarios: [
+  //     { autor: "Juan Pérez", texto: "Se pidió el repuesto, llega la semana que viene.", fecha: "2026-07-16T10:30:00.000Z" }
+  //   ]
+  // },
 ];
-
-
-
-

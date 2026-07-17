@@ -88,9 +88,15 @@ function detectTipoOT(otNombre) {
 }
 
 /* ── Análisis de comentario ─────────────────────────────── */
-function analyzeComment(text, motivo, tipo) {
-  const lower    = (text   || '').toLowerCase();
-  const motivoLow= (motivo || '').toLowerCase();
+function analyzeComment(text, motivo, tipo, otNombre) {
+  const lower    = (text     || '').toLowerCase();
+  const motivoLow= (motivo   || '').toLowerCase();
+  const nombreLow= (otNombre || '').toLowerCase();
+
+  /* "Seteo de equipos" — tarea de configuración, no es una falla: siempre OK. */
+  if (lower.includes('seteo de equipos') || nombreLow.includes('seteo de equipos')) {
+    return { estado:'ok', accion:'Seteo de equipos — tarea de configuración, sin falla.' };
+  }
 
   if (motivoLow.includes('no resuelto')) {
     return { estado:'urgente',    accion:'No resuelto según SAP. Requiere atención inmediata.' };
@@ -242,7 +248,7 @@ function decompressOT(r) {
   return {
     ot_num:      r.n,
     ot:          r.n,
-    ot_nombre:   '',
+    ot_nombre:   r.on || '',
     tipo:        r.t === 'p' ? 'preventivo' : r.t === 'c' ? 'correctivo' : 'otro',
     equipo:      r.e,
     equipo_desc: '',

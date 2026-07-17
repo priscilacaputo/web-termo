@@ -71,6 +71,7 @@ module.exports = async (req, res) => {
         s:  String(o.estado || 'ok'),
         a:  String(o.accion  || '').substring(0, 120),
       };
+      if (o.ot_nombre)       r.on = String(o.ot_nombre).substring(0, 80);
       if (o.estado_manual)  r.sm = String(o.estado_manual);
       if (o.nota_manual)    r.nn = String(o.nota_manual).substring(0, 500);
       if (o.fecha_revision) r.fr = String(o.fecha_revision);

@@ -109,6 +109,7 @@ function renderOTsSection() {
               <th>Equipo</th>
               <th>Tipo</th>
               <th>OT</th>
+              <th>Título</th>
               <th>Fecha</th>
               <th>Técnico</th>
               <th style="text-align:center">Tiempo (h)</th>
@@ -202,7 +203,7 @@ function renderOTsTable() {
   const ots = getFilteredOTs().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
 
   if (ots.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="ots-empty-row">Sin resultados con los filtros aplicados.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="ots-empty-row">Sin resultados con los filtros aplicados.</td></tr>`;
     return;
   }
 
@@ -221,6 +222,7 @@ function renderOTsTable() {
         <td><span class="ots-equipo-tag">${o.equipo}</span></td>
         <td><span class="ots-tipo-badge ${tm.cls}">${tm.emoji} ${tm.label}</span></td>
         <td><code class="ots-ot-code">${o.ot_num||o.ot||'—'}</code></td>
+        <td class="ots-titulo-cell" title="${o.ot_nombre||''}">${o.ot_nombre||'—'}</td>
         <td class="ots-fecha-cell">${o.fecha||'—'}</td>
         <td class="ots-tecnico-cell">${o.tecnico||'—'}</td>
         <td style="text-align:center">${o.tiempo!=null&&o.tiempo!==''?Number(o.tiempo).toFixed(1):'—'}</td>
@@ -483,7 +485,7 @@ function parseSAPRows(rows) {
     const estadoOrden = get(firstRow, 'Estado de la orden');
 
     /* Análisis automático */
-    const { estado, accion } = analyzeComment(comentario, motivo, tipo);
+    const { estado, accion } = analyzeComment(comentario, motivo, tipo, otNombre);
 
     return {
       ot_num:      g.otNum,
@@ -566,8 +568,9 @@ function parseGenericRows(rows) {
       const tipo      = detectTipoOT(extractOTName(otRaw));
       const tecRaw    = colMap.tecnico !== undefined ? String(row[colMap.tecnico]||'').trim() : '';
       const tecnico   = extractTecnicoName(tecRaw) || tecRaw;
-      const { estado, accion } = analyzeComment(comentario, '', tipo);
-      return { ot_num:otNum, ot_nombre:extractOTName(otRaw), ot:otNum, tipo, equipo, equipo_desc:'', fecha, tiempo, tecnico, comentario, motivo:'', estado_orden:'', estado, accion };
+      const otNombre = extractOTName(otRaw);
+      const { estado, accion } = analyzeComment(comentario, '', tipo, otNombre);
+      return { ot_num:otNum, ot_nombre:otNombre, ot:otNum, tipo, equipo, equipo_desc:'', fecha, tiempo, tecnico, comentario, motivo:'', estado_orden:'', estado, accion };
     })
     .filter(o => o.equipo);
 }

@@ -2,17 +2,14 @@
    Creación y marcado como completada: solo administrador. */
 
 const TAREAS_DATA = [
-  {
-    "id": "T1",
-    "titulo": "Reparar Valvula Hidrante VM N°2",
-    "descripcion": "",
-    "responsable": "",
-    "estado": "pendiente",
-    "creadoPor": "admin",
-    "fecha": "2026-07-16T19:09:54.238Z",
-    "comentarios": []
-  }
+  // {
+  //   id: "T1",
+  //   titulo: "Pedir presupuesto para repintado de Núcleo 3",
+  //   descripcion: "",
+  //   responsable: "",
+  //   estado: "pendiente",       // "pendiente" | "hecha"
+  //   creadoPor: "admin",
+  //   fecha: "2026-07-16T10:30:00.000Z",
+  //   comentarios: [],
+  // },
 ];
-
-
-

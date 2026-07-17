@@ -50,6 +50,8 @@ let estadoSearch = '';
 let estadoFiltroCategoria = '';
 let estadoFiltroEstado = '';
 let estadoVista = 'categorias';
+let estadoHidroMostrarTodos = false;
+const ESTADO_HIDRO_MESES = 6;
 const estadoCatAbierta = {};
 const estadoDetalleAbierto = {};
 
@@ -488,14 +490,96 @@ function renderEstadoTareas() {
   });
 }
 
+/* ─── Hidrolavado UTA / Roof Top ─────────────────────────────── */
+/* Última fecha en que cada equipo tuvo una OT cuyo comentario o
+   título menciona "hidrolav" (hidrolavado/hidrolavar/hidrolava). */
+function estadoBuildHidrolavadoIndex() {
+  const idx = {};
+  if (typeof getOTs !== 'function') return idx;
+  getOTs().forEach(o => {
+    if (!o.equipo) return;
+    const texto = ((o.comentario || '') + ' ' + (o.ot_nombre || '')).toLowerCase();
+    if (!texto.includes('hidrolav')) return;
+    const prev = idx[o.equipo];
+    if (!prev || String(o.fecha || '') > String(prev || '')) idx[o.equipo] = o.fecha;
+  });
+  return idx;
+}
+function estadoMesesDesde(fechaStr) {
+  const f = new Date(fechaStr + 'T00:00:00');
+  if (!fechaStr || isNaN(f.getTime())) return Infinity;
+  return (Date.now() - f.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+}
+
+function renderEstadoHidrolavado() {
+  const wrap = document.getElementById('estado-hidrolavado-wrap');
+  const equipos = (typeof AAC_DATA !== 'undefined' ? AAC_DATA : []).filter(e => e.tipo === 'UTA' || e.tipo === 'Roof Top');
+  const hidroIdx = estadoBuildHidrolavadoIndex();
+
+  const filas = equipos.map(e => {
+    const ultimaFecha = hidroIdx[e.equipo] || null;
+    const meses = estadoMesesDesde(ultimaFecha);
+    return { ...e, ultimaFecha, vencido: meses > ESTADO_HIDRO_MESES };
+  }).sort((a, b) => {
+    if (a.vencido !== b.vencido) return a.vencido ? -1 : 1;
+    return (a.ultimaFecha || '').localeCompare(b.ultimaFecha || '');
+  });
+
+  const vencidos = filas.filter(f => f.vencido);
+  const mostrar = estadoHidroMostrarTodos ? filas : vencidos;
+
+  wrap.innerHTML = `
+    <div class="estado-hidro-summary">
+      <div class="estado-hidro-summary-num">${vencidos.length}</div>
+      <div class="estado-hidro-summary-text">
+        de <strong>${filas.length}</strong> equipos UTA / Roof Top sin hidrolavado registrado en los últimos ${ESTADO_HIDRO_MESES} meses
+        <span class="estado-hidro-hint">Se busca la palabra "hidrolav" en el comentario o título de las OTs del historial. Si un equipo nunca tuvo una OT así, figura como "Nunca registrado".</span>
+      </div>
+      <button type="button" class="prog-btn prog-btn-primary" id="estado-hidro-toggle-vencidos">${estadoHidroMostrarTodos ? 'Ver solo pendientes' : `Ver los ${filas.length} equipos (incluye al día)`}</button>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Equipo</th><th>Denominación</th><th>Tipo</th><th>Zona</th><th>Última hidrolavado</th><th>Estado</th><th></th></tr></thead>
+          <tbody>
+            ${mostrar.map(f => `
+              <tr>
+                <td><span class="estado-eq-cod">${f.equipo}</span></td>
+                <td>${f.denominacion || '—'}</td>
+                <td>${f.tipo}</td>
+                <td>${(typeof aacZona === 'function') ? aacZona(f.ubicacion) : ''}</td>
+                <td>${f.ultimaFecha ? new Date(f.ultimaFecha + 'T00:00:00').toLocaleDateString('es-AR') : 'Nunca registrado'}</td>
+                <td>${f.vencido
+                  ? '<span class="estado-badge" style="background:#dc262618;color:#dc2626;border:1px solid #dc262640">🔴 Vencido</span>'
+                  : '<span class="estado-badge" style="background:#10b98118;color:#10b981;border:1px solid #10b98140">🟢 Al día</span>'}</td>
+                <td><button type="button" class="estado-ficha-btn" data-equipo="${f.equipo}" data-cat="aac">📄 Ficha</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      ${!mostrar.length ? '<p class="estado-guardia-empty">No hay equipos para mostrar.</p>' : ''}
+    </div>`;
+
+  wrap.querySelectorAll('.estado-ficha-btn').forEach(btn => {
+    btn.addEventListener('click', () => estadoAbrirFicha(btn.dataset.cat, btn.dataset.equipo));
+  });
+  const toggleBtn = document.getElementById('estado-hidro-toggle-vencidos');
+  if (toggleBtn) toggleBtn.addEventListener('click', () => {
+    estadoHidroMostrarTodos = !estadoHidroMostrarTodos;
+    renderEstadoHidrolavado();
+  });
+}
+
 /* ─── Render dispatcher ──────────────────────────────────────── */
 function renderEstadoResultados() {
   document.getElementById('estado-categorias-wrap').classList.toggle('hidden', estadoVista !== 'categorias');
   document.getElementById('estado-lista-wrap').classList.toggle('hidden', estadoVista !== 'lista');
   document.getElementById('estado-tareas-wrap').classList.toggle('hidden', estadoVista !== 'tareas');
+  document.getElementById('estado-hidrolavado-wrap').classList.toggle('hidden', estadoVista !== 'hidrolavado');
   if (estadoVista === 'categorias') renderEstadoCategorias();
   if (estadoVista === 'lista') renderEstadoLista();
   if (estadoVista === 'tareas') renderEstadoTareas();
+  if (estadoVista === 'hidrolavado') renderEstadoHidrolavado();
 }
 
 function renderEstadoSection() {
