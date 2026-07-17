@@ -2,6 +2,9 @@
    OTs App — Historial SAP · UI + carga + modal injection
    ═══════════════════════════════════════════════════════ */
 
+/* ── Selección múltiple para cambio de estado en lote ────── */
+let otsSelected = new Set();
+
 /* ── Init: cargar desde servidor si localStorage está vacío ── */
 async function initOTsFromServer() {
   if (getOTs().length > 0) return;  // ya hay datos locales
@@ -107,11 +110,25 @@ function renderOTsSection() {
         <button class="ots-export-btn"       onclick="exportOTsExcel()">⬇ Excel</button>
       </div>
 
+      <!-- Barra de cambio de estado en lote -->
+      <div class="ots-bulk-bar hidden" id="ots-bulk-bar">
+        <span id="ots-bulk-count"></span>
+        <div class="ots-bulk-actions">
+          <span class="ots-bulk-label">Cambiar estado a:</span>
+          <button class="ots-badge ots-badge-urgente ots-bulk-estado-btn"    data-estado="urgente">🔴 Urgente</button>
+          <button class="ots-badge ots-badge-correctivo ots-bulk-estado-btn" data-estado="correctivo">🟠 Correctivo sugerido</button>
+          <button class="ots-badge ots-badge-seguimiento ots-bulk-estado-btn" data-estado="seguimiento">🟡 Seguimiento</button>
+          <button class="ots-badge ots-badge-ok ots-bulk-estado-btn"        data-estado="ok">🟢 OK</button>
+          <button class="ots-filter-clear-btn" id="ots-bulk-clear">✕ Deseleccionar</button>
+        </div>
+      </div>
+
       <!-- Tabla -->
       <div class="ots-table-wrap">
         <table class="ots-table">
           <thead>
             <tr>
+              <th style="width:32px"><input type="checkbox" id="otsSelectAll" title="Seleccionar todas las filas visibles"></th>
               <th>Equipo</th>
               <th>Tipo</th>
               <th>OT</th>
@@ -159,6 +176,26 @@ function renderOTsSection() {
         if (el) { el.value = card.dataset.tipo; renderOTsTable(); }
       });
     });
+
+    const selectAll = document.getElementById('otsSelectAll');
+    if (selectAll) {
+      selectAll.addEventListener('change', function () {
+        const visibles = getFilteredOTs();
+        visibles.forEach(o => {
+          const key = otsKeyOf(o);
+          if (this.checked) otsSelected.add(key); else otsSelected.delete(key);
+        });
+        renderOTsTable();
+      });
+    }
+    document.querySelectorAll('.ots-bulk-estado-btn').forEach(btn => {
+      btn.addEventListener('click', () => otsBulkSetEstado(btn.dataset.estado));
+    });
+    document.getElementById('ots-bulk-clear')?.addEventListener('click', () => {
+      otsSelected.clear();
+      renderOTsTable();
+    });
+
     renderOTsTable();
     renderOTsRecommendations();
   }
@@ -205,13 +242,20 @@ function clearOTsFilters() {
   renderOTsTable();
 }
 
+function otsKeyOf(o) { return String(o.ot_num || o.ot || ''); }
+
 function renderOTsTable() {
   const tbody = document.getElementById('otsTableBody');
   if (!tbody) return;
   const ots = getFilteredOTs().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
 
+  /* Limpiar de la selección las OTs que ya no están en el set filtrado/cargado */
+  const validKeys = new Set(getOTs().map(otsKeyOf));
+  [...otsSelected].forEach(k => { if (!validKeys.has(k)) otsSelected.delete(k); });
+
   if (ots.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="10" class="ots-empty-row">Sin resultados con los filtros aplicados.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="ots-empty-row">Sin resultados con los filtros aplicados.</td></tr>`;
+    renderOTsBulkBar();
     return;
   }
 
@@ -225,8 +269,10 @@ function renderOTsTable() {
     const gestionado = o.estado_manual
       ? `<span class="ots-gestionado-badge" title="${o.nota_manual||''}">✏ Gestionado</span>`
       : '';
+    const key = otsKeyOf(o);
     return `
       <tr class="ots-row" data-ot-idx="${i}" style="cursor:pointer">
+        <td><input type="checkbox" class="ots-row-check" data-otkey="${key}" ${otsSelected.has(key) ? 'checked' : ''}></td>
         <td><span class="ots-equipo-tag">${o.equipo}</span></td>
         <td><span class="ots-tipo-badge ${tm.cls}">${tm.emoji} ${tm.label}</span></td>
         <td><code class="ots-ot-code">${o.ot_num||o.ot||'—'}</code></td>
@@ -244,13 +290,60 @@ function renderOTsTable() {
     `;
   }).join('');
 
-  /* Clic en fila (no en el botón) → abre detalle */
+  /* Clic en fila (no en el botón ni el checkbox) → abre detalle */
   tbody.querySelectorAll('.ots-row').forEach((tr, i) => {
     tr.addEventListener('click', e => {
-      if (e.target.classList.contains('ots-ver-mas')) return;
+      if (e.target.classList.contains('ots-ver-mas') || e.target.classList.contains('ots-row-check')) return;
       openOTDetail(e, i);
     });
   });
+
+  /* Selección individual */
+  tbody.querySelectorAll('.ots-row-check').forEach(cb => {
+    cb.addEventListener('click', e => e.stopPropagation());
+    cb.addEventListener('change', () => {
+      const key = cb.dataset.otkey;
+      if (cb.checked) otsSelected.add(key); else otsSelected.delete(key);
+      updateOTsSelectAllState(ots);
+      renderOTsBulkBar();
+    });
+  });
+
+  updateOTsSelectAllState(ots);
+  renderOTsBulkBar();
+}
+
+/* ── Selección múltiple: checkbox "todas" + barra de estado en lote ── */
+function updateOTsSelectAllState(otsVisibles) {
+  const selectAll = document.getElementById('otsSelectAll');
+  if (!selectAll) return;
+  const visibles = otsVisibles || getFilteredOTs();
+  const keys = visibles.map(otsKeyOf);
+  const seleccionadasVisibles = keys.filter(k => otsSelected.has(k)).length;
+  selectAll.checked       = keys.length > 0 && seleccionadasVisibles === keys.length;
+  selectAll.indeterminate = seleccionadasVisibles > 0 && seleccionadasVisibles < keys.length;
+}
+
+function renderOTsBulkBar() {
+  const bar = document.getElementById('ots-bulk-bar');
+  if (!bar) return;
+  bar.classList.toggle('hidden', otsSelected.size === 0);
+  const countEl = document.getElementById('ots-bulk-count');
+  if (countEl) countEl.textContent = `${otsSelected.size} OT${otsSelected.size===1?'':'s'} seleccionada${otsSelected.size===1?'':'s'}`;
+}
+
+function otsBulkSetEstado(estado) {
+  if (!otsSelected.size) return;
+  let count = 0;
+  otsSelected.forEach(key => {
+    const ok = updateOTManual(key, { estado_manual: estado, fecha_revision: new Date().toISOString().slice(0,10) });
+    if (ok) count++;
+  });
+  const label = OTS_ESTADO_META[estado]?.label || estado;
+  showOTsToast(`✓ ${count} OT${count===1?'':'s'} actualizada${count===1?'':'s'} a "${label}". Usá "💾 Guardar permanentemente" para que persista.`, 'success');
+  otsSelected.clear();
+  renderOTsTable();
+  renderOTsRecommendations();
 }
 
 /* ── Modal de detalle de OT ─────────────────────────────── */

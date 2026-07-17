@@ -110,15 +110,21 @@ function detectTipoOT(otNombre) {
   return 'otro';
 }
 
+/* Frases de comentario/título que indican tarea administrativa o de
+   recorrida (no una falla real): siempre se clasifican como OK. */
+const FRASES_SIEMPRE_OK = [
+  'seteo', 'se atienden reclamos', 'recorrida',
+  'reclamos varios', 'gama de tareas', 'damianich',
+];
+
 /* ── Análisis de comentario ─────────────────────────────── */
 function analyzeComment(text, motivo, tipo, otNombre) {
   const lower    = (text     || '').toLowerCase();
   const motivoLow= (motivo   || '').toLowerCase();
   const nombreLow= (otNombre || '').toLowerCase();
 
-  /* "Seteo de equipos" — tarea de configuración, no es una falla: siempre OK. */
-  if (lower.includes('seteo de equipos') || nombreLow.includes('seteo de equipos')) {
-    return { estado:'ok', accion:'Seteo de equipos — tarea de configuración, sin falla.' };
+  if (FRASES_SIEMPRE_OK.some(f => lower.includes(f) || nombreLow.includes(f))) {
+    return { estado:'ok', accion:'Tarea administrativa / de recorrida — sin falla detectada.' };
   }
 
   if (motivoLow.includes('no resuelto')) {
@@ -144,6 +150,9 @@ function analyzeComment(text, motivo, tipo, otNombre) {
       return { estado:'seguimiento', accion:`Indicador: "${kw}". Requiere monitoreo.` };
   }
 
+  if (tipo === 'correctivo' && !lower.trim()) {
+    return { estado:'ok', accion:'OT correctiva sin comentarios registrados — se asume resuelta.' };
+  }
   if (tipo === 'correctivo') {
     return { estado:'seguimiento', accion:'OT correctiva registrada. Verificar cierre y resolución.' };
   }
