@@ -71,6 +71,12 @@ function renderOTsSection() {
 
       <!-- Filtros -->
       <div class="ots-filters">
+        <select id="otsCategoriaFilter" class="ots-filter-sel">
+          <option value="">Todas las categorías</option>
+          ${OTS_CATEGORIAS.concat([OTS_CATEGORIA_SIN_CODIGO])
+            .filter(c => ots.some(o => detectCategoriaEquipo(o.equipo).id === c.id))
+            .map(c=>`<option value="${c.id}">${c.label}</option>`).join('')}
+        </select>
         <select id="otsEquipoFilter"  class="ots-filter-sel">
           <option value="">Todos los equipos</option>
           ${equiposList.map(e=>`<option value="${e}">${e}</option>`).join('')}
@@ -137,7 +143,7 @@ function renderOTsSection() {
   if (fileInput) fileInput.addEventListener('change', handleOTsFile);
 
   if (ots.length > 0) {
-    ['otsEquipoFilter','otsTipoFilter','otsTecnicoFilter','otsEstadoFilter','otsFechaDesde','otsFechaHasta'].forEach(id => {
+    ['otsCategoriaFilter','otsEquipoFilter','otsTipoFilter','otsTecnicoFilter','otsEstadoFilter','otsFechaDesde','otsFechaHasta'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('change', renderOTsTable);
     });
@@ -176,12 +182,14 @@ function otsStatCard(value, label, color, icon, estado, tipo) {
 /* ── Tabla ─────────────────────────────────────────────── */
 function getFilteredOTs() {
   let ots = getOTs();
+  const categoria = document.getElementById('otsCategoriaFilter')?.value;
   const equipo = document.getElementById('otsEquipoFilter')?.value;
   const tipo   = document.getElementById('otsTipoFilter')?.value;
   const tecnico= document.getElementById('otsTecnicoFilter')?.value;
   const estado = document.getElementById('otsEstadoFilter')?.value;
   const desde  = document.getElementById('otsFechaDesde')?.value;
   const hasta  = document.getElementById('otsFechaHasta')?.value;
+  if (categoria) ots = ots.filter(o => detectCategoriaEquipo(o.equipo).id === categoria);
   if (equipo)  ots = ots.filter(o => o.equipo === equipo);
   if (tipo)    ots = ots.filter(o => o.tipo   === tipo);
   if (tecnico) ots = ots.filter(o => o.tecnico=== tecnico);
@@ -192,7 +200,7 @@ function getFilteredOTs() {
 }
 
 function clearOTsFilters() {
-  ['otsEquipoFilter','otsTipoFilter','otsTecnicoFilter','otsEstadoFilter','otsFechaDesde','otsFechaHasta']
+  ['otsCategoriaFilter','otsEquipoFilter','otsTipoFilter','otsTecnicoFilter','otsEstadoFilter','otsFechaDesde','otsFechaHasta']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
   renderOTsTable();
 }

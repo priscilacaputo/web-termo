@@ -292,8 +292,8 @@ function renderEstadoStats() {
   });
 }
 
-/* ─── Render: fila de equipo (compartida por categorías y lista) ── */
-function estadoRenderFilaEquipo(e) {
+/* ─── Render: fila de equipo (compartida por categorías, lista e hidrolavado) ── */
+function estadoRenderFilaEquipo(e, extraBadgeHtml) {
   const est = estadoDe(e.equipo);
   const meta = ESTADO_META[est];
   const manual = estadoEsManual(e.equipo);
@@ -324,6 +324,7 @@ function estadoRenderFilaEquipo(e) {
         <span class="estado-eq-cod">${e.equipo}</span>
         <span class="estado-eq-denom" title="${e.denominacion}">${e.denominacion || '—'}</span>
       </div>
+      ${extraBadgeHtml || ''}
       <span class="estado-badge" style="background:${meta.color}18;color:${meta.color};border:1px solid ${meta.color}40">${meta.emoji} ${meta.label}${manual ? ' · manual' : ''}</span>
       ${comentarios.length ? `<span class="estado-comment-count">💬 ${comentarios.length}</span>` : ''}
       <button type="button" class="estado-ficha-btn" data-equipo="${e.equipo}" data-cat="${e.categoriaId}">📄 Ficha</button>
@@ -519,7 +520,7 @@ function renderEstadoHidrolavado() {
   const filas = equipos.map(e => {
     const ultimaFecha = hidroIdx[e.equipo] || null;
     const meses = estadoMesesDesde(ultimaFecha);
-    return { ...e, ultimaFecha, vencido: meses > ESTADO_HIDRO_MESES };
+    return { ...e, categoriaId: 'aac', ultimaFecha, vencido: meses > ESTADO_HIDRO_MESES };
   }).sort((a, b) => {
     if (a.vencido !== b.vencido) return a.vencido ? -1 : 1;
     return (a.ultimaFecha || '').localeCompare(b.ultimaFecha || '');
@@ -527,6 +528,13 @@ function renderEstadoHidrolavado() {
 
   const vencidos = filas.filter(f => f.vencido);
   const mostrar = estadoHidroMostrarTodos ? filas : vencidos;
+
+  const filasHtml = mostrar.map(f => {
+    const fechaTxt = f.ultimaFecha ? new Date(f.ultimaFecha + 'T00:00:00').toLocaleDateString('es-AR') : 'Nunca';
+    const color = f.vencido ? '#dc2626' : '#10b981';
+    const hidroChip = `<span class="estado-badge" style="background:${color}18;color:${color};border:1px solid ${color}40" title="Última OT de hidrolavado registrada">🚿 ${f.vencido ? 'Vencido' : 'Al día'} · ${fechaTxt}</span>`;
+    return estadoRenderFilaEquipo(f, hidroChip);
+  }).join('');
 
   wrap.innerHTML = `
     <div class="estado-hidro-summary">
@@ -537,32 +545,13 @@ function renderEstadoHidrolavado() {
       </div>
       <button type="button" class="prog-btn prog-btn-primary" id="estado-hidro-toggle-vencidos">${estadoHidroMostrarTodos ? 'Ver solo pendientes' : `Ver los ${filas.length} equipos (incluye al día)`}</button>
     </div>
-    <div class="table-card">
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Equipo</th><th>Denominación</th><th>Tipo</th><th>Zona</th><th>Última hidrolavado</th><th>Estado</th><th></th></tr></thead>
-          <tbody>
-            ${mostrar.map(f => `
-              <tr>
-                <td><span class="estado-eq-cod">${f.equipo}</span></td>
-                <td>${f.denominacion || '—'}</td>
-                <td>${f.tipo}</td>
-                <td>${(typeof aacZona === 'function') ? aacZona(f.ubicacion) : ''}</td>
-                <td>${f.ultimaFecha ? new Date(f.ultimaFecha + 'T00:00:00').toLocaleDateString('es-AR') : 'Nunca registrado'}</td>
-                <td>${f.vencido
-                  ? '<span class="estado-badge" style="background:#dc262618;color:#dc2626;border:1px solid #dc262640">🔴 Vencido</span>'
-                  : '<span class="estado-badge" style="background:#10b98118;color:#10b981;border:1px solid #10b98140">🟢 Al día</span>'}</td>
-                <td><button type="button" class="estado-ficha-btn" data-equipo="${f.equipo}" data-cat="aac">📄 Ficha</button></td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
+    <div class="estado-cat-card">
+      <div class="estado-cat-body">
+        ${filasHtml || '<p class="estado-guardia-empty">No hay equipos para mostrar.</p>'}
       </div>
-      ${!mostrar.length ? '<p class="estado-guardia-empty">No hay equipos para mostrar.</p>' : ''}
     </div>`;
 
-  wrap.querySelectorAll('.estado-ficha-btn').forEach(btn => {
-    btn.addEventListener('click', () => estadoAbrirFicha(btn.dataset.cat, btn.dataset.equipo));
-  });
+  estadoWireFilas(wrap);
   const toggleBtn = document.getElementById('estado-hidro-toggle-vencidos');
   if (toggleBtn) toggleBtn.addEventListener('click', () => {
     estadoHidroMostrarTodos = !estadoHidroMostrarTodos;

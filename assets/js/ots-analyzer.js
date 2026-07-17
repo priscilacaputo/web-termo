@@ -69,6 +69,29 @@ function extractTecnicoName(numPersonal) {
   return m ? m[1].trim() : s.trim();
 }
 
+/* ── Categoría de equipo (según prefijo del código) ─────── */
+const OTS_CATEGORIAS = [
+  { id: 'aac',         label: '❄️ Equipos de Aire',      prefixes: ['AAC', 'UTA'] },
+  { id: 'meq',         label: '🧳 Patio de Valijas',     prefixes: ['MEQ'] },
+  { id: 'mangas',      label: '🛬 Mangas de Embarque',   prefixes: ['MAN'] },
+  { id: 'ascensores',  label: '🛗 Ascensores',           prefixes: ['MAS'] },
+  { id: 'escaleras',   label: '🪜 Escaleras Mecánicas',  prefixes: ['MES'] },
+  { id: 'extractores', label: '💨 Extractores',          prefixes: ['EMO'] },
+  { id: 'persianas',   label: '🪟 Persianas de Gatera',  prefixes: ['MCD'] },
+  { id: 'cortinas',    label: '🌬️ Cortinas de Aire',    prefixes: ['ACO'] },
+  { id: 'bombas',      label: '💧 Bombas',                prefixes: ['MBO'] },
+  { id: 'puertas',     label: '🚪 Puertas Automáticas',  prefixes: ['PPA'] },
+  { id: 'flota',       label: '🚐 Flota Vehicular',      prefixes: ['AVO'] },
+  { id: 'ecas',        label: '🔥 Incendios (ECAs)',     prefixes: ['ECA', 'ECC'] },
+  { id: 'otros',       label: '⚙️ Otros Equipos',        prefixes: ['CMA', 'ARC', 'CTA'] },
+];
+const OTS_CATEGORIA_SIN_CODIGO = { id: 'sin_codigo', label: '📎 Otros / Sin código', prefixes: [] };
+
+function detectCategoriaEquipo(equipo) {
+  const eq = String(equipo || '').toUpperCase();
+  return OTS_CATEGORIAS.find(c => c.prefixes.some(p => eq.startsWith(p))) || OTS_CATEGORIA_SIN_CODIGO;
+}
+
 function detectTipoOT(otNombre) {
   const up = String(otNombre || '').toUpperCase().trimStart();
   if (up.startsWith('MP ') || up === 'MP' ||
