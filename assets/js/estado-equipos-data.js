@@ -16,7 +16,19 @@ const ESTADO_OVERRIDES = [
       }
     ],
     "hidrolavadoManual": "2026-07-01"
+  },
+  {
+    "equipo": "AAC9430",
+    "estadoManual": null,
+    "comentarios": [
+      {
+        "autor": "Anónimo",
+        "texto": "Equipo nuevo",
+        "fecha": "2026-07-17T17:05:48.952Z"
+      }
+    ]
   }
 ];
+
 
 
