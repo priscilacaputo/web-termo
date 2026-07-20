@@ -177,11 +177,13 @@ function progHandleFile(file) {
 
       const ALIASES = {
         'equipo': 'equipo', 'código de equipo': 'equipo', 'codigo de equipo': 'equipo',
+        'objeto técnico': 'objeto_tecnico', 'objeto tecnico': 'objeto_tecnico',
         'denominación': 'denominacion', 'denominacion': 'denominacion',
         'denominación de objeto técnico': 'denominacion', 'denominacion de objeto tecnico': 'denominacion',
         'descripción': 'denominacion', 'descripcion': 'denominacion',
         'texto breve de objeto': 'denominacion',
         'tipo': 'tipo', 'clase de equipo': 'tipo',
+        'ubicación técnica': 'ubicacion_tecnica', 'ubicacion tecnica': 'ubicacion_tecnica',
         'orden': 'ot_num', 'ot': 'ot_num', 'n° de orden': 'ot_num', 'número de orden': 'ot_num',
       };
 
@@ -191,12 +193,25 @@ function progHandleFile(file) {
           const key = ALIASES[String(header).trim().toLowerCase()];
           if (key) obj[key] = (val === null || val === undefined) ? '' : String(val).trim();
         });
+        /* "Objeto técnico" de SAP suele venir como "Denominación (CÓDIGO)".
+           Es la fuente de equipo que pide este formato — tiene prioridad
+           sobre una columna "Equipo" suelta si ambas están presentes. */
+        if (obj.objeto_tecnico) {
+          const codigo = (typeof extractEquipoCode === 'function')
+            ? extractEquipoCode(obj.objeto_tecnico)
+            : obj.objeto_tecnico.toUpperCase();
+          if (codigo) obj.equipo = codigo;
+          if (!obj.denominacion && typeof extractEquipoDesc === 'function') {
+            const desc = extractEquipoDesc(obj.objeto_tecnico);
+            if (desc) obj.denominacion = desc;
+          }
+        }
         return obj;
       }).filter(o => String(o.equipo || '').trim() !== '');
 
       if (!parsedRows.length) {
         const found = Object.keys(rows[0] || {}).join(', ');
-        progToast(`❌ No encontré la columna "Equipo" en el archivo.\nColumnas encontradas: ${found}`, 'error');
+        progToast(`❌ No encontré la columna "Objeto técnico" ni "Equipo" en el archivo.\nColumnas encontradas: ${found}`, 'error');
         return;
       }
 
@@ -210,22 +225,23 @@ function progHandleFile(file) {
 
       parsedRows.forEach((r, i) => {
         const equipo = String(r.equipo).trim().toUpperCase();
-        const key  = equipo + '|' + (r.ot_num || '');
+        const otNum = (typeof extractOTNum === 'function' && r.ot_num) ? extractOTNum(r.ot_num) : (r.ot_num || '');
+        const key  = equipo + '|' + otNum;
         const prev = existingByKey[key];
         const rec  = idx[equipo];
         const denominacion = r.denominacion || (rec && rec.denominacion) || (prev && prev.denominacion) || '';
         const { regla, turno } = progClasificar(equipo, denominacion, r.tipo);
         const esAltura = (typeof ALTURA_EQUIPOS !== 'undefined') && ALTURA_EQUIPOS.has(equipo);
-        const zona = progZonaEquipo(equipo, rec && rec.ubicacion);
+        const zona = progZonaEquipo(equipo, (rec && rec.ubicacion) || r.ubicacion_tecnica);
 
         if (prev) {
-          const item = { ...prev, equipo, denominacion, ot_num: r.ot_num || '', regla, turno, esAltura, zona };
+          const item = { ...prev, equipo, denominacion, ot_num: otNum, regla, turno, esAltura, zona };
           merged.push(item);
           yaAsignados.push(item);
         } else {
           const item = {
             id: equipo + '#' + i + '#' + Date.now(),
-            equipo, denominacion, ot_num: r.ot_num || '',
+            equipo, denominacion, ot_num: otNum,
             regla, turno, esAltura, zona,
             guardia: null,
           };
