@@ -69,6 +69,29 @@ function extractTecnicoName(numPersonal) {
   return m ? m[1].trim() : s.trim();
 }
 
+/* ── Categoría de equipo (según prefijo del código) ─────── */
+const OTS_CATEGORIAS = [
+  { id: 'aac',         label: '❄️ Equipos de Aire',      prefixes: ['AAC', 'UTA'] },
+  { id: 'meq',         label: '🧳 Patio de Valijas',     prefixes: ['MEQ'] },
+  { id: 'mangas',      label: '🛬 Mangas de Embarque',   prefixes: ['MAN'] },
+  { id: 'ascensores',  label: '🛗 Ascensores',           prefixes: ['MAS'] },
+  { id: 'escaleras',   label: '🪜 Escaleras Mecánicas',  prefixes: ['MES'] },
+  { id: 'extractores', label: '💨 Extractores',          prefixes: ['EMO'] },
+  { id: 'persianas',   label: '🪟 Persianas de Gatera',  prefixes: ['MCD'] },
+  { id: 'cortinas',    label: '🌬️ Cortinas de Aire',    prefixes: ['ACO'] },
+  { id: 'bombas',      label: '💧 Bombas',                prefixes: ['MBO'] },
+  { id: 'puertas',     label: '🚪 Puertas Automáticas',  prefixes: ['PPA'] },
+  { id: 'flota',       label: '🚐 Flota Vehicular',      prefixes: ['AVO'] },
+  { id: 'ecas',        label: '🔥 Incendios (ECAs)',     prefixes: ['ECA', 'ECC'] },
+  { id: 'otros',       label: '⚙️ Otros Equipos',        prefixes: ['CMA', 'ARC', 'CTA'] },
+];
+const OTS_CATEGORIA_SIN_CODIGO = { id: 'sin_codigo', label: '📎 Otros / Sin código', prefixes: [] };
+
+function detectCategoriaEquipo(equipo) {
+  const eq = String(equipo || '').toUpperCase();
+  return OTS_CATEGORIAS.find(c => c.prefixes.some(p => eq.startsWith(p))) || OTS_CATEGORIA_SIN_CODIGO;
+}
+
 function detectTipoOT(otNombre) {
   const up = String(otNombre || '').toUpperCase().trimStart();
   if (up.startsWith('MP ') || up === 'MP' ||
@@ -87,10 +110,22 @@ function detectTipoOT(otNombre) {
   return 'otro';
 }
 
+/* Frases de comentario/título que indican tarea administrativa o de
+   recorrida (no una falla real): siempre se clasifican como OK. */
+const FRASES_SIEMPRE_OK = [
+  'seteo', 'se atienden reclamos', 'recorrida',
+  'reclamos varios', 'gama de tareas', 'damianich',
+];
+
 /* ── Análisis de comentario ─────────────────────────────── */
-function analyzeComment(text, motivo, tipo) {
-  const lower    = (text   || '').toLowerCase();
-  const motivoLow= (motivo || '').toLowerCase();
+function analyzeComment(text, motivo, tipo, otNombre) {
+  const lower    = (text     || '').toLowerCase();
+  const motivoLow= (motivo   || '').toLowerCase();
+  const nombreLow= (otNombre || '').toLowerCase();
+
+  if (FRASES_SIEMPRE_OK.some(f => lower.includes(f) || nombreLow.includes(f))) {
+    return { estado:'ok', accion:'Tarea administrativa / de recorrida — sin falla detectada.' };
+  }
 
   if (motivoLow.includes('no resuelto')) {
     return { estado:'urgente',    accion:'No resuelto según SAP. Requiere atención inmediata.' };
@@ -115,6 +150,9 @@ function analyzeComment(text, motivo, tipo) {
       return { estado:'seguimiento', accion:`Indicador: "${kw}". Requiere monitoreo.` };
   }
 
+  if (tipo === 'correctivo' && !lower.trim()) {
+    return { estado:'ok', accion:'OT correctiva sin comentarios registrados — se asume resuelta.' };
+  }
   if (tipo === 'correctivo') {
     return { estado:'seguimiento', accion:'OT correctiva registrada. Verificar cierre y resolución.' };
   }
@@ -242,7 +280,7 @@ function decompressOT(r) {
   return {
     ot_num:      r.n,
     ot:          r.n,
-    ot_nombre:   '',
+    ot_nombre:   r.on || '',
     tipo:        r.t === 'p' ? 'preventivo' : r.t === 'c' ? 'correctivo' : 'otro',
     equipo:      r.e,
     equipo_desc: '',

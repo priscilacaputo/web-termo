@@ -1,4 +1,5 @@
-/* UTA Specifications - Extracted from AA UTAs Ed IV y N3.xlsx */
+/* Especificaciones tecnicas de equipos de Aire — UTAs (AA UTAs Ed IV y N3.xlsx)
+   + Roof Tops y otros equipos con filtro/correa (Filtros Aire 2020.xlsx) */
 
 const UTA_SPECS = {
   "AAC2119": {
@@ -422,330 +423,86 @@ const UTA_SPECS = {
     "TRH": 150,
     "Servicio a": "Utas Ed.IV y núcleos"
   },
-  "AAC2261": {
-    "Equipo": "AAC2261",
-    "Codigo": "1A LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2262": {
-    "Equipo": "AAC2262",
-    "Codigo": "1B LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2271": {
-    "Equipo": "AAC2271",
-    "Codigo": "1C LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2272": {
-    "Equipo": "AAC2272",
-    "Codigo": "2A LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2263": {
-    "Equipo": "AAC2263",
-    "Codigo": "2B LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC047": {
-    "Equipo": "AAC047",
-    "Codigo": "2C LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2064": {
-    "Equipo": "AAC2064",
-    "Codigo": "3A LENNOX",
-    "Filtros aire": "500x500x50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2065": {
-    "Equipo": "AAC2065",
-    "Codigo": "3B LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2264": {
-    "Equipo": "AAC2264",
-    "Codigo": "5A LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2265": {
-    "Equipo": "AAC2265",
-    "Codigo": "5B LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2266": {
-    "Equipo": "AAC2266",
-    "Codigo": "6A LENNOX",
-    "Filtros aire": "500x500x50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2267": {
-    "Equipo": "AAC2267",
-    "Codigo": "5D LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2067": {
-    "Equipo": "AAC2067",
-    "Codigo": "6B LENNOX",
-    "Filtros aire": "500x500x50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2069": {
-    "Equipo": "AAC2069",
-    "Codigo": "6D LENNOX",
-    "Filtros aire": "500x500x50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2070": {
-    "Equipo": "AAC2070",
-    "Codigo": "6E LENNOX",
-    "Filtros aire": "500x500x50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2717": {
-    "Equipo": "AAC2717",
-    "Codigo": "8A LENNOX 20 TN",
-    "Filtros aire": "600x600x50",
-    "Cantidad de filtros": 6
-  },
-  "AAC2718": {
-    "Equipo": "AAC2718",
-    "Codigo": "7B LENNOX 20 TN",
-    "Filtros aire": "600x600x50",
-    "Cantidad de filtros": 6
-  },
-  "AAC2719": {
-    "Equipo": "AAC2719",
-    "Codigo": "8B LENNOX 20 TN",
-    "Filtros aire": "600x600x50",
-    "Cantidad de filtros": 6
-  },
-  "AAC2273": {
-    "Equipo": "AAC2273",
-    "Codigo": "9A LENNOX 20 TN",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC069": {
-    "Equipo": "AAC069",
-    "Codigo": "9B LENNOX 20 TN",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2274": {
-    "Equipo": "AAC2274",
-    "Codigo": "9C LENNOX 20 TN",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2071": {
-    "Equipo": "AAC2071",
-    "Codigo": "10 LENNOX 20 TN",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC074": {
-    "Equipo": "AAC074",
-    "Codigo": "11B",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC075": {
-    "Equipo": "AAC075",
-    "Codigo": "11C",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC3477": {
-    "Equipo": "AAC3477",
-    "Codigo": "12A TRANE",
-    "Filtros aire": "600X500X50",
-    "Cantidad de filtros": 4
-  },
-  "AAC3478": {
-    "Equipo": "AAC3478",
-    "Codigo": "13A TRANE",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 8
-  },
-  "AAC3479": {
-    "Equipo": "AAC3479",
-    "Codigo": "13B TRANE",
-    "Filtros aire": "500X600X50",
-    "Cantidad de filtros": 4
-  },
-  "AAC2195": {
-    "Equipo": "AAC2195",
-    "Codigo": "B1  BGH",
-    "Filtros aire": "LAVABLES"
-  },
-  "AAC2196": {
-    "Equipo": "AAC2196",
-    "Codigo": "B2  BGH",
-    "Filtros aire": "LAVABLES"
-  },
-  "AAC2197": {
-    "Equipo": "AAC2197",
-    "Codigo": "B5  BGH ",
-    "Filtros aire": "LAVABLES"
-  },
-  "AAC2198": {
-    "Equipo": "AAC2198",
-    "Codigo": "B6  BGH",
-    "Filtros aire": "LAVABLES"
-  },
-  "AAC2078": {
-    "Equipo": "AAC2078",
-    "Codigo": "LG NORTE",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 2
-  },
-  "AAC2079": {
-    "Equipo": "AAC2079",
-    "Codigo": "LG SUR",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 2
-  },
-  "AAC092": {
-    "Equipo": "AAC092",
-    "Codigo": "C2 ",
-    "Filtros aire": "500x500x50                                                                                     500x400x50",
-    "Cantidad de filtros": "4 + 4"
-  },
-  "AAC097": {
-    "Equipo": "AAC097",
-    "Codigo": "C7",
-    "Filtros aire": "500x400x20",
-    "Cantidad de filtros": 4
-  },
-  "AAC183": {
-    "Equipo": "AAC183",
-    "Codigo": "C14 LENNOX",
-    "Filtros aire": "570x550x20",
-    "Cantidad de filtros": 1
-  },
-  "AAC105": {
-    "Equipo": "AAC105",
-    "Codigo": "C15",
-    "Filtros aire": "400x650x50",
-    "Cantidad de filtros": 2
-  },
-  "AAC107": {
-    "Equipo": "AAC107",
-    "Codigo": "C17 ",
-    "Filtros aire": "400x500x50",
-    "Cantidad de filtros": 4
-  },
-  "AAC108": {
-    "Equipo": "AAC108",
-    "Codigo": "C18 LENNOX",
-    "Filtros aire": "600x420x50",
-    "Cantidad de filtros": 4
-  },
-  "AAC2072": {
-    "Equipo": "AAC2072",
-    "Codigo": "G3 LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2073": {
-    "Equipo": "AAC2073",
-    "Codigo": "G4 LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2074": {
-    "Equipo": "AAC2074",
-    "Codigo": "G5 LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2734": {
-    "Equipo": "AAC2734",
-    "Codigo": "G6 LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2735": {
-    "Equipo": "AAC2735",
-    "Codigo": "G7 LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2075": {
-    "Equipo": "AAC2075",
-    "Codigo": "G8 LENNOX",
-    "Filtros aire": "500X500X50",
-    "Cantidad de filtros": 12
-  },
-  "AAC2102": {
-    "Equipo": "AAC2102",
-    "Codigo": "WESTRIC 20 TN",
-    "Filtros aire": "600X600X50",
-    "Cantidad de filtros": 3
-  },
-  "AAC2103": {
-    "Equipo": "AAC2103",
-    "Codigo": "WESTRIC 30 TN",
-    "Filtros aire": "600X600X50",
-    "Cantidad de filtros": 3
-  },
-  "AAC3480": {
-    "Equipo": "AAC3480",
-    "Codigo": "1Y TRANE",
-    "Filtros aire": "620X500X50",
-    "Cantidad de filtros": 8
-  },
-  "AAC3481": {
-    "Equipo": "AAC3481",
-    "Codigo": "2Y TRANE",
-    "Filtros aire": "620X500X50",
-    "Cantidad de filtros": 8
-  },
-  "AAC3482": {
-    "Equipo": "AAC3482",
-    "Codigo": "3Y TRANE",
-    "Filtros aire": "620X500X50",
-    "Cantidad de filtros": 8
-  },
-  "AAC2076": {
-    "Equipo": "AAC2076",
-    "Codigo": "A5 LENNOX",
-    "Filtros aire": "600X600X50",
-    "Cantidad de filtros": 6
-  },
-  "AAC2077": {
-    "Equipo": "AAC2077",
-    "Codigo": "A6 LENNOX",
-    "Filtros aire": "600X600X50",
-    "Cantidad de filtros": 6
-  },
-  "AAC2736": {
-    "Equipo": "AAC2736",
-    "Codigo": "MI IDEA VIALIDAD",
-    "Filtros aire": "620X500X50",
-    "Cantidad de filtros": 3
-  },
-  "AAC3466": {
-    "Equipo": "AAC3466",
-    "Codigo": "TRANNE CHECK IN",
-    "Filtros aire": 22222,
-    "Cantidad de filtros": "=SUBTOTAL(9,S69:S123)"
-  },
-  "AAC3504": {
-    "Equipo": "AAC3504",
-    "Codigo": "TRANE CABOTAGE",
-    "Filtros aire": "620x400x20",
-    "Cantidad de filtros": 4
-  }
+  "AAC2261": {"Equipo": "AAC2261", "Codigo": "1A LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC2262": {"Equipo": "AAC2262", "Codigo": "1B LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC2271": {"Equipo": "AAC2271", "Codigo": "1C LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC2272": {"Equipo": "AAC2272", "Codigo": "2A LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC2263": {"Equipo": "AAC2263", "Codigo": "2B LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC2064": {"Equipo": "AAC2064", "Codigo": "3A LENNOX", "Filtros aire": "500x500x50 (12)"},
+  "AAC2065": {"Equipo": "AAC2065", "Codigo": "3B LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC2264": {"Equipo": "AAC2264", "Codigo": "5A LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC2265": {"Equipo": "AAC2265", "Codigo": "5B LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC2266": {"Equipo": "AAC2266", "Codigo": "5C LENNOX", "Filtros aire": "500X500X50 (12)", "Servicio a": "La planilla original repite este codigo AAC tambien para \"6A LENNOX\" (revisar cual corresponde)."},
+  "AAC2267": {"Equipo": "AAC2267", "Codigo": "5D LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC2067": {"Equipo": "AAC2067", "Codigo": "6B LENNOX", "Filtros aire": "500x500x50 (12)"},
+  "AAC2068": {"Equipo": "AAC2068", "Codigo": "6C LENNOX", "Filtros aire": "500x500x50 (12)"},
+  "AAC2069": {"Equipo": "AAC2069", "Codigo": "6D LENNOX", "Filtros aire": "500x500x50 (12)"},
+  "AAC2070": {"Equipo": "AAC2070", "Codigo": "6E LENNOX", "Filtros aire": "500x500x50 (12)"},
+  "AAC2717": {"Equipo": "AAC2717", "Codigo": "7A LENNOX 20 TN", "Filtros aire": "600x600x50 (6)", "Servicio a": "La planilla original repite este codigo AAC tambien para \"8A LENNOX 20 TN\" (revisar cual corresponde)."},
+  "AAC2718": {"Equipo": "AAC2718", "Codigo": "7B LENNOX 20 TN", "Filtros aire": "600x600x50 (6)"},
+  "AAC2719": {"Equipo": "AAC2719", "Codigo": "8B LENNOX 20 TN", "Filtros aire": "600x600x50 (6)"},
+  "AAC2273": {"Equipo": "AAC2273", "Codigo": "9A LENNOX 20 TN", "Filtros aire": "500X500X50 (12)"},
+  "AAC2274": {"Equipo": "AAC2274", "Codigo": "9C LENNOX 20 TN", "Filtros aire": "500X500X50 (12)"},
+  "AAC2071": {"Equipo": "AAC2071", "Codigo": "10 LENNOX 20 TN", "Filtros aire": "500X500X50 (12)"},
+  "AAC3833": {"Equipo": "AAC3833", "Codigo": "4A", "Filtros aire": "500X500X50 (12)"},
+  "AAC3834": {"Equipo": "AAC3834", "Codigo": "4B", "Filtros aire": "500X500X50 (12)"},
+  "AAC3836": {"Equipo": "AAC3836", "Codigo": "11A", "Filtros aire": "500X500X50 (12)"},
+  "AAC3477": {"Equipo": "AAC3477", "Codigo": "12A TRANE", "Filtros aire": "600X500X50 (4); 500X500X50 (4)"},
+  "AAC3478": {"Equipo": "AAC3478", "Codigo": "13A TRANE", "Filtros aire": "500X500X50 (8); 500X400X50 (4)"},
+  "AAC3479": {"Equipo": "AAC3479", "Codigo": "13B TRANE", "Filtros aire": "500X600X50 (4); 500X500X50 (4)"},
+  "AAC2078": {"Equipo": "AAC2078", "Codigo": "LG NORTE", "Filtros aire": "500X500X50 (2)"},
+  "AAC2079": {"Equipo": "AAC2079", "Codigo": "LG SUR", "Filtros aire": "500X500X50 (2)"},
+  "AAC2072": {"Equipo": "AAC2072", "Codigo": "G3 LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC2073": {"Equipo": "AAC2073", "Codigo": "G4 LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC2074": {"Equipo": "AAC2074", "Codigo": "G5 LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC2734": {"Equipo": "AAC2734", "Codigo": "G6 LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC2735": {"Equipo": "AAC2735", "Codigo": "G7 LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC2075": {"Equipo": "AAC2075", "Codigo": "G8 LENNOX", "Filtros aire": "500X500X50 (12)"},
+  "AAC3480": {"Equipo": "AAC3480", "Codigo": "1Y TRANE", "Filtros aire": "620X500X50 (8)"},
+  "AAC3481": {"Equipo": "AAC3481", "Codigo": "2Y TRANE", "Filtros aire": "620X500X50 (8)"},
+  "AAC3482": {"Equipo": "AAC3482", "Codigo": "3Y TRANE", "Filtros aire": "620X500X50 (8)"},
+  "AAC2076": {"Equipo": "AAC2076", "Codigo": "A5 LENNOX", "Filtros aire": "600X600X50 (6)"},
+  "AAC2077": {"Equipo": "AAC2077", "Codigo": "A6 LENNOX", "Filtros aire": "600X600X50 (6)"},
+  "AAC3504": {"Equipo": "AAC3504", "Codigo": "TRANE CABOTAGE", "Filtros aire": "620x400x20 (4); 350X500X50 (2); 350X310X50 (2); 550X570X20 (1); 410X580X50 (3); 400X580X50 (3); 350X500X50 (3)"},
+  "AAC2116": {"Equipo": "AAC2116", "Codigo": "Roof Top N°1 Manga 3 - F/C Res.Eléct.-", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC2117": {"Equipo": "AAC2117", "Codigo": "Roof Top N°2 Manga 3 - F/C Res.Eléct.", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC2167": {"Equipo": "AAC2167", "Codigo": "Roof Top N°1 Manga 9 - F/C Res.Eléct.", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC2168": {"Equipo": "AAC2168", "Codigo": "Roof Top N°2 Manga 9 - F/C Res.Eléct.", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC2169": {"Equipo": "AAC2169", "Codigo": "Roof Top N°1 Manga 10 - F/C Res.Eléct.", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC2170": {"Equipo": "AAC2170", "Codigo": "Roof Top N°2 Manga 10 - F/C Res.Eléct.", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC2171": {"Equipo": "AAC2171", "Codigo": "Roof Top N°1 Manga 11 - F/C Res.Eléct.", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC2172": {"Equipo": "AAC2172", "Codigo": "Roof Top N°2 Manga 11 - F/C Res.Eléct.", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC2173": {"Equipo": "AAC2173", "Codigo": "Roof Top N°1 Manga 12 - F/C Res.Eléct.", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC2174": {"Equipo": "AAC2174", "Codigo": "Roof Top N°2 Manga 12 - F/C Res.Eléct.", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC3820": {"Equipo": "AAC3820", "Codigo": "Roof Top Trane 7,5 Tr 4-1- Manga 4", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC3821": {"Equipo": "AAC3821", "Codigo": "Roof Top Trane 7,5 Tr 4-2. Manga 4", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC3822": {"Equipo": "AAC3822", "Codigo": "Roof Top Trane 7,5 Tr 5-1 - Manga 5", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC3823": {"Equipo": "AAC3823", "Codigo": "Roof Top Trane 7,5 Tr 5-2- Manga 5", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC3824": {"Equipo": "AAC3824", "Codigo": "Roof Top - F/C por Bomba. Manga 6", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC3825": {"Equipo": "AAC3825", "Codigo": "Roof Top - F/C por Bomba. Manga 6", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC3826": {"Equipo": "AAC3826", "Codigo": "Roof Top - F/C por Bomba. Manga 7", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC3827": {"Equipo": "AAC3827", "Codigo": "Roof Top - F/C por Bomba. Manga 7", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC3828": {"Equipo": "AAC3828", "Codigo": "Roof Top - F/C por Bomba-Manga 8", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC3829": {"Equipo": "AAC3829", "Codigo": "Roof Top - F/C por Bomba- Manga 8", "Filtros aire": "750X500X50 (2)", "Correas": "A35 (1)"},
+  "AAC3502": {"Equipo": "AAC3502", "Codigo": "Split N°1 - Sala Técnica 7", "Filtros aire": "620X400X20 (4)"},
+  "AAC3503": {"Equipo": "AAC3503", "Codigo": "Split N°2 - Sala Técnica 7", "Filtros aire": "620X400X20 (4)"},
+  "AAC3815": {"Equipo": "AAC3815", "Codigo": "Split N°3 - Sala Técnica 7", "Filtros aire": "620X400X20 (4)"},
+  "AAC3816": {"Equipo": "AAC3816", "Codigo": "Split N°4 - Sala Técnica 7", "Filtros aire": "620X400X20 (4)"},
+  "AAC047": {"Equipo": "AAC047", "Codigo": "2C LENNOX", "Filtros aire": "500X500X50 (12)", "Correas": "B80 (1)"},
+  "AAC069": {"Equipo": "AAC069", "Codigo": "9B LENNOX 20 TN", "Filtros aire": "500X500X50 (12)"},
+  "AAC074": {"Equipo": "AAC074", "Codigo": "11B", "Filtros aire": "500X500X50 (12)", "Correas": "B80 (1)"},
+  "AAC075": {"Equipo": "AAC075", "Codigo": "11C", "Filtros aire": "500X500X50 (12)", "Correas": "B80 (1)"},
+  "AAC2195": {"Equipo": "AAC2195", "Codigo": "B1  BGH", "Filtros aire": "LAVABLES"},
+  "AAC2196": {"Equipo": "AAC2196", "Codigo": "B2  BGH", "Filtros aire": "LAVABLES"},
+  "AAC2197": {"Equipo": "AAC2197", "Codigo": "B5  BGH", "Filtros aire": "LAVABLES"},
+  "AAC2198": {"Equipo": "AAC2198", "Codigo": "B6  BGH", "Filtros aire": "LAVABLES"},
+  "AAC092": {"Equipo": "AAC092", "Codigo": "C2", "Filtros aire": "500x500x50 | 500x400x50 (4 + 4)", "Correas": "B-36/37/38 (2)"},
+  "AAC097": {"Equipo": "AAC097", "Codigo": "C7", "Filtros aire": "500x400x20 (4)", "Correas": "A34 (1)"},
+  "AAC183": {"Equipo": "AAC183", "Codigo": "C14 LENNOX", "Filtros aire": "570x550x20 (1)", "Correas": "NO POSEE"},
+  "AAC105": {"Equipo": "AAC105", "Codigo": "C15", "Filtros aire": "400x650x50 (2)", "Correas": "A40 (1)"},
+  "AAC107": {"Equipo": "AAC107", "Codigo": "C17", "Filtros aire": "400x500x50 (4)", "Correas": "A47 (1)"},
+  "AAC108": {"Equipo": "AAC108", "Codigo": "C18 LENNOX", "Filtros aire": "600x420x50 (4)", "Correas": "B56 (1)"},
+  "AAC2102": {"Equipo": "AAC2102", "Codigo": "WESTRIC 20 TN", "Filtros aire": "600X600X50 (3); 600X450X50 (1); 500X450X50 (5)", "Correas": "B49 (1)"},
+  "AAC2103": {"Equipo": "AAC2103", "Codigo": "WESTRIC 30 TN", "Filtros aire": "600X600X50 (3); 600X450X50 (1); 500X450X50 (5)", "Correas": "B49 (1)"},
+  "AAC2736": {"Equipo": "AAC2736", "Codigo": "MI IDEA VIALIDAD", "Filtros aire": "620X500X50 (3)"}
 };

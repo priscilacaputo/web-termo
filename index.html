@@ -37,6 +37,14 @@
         <span class="nav-icon">👷</span>
         <span class="nav-label">Personal Mantenimiento Termomecánica - AEP</span>
       </li>
+      <li class="nav-item" data-page="programacion">
+        <span class="nav-icon">🗓️</span>
+        <span class="nav-label">Programación de OTs</span>
+      </li>
+      <li class="nav-item" data-page="estado">
+        <span class="nav-icon">🚦</span>
+        <span class="nav-label">Estado de Equipos</span>
+      </li>
 
       <li class="nav-section-label">Equipos e Instalaciones</li>
       <li class="nav-item" data-page="flota">
@@ -1188,9 +1196,11 @@
           <button class="aac-view-btn" data-view="table">☰ Tabla</button>
           <button class="aac-view-btn" data-view="planes">📋 Planes</button>
           <button class="aac-view-btn" data-view="planos">📄 Planos</button>
+          <button class="aac-view-btn" data-view="mapa">🗺️ Mapa</button>
         </div>
         <button class="altura-toggle-btn" id="aac-altura-btn" title="Filtrar equipos que requieren trabajo en altura">🏔 Altura</button>
         <button class="export-btn" id="aac-export-btn">⬇ Excel</button>
+        <a href="https://hvacsetpoint.vercel.app" target="_blank" rel="noopener" class="aac-hvac-link" title="Abrir HVAC Advisor — recomendación de setpoints, ventilación y diagnóstico">🧠 HVAC Advisor ↗</a>
         <span id="aac-result-count" class="puertas-result-count"></span>
       </div>
 
@@ -1264,6 +1274,21 @@
                 class="plano-iframe"
                 title="Plano Equipos de Aire AEP"
                 loading="lazy"></iframe>
+      </div>
+
+      <!-- Vista: Mapa interactivo -->
+      <div id="aac-mapa-wrap" class="hidden">
+        <div class="plano-toolbar">
+          <span class="plano-toolbar-title">🗺️ Mapa Interactivo de Equipos de Aire — AEP</span>
+        </div>
+        <div class="aac-edificio-tabs" id="aac-mapa-edificio-tabs"></div>
+        <p class="aac-mapa-hint">Pasá el mouse (o tocá) sobre un punto del plano para ver el equipo. Hacé clic para abrir su ficha técnica.</p>
+        <div class="aac-mapa-container" id="aac-mapa-container">
+          <div class="aac-mapa-scaler" id="aac-mapa-scaler">
+            <img id="aac-mapa-img" class="aac-mapa-img" alt="Plano interactivo de equipos de aire" />
+            <div class="aac-mapa-pins" id="aac-mapa-pins"></div>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -1452,6 +1477,143 @@
 
     </div>
 
+    <!-- ─── PÁGINA: Programación de OTs ─── -->
+    <div class="page hidden" id="page-programacion">
+
+      <div class="prog-upload-bar">
+        <div class="prog-mes-select">
+          <label for="prog-mes-input">Mes de programación</label>
+          <input type="month" id="prog-mes-input" />
+        </div>
+        <div class="prog-upload-actions">
+          <button class="prog-btn prog-btn-primary" id="prog-upload-btn">⬆ Cargar Excel del mes</button>
+          <input type="file" id="prog-file-input" accept=".xlsx,.xls" style="display:none" />
+          <button class="export-btn" id="prog-export-btn">⬇ Exportar programación</button>
+          <button class="prog-btn prog-btn-danger" id="prog-reset-btn">🗑 Vaciar</button>
+        </div>
+      </div>
+
+      <div class="prog-reglas-info">
+        <span class="prog-regla-chip noche">🌙 Equipos MEQ → siempre Turno Noche</span>
+        <span class="prog-regla-chip manana">☀️ Roof Top → siempre Turno Mañana</span>
+        <span class="prog-regla-chip manana">☀️ AVO → siempre Turno Mañana</span>
+        <span class="prog-regla-chip libre">✏️ El resto se sugiere y se puede reasignar a mano</span>
+      </div>
+
+      <div class="stats-grid" id="prog-stats" style="margin-bottom:20px"></div>
+
+      <div class="toolbar" id="prog-toolbar" style="margin-bottom:16px">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="prog-search" class="search-input" placeholder="Buscar por código de equipo o denominación..." />
+          <button class="clear-btn" id="prog-clear-search" title="Limpiar" style="display:none">✕</button>
+        </div>
+        <div class="filter-group">
+          <select id="prog-filter-turno" class="filter-select">
+            <option value="">Todos los turnos</option>
+            <option value="mañana">☀️ Mañana</option>
+            <option value="noche">🌙 Noche</option>
+          </select>
+          <select id="prog-filter-regla" class="filter-select">
+            <option value="">Todas las reglas</option>
+            <option value="MEQ">MEQ</option>
+            <option value="Roof Top">Roof Top</option>
+            <option value="AVO">AVO</option>
+            <option value="__sin_regla__">Sin regla fija</option>
+          </select>
+          <select id="prog-filter-zona" class="filter-select">
+            <option value="">Todas las zonas</option>
+          </select>
+          <button class="altura-filter-toggle" id="prog-filter-altura" title="Mostrar solo equipos que pagan altura">
+            ⛰️ Solo Altura
+          </button>
+        </div>
+      </div>
+
+      <div id="prog-empty-state" class="prog-empty-state hidden">
+        <span class="prog-empty-icon">🗓️</span>
+        <h3>Todavía no cargaste los preventivos de este mes</h3>
+        <p>Subí el Excel con los equipos a programar (columnas <strong>Equipo</strong> y <strong>Denominación</strong>) y te sugiero la distribución entre las 4 guardias según las reglas de turno.</p>
+      </div>
+
+      <div class="prog-guardias-wrap" id="prog-guardias-wrap"></div>
+
+    </div>
+
+    <!-- ─── PÁGINA: Estado de Equipos (SCADA) ─── -->
+    <div class="page hidden" id="page-estado">
+
+      <div class="stats-grid" id="estado-stats" style="margin-bottom:20px"></div>
+
+      <div class="toolbar" id="estado-toolbar" style="margin-bottom:16px">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="estado-search" class="search-input" placeholder="Buscar por código de equipo o denominación..." />
+          <button class="clear-btn" id="estado-clear-search" title="Limpiar" style="display:none">✕</button>
+        </div>
+        <div class="filter-group">
+          <select id="estado-filter-categoria" class="filter-select">
+            <option value="">Todas las categorías</option>
+          </select>
+          <select id="estado-filter-estado" class="filter-select">
+            <option value="">Todos los estados</option>
+            <option value="ok">🟢 OK</option>
+            <option value="atencion">🟡 Requiere atención</option>
+            <option value="reparacion">🔵 En reparación</option>
+            <option value="fuera_servicio">🔴 Fuera de servicio</option>
+          </select>
+        </div>
+        <button class="estado-admin-only prog-btn prog-btn-primary hidden" id="estado-nueva-tarea-btn">+ Nueva tarea</button>
+      </div>
+
+      <div class="mangas-view-toggle" style="margin-bottom:16px">
+        <button class="aac-view-btn active" data-eview="categorias">📂 Por categoría</button>
+        <button class="aac-view-btn" data-eview="lista">☰ Lista</button>
+        <button class="aac-view-btn" data-eview="tareas">✅ Tareas</button>
+        <button class="aac-view-btn" data-eview="hidrolavado">🚿 Hidrolavado UTA/RTF</button>
+      </div>
+
+      <div id="estado-categorias-wrap"></div>
+      <div id="estado-lista-wrap" class="hidden"></div>
+      <div id="estado-tareas-wrap" class="hidden"></div>
+      <div id="estado-hidrolavado-wrap" class="hidden"></div>
+
+    </div>
+
+  </div>
+
+  <!-- Modal ficha genérica (fallback para categorías sin modal propio) -->
+  <div class="modal-overlay" id="estadoFichaModalOverlay">
+    <div class="modal" id="estadoFichaModal">
+      <button class="modal-close" id="estadoFichaModalClose">✕</button>
+      <div class="modal-header" id="estadoFichaModalHeader"></div>
+      <div class="modal-body" id="estadoFichaModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal nueva tarea -->
+  <div class="modal-overlay" id="estadoTareaModalOverlay">
+    <div class="modal" id="estadoTareaModal">
+      <button class="modal-close" id="estadoTareaModalClose">✕</button>
+      <div class="modal-header"><div class="modal-denom">✅ Nueva tarea</div></div>
+      <div class="modal-body">
+        <div class="estado-form-field">
+          <label>Título *</label>
+          <input type="text" id="estado-tarea-titulo" placeholder="Ej: Pedir repuesto para bomba jockey" />
+        </div>
+        <div class="estado-form-field">
+          <label>Descripción</label>
+          <textarea id="estado-tarea-descripcion" rows="3" placeholder="Detalle opcional..."></textarea>
+        </div>
+        <div class="estado-form-field">
+          <label>Responsable</label>
+          <input type="text" id="estado-tarea-responsable" placeholder="Nombre (opcional)" />
+        </div>
+        <div class="estado-form-actions">
+          <button class="prog-btn prog-btn-primary" id="estado-tarea-guardar-btn">Guardar tarea</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Modal flota -->
@@ -1625,7 +1787,8 @@
   <script src="assets/js/puertas-app.js?v=6"></script>
   <script src="assets/js/aac-data.js?v=2"></script>
   <script src="assets/js/uta-specs.js?v=1"></script>
-  <script src="assets/js/aac-app.js?v=5"></script>
+  <script src="assets/js/aac-mapa-data.js?v=4"></script>
+  <script src="assets/js/aac-app.js?v=9"></script>
   <script src="assets/js/otros-data.js?v=1"></script>
   <script src="assets/js/otros-app.js?v=2"></script>
   <script src="assets/js/ecas-data.js?v=1"></script>
@@ -1635,6 +1798,7 @@
   <script src="assets/js/maint-planes-app.js?v=2"></script>
   <script src="assets/js/global-search.js?v=1"></script>
   <script src="assets/js/export-utils.js?v=1"></script>
+  <script src="assets/js/programacion-app.js?v=2"></script>
 
   <!-- ── Admin login modal ──────────────────────────────── -->
   <div id="admin-login-modal" class="admin-overlay">
@@ -1685,5 +1849,8 @@
   <script src="assets/js/ots-analyzer.js?v=1"></script>
   <script src="assets/js/ots-app.js?v=1"></script>
   <script src="assets/js/kpis-app.js?v=1"></script>
+  <script src="assets/js/estado-equipos-data.js?v=1"></script>
+  <script src="assets/js/tareas-data.js?v=1"></script>
+  <script src="assets/js/estado-app.js?v=1"></script>
 </body>
 </html>

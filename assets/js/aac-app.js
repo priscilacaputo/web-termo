@@ -169,6 +169,7 @@ function renderAAC() {
   const isData   = aacView === 'grid' || aacView === 'table';
   const isPlanes = aacView === 'planes';
   const isPlanos = aacView === 'planos';
+  const isMapa   = aacView === 'mapa';
 
   document.getElementById('aac-result-count').textContent =
     isData ? `${aacFiltered.length} de ${AAC_DATA.length} equipos` : '';
@@ -179,11 +180,13 @@ function renderAAC() {
   document.getElementById('aac-table-wrap').classList.toggle('hidden',   aacView !== 'table');
   document.getElementById('aac-planes-wrap').classList.toggle('hidden',  !isPlanes);
   document.getElementById('aac-planos-wrap').classList.toggle('hidden',  !isPlanos);
+  document.getElementById('aac-mapa-wrap').classList.toggle('hidden',    !isMapa);
 
   if (aacView === 'grid')   renderAACGrid();
   if (aacView === 'table')  renderAACTable();
   if (isPlanes)             renderAACPlanes();
   if (isPlanos)             initAACPlanos();
+  if (isMapa)               initAACMapa();
 }
 
 /* ─── Planos por edificio ─────────────────────────────────── */
@@ -217,6 +220,118 @@ function setAACPlano(edif) {
   document.getElementById('aac-plano-open').href     = p.file;
   document.querySelector('.plano-toolbar-title').textContent =
     `📄 Plano Equipos de Aire — ${p.label} · AEP`;
+}
+
+/* ─── Mapa interactivo por edificio ──────────────────────────── */
+let aacMapaEdifActivo = Object.keys(AAC_MAPA_DATA)[0];
+
+function initAACMapa() {
+  const tabsWrap = document.getElementById('aac-mapa-edificio-tabs');
+
+  if (!tabsWrap.dataset.built) {
+    tabsWrap.innerHTML = Object.keys(AAC_MAPA_DATA).map(k => `
+      <button class="aac-edif-btn ${k === aacMapaEdifActivo ? 'active' : ''}" data-edif="${k}">
+        ${AAC_MAPA_DATA[k].label}
+      </button>
+    `).join('');
+    tabsWrap.dataset.built = '1';
+
+    tabsWrap.querySelectorAll('.aac-edif-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabsWrap.querySelectorAll('.aac-edif-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        aacMapaEdifActivo = btn.dataset.edif;
+        renderAACMapa();
+      });
+    });
+  }
+
+  renderAACMapa();
+}
+
+function renderAACMapa() {
+  const data = AAC_MAPA_DATA[aacMapaEdifActivo];
+  const img  = document.getElementById('aac-mapa-img');
+  const pins = document.getElementById('aac-mapa-pins');
+  if (!data) { pins.innerHTML = ''; return; }
+
+  const imgChanged = img.src.indexOf(data.imagen) === -1;
+  const doScroll = () => requestAnimationFrame(() => scrollAACMapaToPuntos(data.puntos));
+
+  img.onload = doScroll;          // por si la imagen todavía no había cargado
+  if (imgChanged) img.src = data.imagen;
+  img.alt = `Plano interactivo — ${data.label}`;
+  if (!imgChanged || img.complete) doScroll();   // imagen ya cargada: onload no vuelve a disparar
+
+  pins.innerHTML = data.puntos.map((p, i) => {
+    const primero    = AAC_DATA.find(e => e.equipo === p.equipos[0]);
+    const tipoColor  = primero ? (AAC_TIPO_COLORS[primero.tipo] || '#1a56a4') : '#1a56a4';
+    const tooltipCls = p.y > 55 ? 'arriba' : 'abajo';
+
+    const filas = p.equipos.map(cod => {
+      const e = AAC_DATA.find(x => x.equipo === cod);
+      if (!e) return '';
+      return `
+        <button type="button" class="aac-mapa-pin-equipo" data-equipo="${e.equipo}">
+          <span class="aac-mapa-pin-equipo-cod">${e.equipo}</span>
+          <span class="aac-mapa-pin-equipo-denom">${e.denominacion}</span>
+        </button>`;
+    }).join('');
+
+    return `
+      <div class="aac-mapa-pin" style="left:${p.x}%; top:${p.y}%; --pin-color:${tipoColor}" data-idx="${i}">
+        <button type="button" class="aac-mapa-pin-dot" aria-label="${p.nombre}"></button>
+        <div class="aac-mapa-pin-tooltip ${tooltipCls}">
+          <div class="aac-mapa-pin-tooltip-card">
+            <div class="aac-mapa-pin-tooltip-title">${p.nombre}</div>
+            ${filas}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  pins.querySelectorAll('.aac-mapa-pin-dot').forEach(dot => {
+    dot.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const pin = this.closest('.aac-mapa-pin');
+      const wasOpen = pin.classList.contains('open');
+      pins.querySelectorAll('.aac-mapa-pin.open').forEach(p => p.classList.remove('open'));
+      if (!wasOpen) pin.classList.add('open');
+    });
+  });
+
+  pins.querySelectorAll('.aac-mapa-pin-equipo').forEach(btn => {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      openAACModal(this.dataset.equipo);
+      pins.querySelectorAll('.aac-mapa-pin.open').forEach(p => p.classList.remove('open'));
+    });
+  });
+
+  if (!pins.dataset.outsideBound) {
+    pins.dataset.outsideBound = '1';
+    document.addEventListener('click', () => {
+      pins.querySelectorAll('.aac-mapa-pin.open').forEach(p => p.classList.remove('open'));
+    });
+  }
+}
+
+/* Centra el scroll del contenedor sobre el promedio de los puntos activos,
+   para que al entrar a un edificio se vea directamente el grupo de RTF
+   correspondiente dentro del plano completo (sin recortar la imagen). */
+function scrollAACMapaToPuntos(puntos) {
+  if (!puntos.length) return;
+  const container = document.getElementById('aac-mapa-container');
+  const scaler    = document.getElementById('aac-mapa-scaler');
+
+  const avgX = puntos.reduce((s, p) => s + p.x, 0) / puntos.length;
+  const avgY = puntos.reduce((s, p) => s + p.y, 0) / puntos.length;
+
+  const targetLeft = scaler.offsetWidth  * avgX / 100 - container.clientWidth  / 2;
+  const targetTop  = scaler.offsetHeight * avgY / 100 - container.clientHeight / 2;
+
+  container.scrollLeft = Math.max(0, targetLeft);
+  container.scrollTop  = Math.max(0, targetTop);
 }
 
 /* ─── Grid ───────────────────────────────────────────────── */
@@ -330,14 +445,14 @@ function openAACModal(equipo) {
     ${mf('Ubicación SAP', e.ubicacion, true, true)}
   `;
 
-  // Add UTA specifications if available
+  // Add technical specs (UTAs, Roof Tops y otros equipos con datos de filtro/correa) if available
   if (uta) {
     bodyHTML += `
       <div style="margin-top:20px; padding-top:20px; border-top:2px solid var(--color-border)">
-        <h4 style="color:var(--color-navy); font-weight:700; margin-bottom:12px; font-size:14px">📋 Especificaciones Técnicas (UTA)</h4>
-        ${mf('Código UTA', uta['Codigo'])}
+        <h4 style="color:var(--color-navy); font-weight:700; margin-bottom:12px; font-size:14px">📋 Especificaciones Técnicas</h4>
+        ${mf('Código (planilla)', uta['Codigo'])}
         ${mf('Marca', uta['Marca'])}
-        ${mf('Modelo UTA', uta['Modelo UTA'] || uta['Modelo'])}
+        ${mf('Modelo', uta['Modelo UTA'] || uta['Modelo'])}
         ${mf('Servicio a', uta['Servicio a'], true)}
         ${mf('Filtros de Aire', uta['Filtros aire'])}
         ${mf('Correas', uta['Correas'])}

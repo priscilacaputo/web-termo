@@ -13,6 +13,8 @@ const SECTION_CONFIG = {
   aac:         { file: 'assets/js/aac-data.js',         varName: 'AAC_DATA' },
   ecas:        { file: 'assets/js/ecas-data.js',        varName: 'ECAS_DATA' },
   otros:       { file: 'assets/js/otros-data.js',       varName: 'OTROS_DATA' },
+  estados:     { file: 'assets/js/estado-equipos-data.js', varName: 'ESTADO_OVERRIDES' },
+  tareas:      { file: 'assets/js/tareas-data.js',      varName: 'TAREAS_DATA' },
 };
 
 function githubRequest(method, path, token, body) {
@@ -114,10 +116,10 @@ module.exports = async (req, res) => {
   const config = SECTION_CONFIG[section];
   if (!config) return res.status(400).json({ error: `Sección desconocida: ${section}` });
 
-  const owner = process.env.GITHUB_OWNER;
-  const repo  = process.env.GITHUB_REPO;
-  const branch = process.env.GITHUB_BRANCH || 'main';
-  const token  = process.env.GITHUB_TOKEN;
+  const owner  = (process.env.GITHUB_OWNER  || '').trim();
+  const repo   = (process.env.GITHUB_REPO   || '').trim();
+  const branch = (process.env.GITHUB_BRANCH || 'main').trim();
+  const token  = (process.env.GITHUB_TOKEN  || '').trim();
 
   if (!owner || !repo || !token) {
     return res.status(500).json({ error: 'Configuración del servidor incompleta (env vars faltantes)' });
