@@ -378,7 +378,24 @@ const AAC_DATA = [
   { equipo:"AAC9428", denominacion:"RoofTop (B2) Arribos inter Sector Public", capacidad:"", ubicacion:"AEP-ED7-NIVEL7-UBITEC001", fabricante:"", modelo:"", sector:"Techo Edificio 7 — Termostato: pared del hall público antes de los baños, junto a los puestos de alquiler de autos", tipo:"Roof Top" },
   { equipo:"AAC9429", denominacion:"RoofTop (B1)Arribos inter Sector Publico", capacidad:"", ubicacion:"AEP-ED7-NIVEL7-UBITEC001", fabricante:"", modelo:"", sector:"Techo Edificio 7 — Termostato: pared del hall público antes de los baños, junto a los puestos de alquiler de autos", tipo:"Roof Top" },
   { equipo:"AAC9430", denominacion:"Westric 2 Arribos inter (Lado Rio)", capacidad:"", ubicacion:"AEP-ED7-NIVEL7-UBITEC001", fabricante:"Westric", modelo:"", sector:"Techo Edificio 7 — Termostato: hall de arribos, al fondo, antes de migraciones", tipo:"Roof Top" },
-  { equipo:"AAC9431", denominacion:"Westric 1 Arribos inter (Lado Pista)", capacidad:"", ubicacion:"AEP-ED7-NIVEL7-UBITEC001", fabricante:"Westric", modelo:"", sector:"Techo Edificio 7 — Termostato: pared del hall de arribos, apenas se entra, a la izquierda, antes de migraciones", tipo:"Roof Top" }
+  { equipo:"AAC9431", denominacion:"Westric 1 Arribos inter (Lado Pista)", capacidad:"", ubicacion:"AEP-ED7-NIVEL7-UBITEC001", fabricante:"Westric", modelo:"", sector:"Techo Edificio 7 — Termostato: pared del hall de arribos, apenas se entra, a la izquierda, antes de migraciones", tipo:"Roof Top" },
+  { equipo:"AAC047", denominacion:"2C LENNOX", capacidad:"", ubicacion:"", fabricante:"Lennox", modelo:"", sector:"", tipo:"Roof Top" },
+  { equipo:"AAC069", denominacion:"9B LENNOX 20 TN", capacidad:"20 TR", ubicacion:"", fabricante:"Lennox", modelo:"", sector:"", tipo:"Roof Top" },
+  { equipo:"AAC074", denominacion:"11B", capacidad:"", ubicacion:"", fabricante:"", modelo:"", sector:"", tipo:"Roof Top" },
+  { equipo:"AAC075", denominacion:"11C", capacidad:"", ubicacion:"", fabricante:"", modelo:"", sector:"", tipo:"Roof Top" },
+  { equipo:"AAC2195", denominacion:"B1  BGH", capacidad:"", ubicacion:"", fabricante:"BGH", modelo:"", sector:"", tipo:"Otro" },
+  { equipo:"AAC2196", denominacion:"B2  BGH", capacidad:"", ubicacion:"", fabricante:"BGH", modelo:"", sector:"", tipo:"Otro" },
+  { equipo:"AAC2197", denominacion:"B5  BGH", capacidad:"", ubicacion:"", fabricante:"BGH", modelo:"", sector:"", tipo:"Otro" },
+  { equipo:"AAC2198", denominacion:"B6  BGH", capacidad:"", ubicacion:"", fabricante:"BGH", modelo:"", sector:"", tipo:"Otro" },
+  { equipo:"AAC092", denominacion:"C2", capacidad:"", ubicacion:"", fabricante:"", modelo:"", sector:"", tipo:"Roof Top" },
+  { equipo:"AAC097", denominacion:"C7", capacidad:"", ubicacion:"", fabricante:"", modelo:"", sector:"", tipo:"Roof Top" },
+  { equipo:"AAC183", denominacion:"C14 LENNOX", capacidad:"", ubicacion:"", fabricante:"Lennox", modelo:"", sector:"", tipo:"Roof Top" },
+  { equipo:"AAC105", denominacion:"C15", capacidad:"", ubicacion:"", fabricante:"", modelo:"", sector:"", tipo:"Roof Top" },
+  { equipo:"AAC107", denominacion:"C17", capacidad:"", ubicacion:"", fabricante:"", modelo:"", sector:"", tipo:"Roof Top" },
+  { equipo:"AAC108", denominacion:"C18 LENNOX", capacidad:"", ubicacion:"", fabricante:"Lennox", modelo:"", sector:"", tipo:"Roof Top" },
+  { equipo:"AAC2102", denominacion:"WESTRIC 20 TN", capacidad:"20 TR", ubicacion:"", fabricante:"Westric", modelo:"", sector:"", tipo:"Roof Top" },
+  { equipo:"AAC2103", denominacion:"WESTRIC 30 TN", capacidad:"30 TR", ubicacion:"", fabricante:"Westric", modelo:"", sector:"", tipo:"Roof Top" },
+  { equipo:"AAC2736", denominacion:"MI IDEA VIALIDAD", capacidad:"", ubicacion:"", fabricante:"", modelo:"", sector:"", tipo:"Otro" },
 ];
 
 

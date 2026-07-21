@@ -445,14 +445,14 @@ function openAACModal(equipo) {
     ${mf('Ubicación SAP', e.ubicacion, true, true)}
   `;
 
-  // Add UTA specifications if available
+  // Add technical specs (UTAs, Roof Tops y otros equipos con datos de filtro/correa) if available
   if (uta) {
     bodyHTML += `
       <div style="margin-top:20px; padding-top:20px; border-top:2px solid var(--color-border)">
-        <h4 style="color:var(--color-navy); font-weight:700; margin-bottom:12px; font-size:14px">📋 Especificaciones Técnicas (UTA)</h4>
-        ${mf('Código UTA', uta['Codigo'])}
+        <h4 style="color:var(--color-navy); font-weight:700; margin-bottom:12px; font-size:14px">📋 Especificaciones Técnicas</h4>
+        ${mf('Código (planilla)', uta['Codigo'])}
         ${mf('Marca', uta['Marca'])}
-        ${mf('Modelo UTA', uta['Modelo UTA'] || uta['Modelo'])}
+        ${mf('Modelo', uta['Modelo UTA'] || uta['Modelo'])}
         ${mf('Servicio a', uta['Servicio a'], true)}
         ${mf('Filtros de Aire', uta['Filtros aire'])}
         ${mf('Correas', uta['Correas'])}

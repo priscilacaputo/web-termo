@@ -329,10 +329,7 @@ function renderProgStats() {
 }
 
 function progGuardiaLabel(id) {
-  const sup = (typeof GUARDIAS !== 'undefined')
-    ? (GUARDIAS.find(g => g.id === id)?.miembros || []).find(m => m.rol.toUpperCase().startsWith('SUP'))
-    : null;
-  return sup ? `Guardia ${id} — Sup. ${sup.nombre}` : `Guardia ${id}`;
+  return `Guardia ${id}`;
 }
 
 function renderProgGuardias() {
