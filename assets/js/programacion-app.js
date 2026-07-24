@@ -91,6 +91,18 @@ function progSave() {
   catch (e) { progToast('⚠ No se pudo guardar en este navegador.', 'error'); }
 }
 
+/* ─── Clasificación por Puesto de trabajo principal (Aire / Mecánicos) ──
+   Viene del Excel de SAP: AUX_TER (Auxiliar Termomecánica) → Aire,
+   AUX_MEC (Auxiliar Mecánica) → Mecánicos. Se detecta por substring para
+   tolerar tanto el código corto como el texto descriptivo completo. */
+function progClasificarPuesto(raw) {
+  const v = String(raw || '').trim().toUpperCase();
+  if (!v) return null;
+  if (v.includes('MEC')) return 'mecanico';
+  if (v.includes('TER')) return 'aire';
+  return null;
+}
+
 /* ─── Clasificación por regla fija de turno ─────────────────────── */
 function progClasificar(equipo, denominacionExcel, tipoExcel) {
   const eq  = String(equipo || '').trim().toUpperCase();
@@ -185,6 +197,7 @@ function progHandleFile(file) {
         'tipo': 'tipo', 'clase de equipo': 'tipo',
         'ubicación técnica': 'ubicacion_tecnica', 'ubicacion tecnica': 'ubicacion_tecnica',
         'orden': 'ot_num', 'ot': 'ot_num', 'n° de orden': 'ot_num', 'número de orden': 'ot_num',
+        'puesto de trabajo principal': 'puesto_trabajo', 'puesto de trabajo': 'puesto_trabajo',
       };
 
       const parsedRows = rows.map(row => {
@@ -233,16 +246,17 @@ function progHandleFile(file) {
         const { regla, turno } = progClasificar(equipo, denominacion, r.tipo);
         const esAltura = (typeof ALTURA_EQUIPOS !== 'undefined') && ALTURA_EQUIPOS.has(equipo);
         const zona = progZonaEquipo(equipo, (rec && rec.ubicacion) || r.ubicacion_tecnica);
+        const puesto = r.puesto_trabajo ? progClasificarPuesto(r.puesto_trabajo) : ((prev && prev.puesto) || null);
 
         if (prev) {
-          const item = { ...prev, equipo, denominacion, ot_num: otNum, regla, turno, esAltura, zona };
+          const item = { ...prev, equipo, denominacion, ot_num: otNum, regla, turno, esAltura, zona, puesto };
           merged.push(item);
           yaAsignados.push(item);
         } else {
           const item = {
             id: equipo + '#' + i + '#' + Date.now(),
             equipo, denominacion, ot_num: otNum,
-            regla, turno, esAltura, zona,
+            regla, turno, esAltura, zona, puesto,
             guardia: null,
           };
           merged.push(item);
@@ -307,16 +321,20 @@ function renderProgStats() {
   const wrap = document.getElementById('prog-stats');
   if (!progState.ots.length) { wrap.innerHTML = ''; return; }
 
-  const total    = progState.ots.length;
-  const manana   = progState.ots.filter(o => o.turno === 'mañana').length;
-  const noche    = progState.ots.filter(o => o.turno === 'noche').length;
-  const altura   = progState.ots.filter(o => o.esAltura).length;
+  const total          = progState.ots.length;
+  const manana         = progState.ots.filter(o => o.turno === 'mañana').length;
+  const noche          = progState.ots.filter(o => o.turno === 'noche').length;
+  const altura         = progState.ots.filter(o => o.esAltura).length;
+  const alturaAire      = progState.ots.filter(o => o.esAltura && o.puesto === 'aire').length;
+  const alturaMecanico  = progState.ots.filter(o => o.esAltura && o.puesto === 'mecanico').length;
 
   const cards = [
     { label: 'Total equipos', value: total, icon: '🗓️', color: '#1a56a4' },
     { label: '☀️ Turno mañana', value: manana, icon: '☀️', color: '#d97706' },
     { label: '🌙 Turno noche', value: noche, icon: '🌙', color: '#4338ca' },
     { label: '⛰️ Pagan altura', value: altura, icon: '⛰️', color: '#92400e' },
+    { label: '⛰️ Altura Aire', value: alturaAire, icon: '💨', color: '#0369a1' },
+    { label: '⛰️ Altura Mecánicos', value: alturaMecanico, icon: '🔧', color: '#b45309' },
   ];
 
   wrap.innerHTML = cards.map(c => `
@@ -404,6 +422,7 @@ function progExportExcel() {
       'Denominación': o.denominacion || '',
       'Zona': o.zona,
       'Paga altura': o.esAltura ? 'Sí' : 'No',
+      'Puesto de trabajo': o.puesto === 'aire' ? 'Aire' : (o.puesto === 'mecanico' ? 'Mecánicos' : ''),
       'Regla aplicada': o.regla || 'Sin regla fija',
     }));
 
