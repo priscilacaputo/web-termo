@@ -75,6 +75,13 @@ function progZonaEquipo(equipo, ubicacionFallback) {
   const rec = progGetEquipoIndex()[equipo];
   return progZonaFromUbicacion((rec && rec.ubicacion) || ubicacionFallback || '');
 }
+/* Ubicación técnica puntual (más fina que la zona/edificio), para agrupar
+   dentro de una misma zona a los equipos que además comparten el mismo
+   sector físico y así minimizar los traslados de la guardia. */
+function progUbicacionTecnicaEquipo(equipo, ubicacionFallback) {
+  const rec = progGetEquipoIndex()[String(equipo).toUpperCase()];
+  return String((rec && rec.ubicacion) || ubicacionFallback || '').trim().toUpperCase() || 'SIN UBICACIÓN';
+}
 
 /* ─── Persistencia ───────────────────────────────────────── */
 function progLoad() {
@@ -123,7 +130,10 @@ function progClasificar(equipo, denominacionExcel, tipoExcel) {
    Se procesa agrupando por zona (para favorecer que una misma guardia
    se quede con los equipos de un mismo edificio) y, dentro de cada
    zona, primero los que pagan altura (para repartirlos parejo antes
-   de que el resto llene el cupo de cada guardia). */
+   de que el resto llene el cupo de cada guardia). Además de la zona
+   (edificio) se usa la ubicación técnica puntual como segundo criterio
+   de cercanía, para agrupar en lo posible el mismo sector físico dentro
+   del edificio y minimizar los traslados de la guardia. */
 function progCompararClaves(a, b) {
   for (let i = 0; i < a.length; i++) {
     if (a[i] !== b[i]) return a[i] - b[i];
@@ -134,16 +144,19 @@ function progAsignarPendientes(pendientes, yaAsignados) {
   const totalCount  = { 1: 0, 2: 0, 3: 0, 4: 0 };
   const alturaCount = { 1: 0, 2: 0, 3: 0, 4: 0 };
   const zonaCount   = { 1: {}, 2: {}, 3: {}, 4: {} };
+  const ubicCount   = { 1: {}, 2: {}, 3: {}, 4: {} };
 
   function registrar(o) {
     totalCount[o.guardia]++;
     if (o.esAltura) alturaCount[o.guardia]++;
     zonaCount[o.guardia][o.zona] = (zonaCount[o.guardia][o.zona] || 0) + 1;
+    ubicCount[o.guardia][o.ubicacionTecnica] = (ubicCount[o.guardia][o.ubicacionTecnica] || 0) + 1;
   }
   yaAsignados.forEach(registrar);
 
   const ordenados = [...pendientes].sort((a, b) => {
     if (a.zona !== b.zona) return a.zona.localeCompare(b.zona);
+    if (a.ubicacionTecnica !== b.ubicacionTecnica) return a.ubicacionTecnica.localeCompare(b.ubicacionTecnica);
     if (a.esAltura !== b.esAltura) return a.esAltura ? -1 : 1;
     return 0;
   });
@@ -153,10 +166,11 @@ function progAsignarPendientes(pendientes, yaAsignados) {
     let mejorGuardia = pool[0];
     let mejorClave = null;
     pool.forEach(g => {
-      const cercania = zonaCount[g][o.zona] || 0;
+      const cercaniaZona  = zonaCount[g][o.zona] || 0;
+      const cercaniaUbic  = ubicCount[g][o.ubicacionTecnica] || 0;
       const clave = o.esAltura
-        ? [alturaCount[g], -cercania, totalCount[g], g]   // 1° equidad de altura, 2° cercanía, 3° carga total
-        : [-cercania, totalCount[g], g];                   // 1° cercanía, 2° carga total
+        ? [alturaCount[g], -cercaniaZona, -cercaniaUbic, totalCount[g], g]   // 1° equidad de altura, 2° cercanía por zona, 3° cercanía por ubicación técnica, 4° carga total
+        : [-cercaniaZona, -cercaniaUbic, totalCount[g], g];                   // 1° cercanía por zona, 2° cercanía por ubicación técnica, 3° carga total
       if (mejorClave === null || progCompararClaves(clave, mejorClave) < 0) {
         mejorClave = clave;
         mejorGuardia = g;
@@ -246,17 +260,18 @@ function progHandleFile(file) {
         const { regla, turno } = progClasificar(equipo, denominacion, r.tipo);
         const esAltura = (typeof ALTURA_EQUIPOS !== 'undefined') && ALTURA_EQUIPOS.has(equipo);
         const zona = progZonaEquipo(equipo, (rec && rec.ubicacion) || r.ubicacion_tecnica);
+        const ubicacionTecnica = progUbicacionTecnicaEquipo(equipo, r.ubicacion_tecnica);
         const puesto = r.puesto_trabajo ? progClasificarPuesto(r.puesto_trabajo) : ((prev && prev.puesto) || null);
 
         if (prev) {
-          const item = { ...prev, equipo, denominacion, ot_num: otNum, regla, turno, esAltura, zona, puesto };
+          const item = { ...prev, equipo, denominacion, ot_num: otNum, regla, turno, esAltura, zona, ubicacionTecnica, puesto };
           merged.push(item);
           yaAsignados.push(item);
         } else {
           const item = {
             id: equipo + '#' + i + '#' + Date.now(),
             equipo, denominacion, ot_num: otNum,
-            regla, turno, esAltura, zona, puesto,
+            regla, turno, esAltura, zona, ubicacionTecnica, puesto,
             guardia: null,
           };
           merged.push(item);
