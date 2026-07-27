@@ -126,6 +126,19 @@ function progClasificar(equipo, denominacionExcel, tipoExcel) {
   return { regla: null, turno: null };
 }
 
+/* ─── Gremio (Aire / Mecánicos), para repartir cada uno por separado ────
+   Se usa el Puesto de trabajo principal del Excel (AUX_TER/AUX_MEC) si
+   está cargado; si no viene esa columna, se infiere por el equipo: los
+   de Aire Acondicionado (AAC, incluidos los Roof Top) los atiende el
+   gremio de Aire y el resto (MEQ, mangas, ascensores, escaleras, bombas,
+   flota vehicular, etc.) el gremio de Mecánicos. */
+function progGrupoEquipo(equipo, puesto, regla) {
+  if (puesto === 'aire' || puesto === 'mecanico') return puesto;
+  const eq = String(equipo || '').trim().toUpperCase();
+  if (eq.startsWith('AAC') || regla === 'Roof Top') return 'aire';
+  return 'mecanico';
+}
+
 /* ─── Asignación de guardia: equidad de altura + cercanía física ──
    Se procesa agrupando por zona (para favorecer que una misma guardia
    se quede con los equipos de un mismo edificio) y, dentro de cada
@@ -262,16 +275,17 @@ function progHandleFile(file) {
         const zona = progZonaEquipo(equipo, (rec && rec.ubicacion) || r.ubicacion_tecnica);
         const ubicacionTecnica = progUbicacionTecnicaEquipo(equipo, r.ubicacion_tecnica);
         const puesto = r.puesto_trabajo ? progClasificarPuesto(r.puesto_trabajo) : ((prev && prev.puesto) || null);
+        const grupo = progGrupoEquipo(equipo, puesto, regla);
 
         if (prev) {
-          const item = { ...prev, equipo, denominacion, ot_num: otNum, regla, turno, esAltura, zona, ubicacionTecnica, puesto };
+          const item = { ...prev, equipo, denominacion, ot_num: otNum, regla, turno, esAltura, zona, ubicacionTecnica, puesto, grupo };
           merged.push(item);
           yaAsignados.push(item);
         } else {
           const item = {
             id: equipo + '#' + i + '#' + Date.now(),
             equipo, denominacion, ot_num: otNum,
-            regla, turno, esAltura, zona, ubicacionTecnica, puesto,
+            regla, turno, esAltura, zona, ubicacionTecnica, puesto, grupo,
             guardia: null,
           };
           merged.push(item);
@@ -279,7 +293,16 @@ function progHandleFile(file) {
         }
       });
 
-      progAsignarPendientes(pendientes, yaAsignados);
+      /* Se reparte cada gremio por separado: la equidad de altura y la
+         cercanía por zona/ubicación técnica se calculan solo contra el
+         resto de OTs del mismo gremio (Aire o Mecánicos), no mezcladas,
+         para que cada guardia quede pareja dentro de su propia disciplina. */
+      ['aire', 'mecanico'].forEach(g => {
+        progAsignarPendientes(
+          pendientes.filter(o => o.grupo === g),
+          yaAsignados.filter(o => o.grupo === g)
+        );
+      });
 
       progState.ots = merged;
       if (!progState.mes) progState.mes = document.getElementById('prog-mes-input').value || new Date().toISOString().slice(0, 7);
