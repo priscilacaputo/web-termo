@@ -99,14 +99,15 @@ function progSave() {
 }
 
 /* ─── Clasificación por Puesto de trabajo principal (Aire / Mecánicos) ──
-   Viene del Excel de SAP: AUX_TER (Auxiliar Termomecánica) → Aire,
-   AUX_MEC (Auxiliar Mecánica) → Mecánicos. Se detecta por substring para
-   tolerar tanto el código corto como el texto descriptivo completo. */
+   Viene del Excel de SAP: "Auxiliar Termomecánica (AUX_TER)" → Aire,
+   "Auxiliar Mecánica (AUX_MEC)" → Mecánicos. OJO: "Termomecánica" contiene
+   la subcadena "MEC" (TER-MO-MEC-ánica), así que hay que descartar Aire
+   ANTES de buscar "MEC" o todo Aire cae mal clasificado como Mecánicos. */
 function progClasificarPuesto(raw) {
   const v = String(raw || '').trim().toUpperCase();
   if (!v) return null;
-  if (v.includes('MEC')) return 'mecanico';
-  if (v.includes('TER')) return 'aire';
+  if (v.includes('AUX_TER') || v.includes('TERMOMEC')) return 'aire';
+  if (v.includes('AUX_MEC') || v.includes('MEC')) return 'mecanico';
   return null;
 }
 
