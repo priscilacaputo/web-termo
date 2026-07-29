@@ -18,7 +18,63 @@ const PROG_STORAGE_KEY   = 'programacion_ots_v1';
 const PROG_GUARDIA_TURNO = { 1: 'mañana', 2: 'mañana', 3: 'noche', 4: 'noche' };
 const PROG_POOL_TURNO    = { 'mañana': [1, 2], 'noche': [3, 4], 'libre': [1, 2, 3, 4] };
 
-let progState  = { mes: '', ots: [] };
+/* ─── Mangas de Embarque ↔ sus equipos de Aire asociados ────────────
+   La guardia que atiende la Manga (MAN*) es la que manda: sus equipos
+   de Aire (Roof Top, Split, UTA, acondicionadores) de esa misma manga
+   quedan siempre en la misma guardia, para no partir la logística de
+   un mismo puente de embarque entre dos guardias distintas. */
+const PROG_MANGA_AAC_MAP = {
+  'MAN005': ['AAC2114', 'AAC2115', 'AAC2116', 'AAC2117', 'AAC2118'],
+  'MAN008': ['AAC2230', 'AAC2231', 'AAC2232', 'AAC2233', 'AAC2236', 'AAC3824', 'AAC3825'],
+  'MAN009': ['AAC2239', 'AAC3826', 'AAC3827'],
+  'MAN010': ['AAC2238', 'AAC3828', 'AAC3829'],
+  'MAN011': ['AAC2146', 'AAC2171', 'AAC2172'],
+  'MAN012': ['AAC2147', 'AAC2173', 'AAC2174'],
+  'MAN029': ['AAC2144', 'AAC2167', 'AAC2168'],
+  'MAN030': ['AAC2145', 'AAC2169', 'AAC2170'],
+  'MAN234': ['AAC3820', 'AAC3821', 'AAC9313', 'AAC9314'],
+  'MAN235': ['AAC3822', 'AAC3823', 'AAC9315', 'AAC9316'],
+};
+const PROG_MANGA_LABELS = {
+  'MAN005': 'Manga POS N°3',  'MAN234': 'Manga POS N°4',  'MAN235': 'Manga POS N°5',
+  'MAN008': 'Manga POS N°6',  'MAN009': 'Manga POS N°7',  'MAN010': 'Manga POS N°8',
+  'MAN029': 'Manga POS N°9',  'MAN030': 'Manga POS N°10', 'MAN011': 'Manga POS N°11',
+  'MAN012': 'Manga POS N°12',
+};
+const PROG_AAC_A_MANGA = {};
+Object.entries(PROG_MANGA_AAC_MAP).forEach(([man, aacs]) => {
+  aacs.forEach(aac => { PROG_AAC_A_MANGA[aac] = man; });
+});
+function progMangaDeEquipo(equipo) {
+  const eq = String(equipo || '').trim().toUpperCase();
+  if (PROG_MANGA_AAC_MAP[eq]) return eq;
+  return PROG_AAC_A_MANGA[eq] || null;
+}
+/* Fuerza que la Manga (MAN*) y sus equipos de Aire asociados compartan
+   guardia. Manda la guardia fija elegida a mano en el panel de Mangas
+   (progState.mangaGuardia, independiente de si ese mes hay o no una OT
+   de la Manga en sí); si no hay una fija para esa manga, se usa como
+   respaldo la guardia de la fila de la Manga si ese mes sí vino cargada. */
+function progSincronizarMangas(items) {
+  const porManga = {};
+  items.forEach(o => {
+    const man = progMangaDeEquipo(o.equipo);
+    if (man) (porManga[man] = porManga[man] || []).push(o);
+  });
+  Object.keys(porManga).forEach(man => {
+    const grupo = porManga[man];
+    const fija = progState.mangaGuardia && progState.mangaGuardia[man];
+    if (fija != null) {
+      grupo.forEach(o => { o.guardia = fija; });
+      return;
+    }
+    const manRow = grupo.find(o => o.equipo === man && o.guardia != null);
+    if (!manRow) return;
+    grupo.forEach(o => { if (o.equipo !== man) o.guardia = manRow.guardia; });
+  });
+}
+
+let progState  = { mes: '', ots: [], mangaGuardia: {} };
 let progSearch = '';
 let progFiltroTurno  = '';
 let progFiltroRegla  = '';
@@ -89,7 +145,10 @@ function progLoad() {
     const raw = localStorage.getItem(PROG_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.ots)) progState = parsed;
+      if (parsed && Array.isArray(parsed.ots)) {
+        if (!parsed.mangaGuardia) parsed.mangaGuardia = {};
+        progState = parsed;
+      }
     }
   } catch (e) { /* localStorage corrupto o no disponible: arrancamos vacío */ }
 }
@@ -304,6 +363,7 @@ function progHandleFile(file) {
           yaAsignados.filter(o => o.grupo === g)
         );
       });
+      progSincronizarMangas(merged);
 
       progState.ots = merged;
       if (!progState.mes) progState.mes = document.getElementById('prog-mes-input').value || new Date().toISOString().slice(0, 7);
@@ -340,10 +400,56 @@ function renderProgramacion() {
   document.getElementById('prog-empty-state').classList.toggle('hidden', hasData);
   document.getElementById('prog-toolbar').style.display = hasData ? '' : 'none';
   document.getElementById('prog-stats').style.display = hasData ? '' : 'none';
+  document.getElementById('prog-mangas-panel').style.display = hasData ? '' : 'none';
 
   renderProgFiltroZona();
   renderProgStats();
+  renderProgMangasPanel();
   renderProgGuardias();
+}
+
+/* ─── Panel: guardia fija por Manga ─────────────────────────────────
+   Independiente de si ese mes hay o no una OT de la Manga en sí: al
+   elegir acá la guardia de una Manga, se aplica de inmediato a ella y
+   a todos sus equipos de Aire asociados que estén cargados este mes. */
+function renderProgMangasPanel() {
+  const wrap = document.getElementById('prog-mangas-panel');
+  if (!wrap) return;
+  const mangas = Object.keys(PROG_MANGA_LABELS).sort((a, b) =>
+    PROG_MANGA_LABELS[a].localeCompare(PROG_MANGA_LABELS[b], undefined, { numeric: true })
+  );
+  const opcionesGuardia = selected => [1, 2, 3, 4].map(n =>
+    `<option value="${n}" ${n === selected ? 'selected' : ''}>Guardia ${n} (${PROG_GUARDIA_TURNO[n] === 'mañana' ? '☀️ Mañana' : '🌙 Noche'})</option>`
+  ).join('');
+
+  wrap.innerHTML = `
+    <div class="prog-mangas-header">
+      🛬 Guardia fija por Manga
+      <span class="prog-mangas-hint">— sus equipos de Aire (Roof Top, Split, UTA) quedan siempre con la misma guardia</span>
+    </div>
+    <div class="prog-mangas-grid">
+      ${mangas.map(man => `
+        <div class="prog-manga-row">
+          <span class="prog-manga-label">${PROG_MANGA_LABELS[man]}</span>
+          <select class="filter-select prog-manga-select" data-man="${man}">
+            <option value="">Sin asignar</option>
+            ${opcionesGuardia(progState.mangaGuardia[man] || null)}
+          </select>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  wrap.querySelectorAll('.prog-manga-select').forEach(sel => {
+    sel.addEventListener('change', function () {
+      const man = this.dataset.man;
+      if (this.value) progState.mangaGuardia[man] = parseInt(this.value, 10);
+      else delete progState.mangaGuardia[man];
+      progSincronizarMangas(progState.ots);
+      progSave();
+      renderProgramacion();
+    });
+  });
 }
 
 function renderProgFiltroZona() {
@@ -437,6 +543,7 @@ function renderProgGuardias() {
       const ot = progState.ots.find(o => o.id === this.dataset.id);
       if (ot) {
         ot.guardia = parseInt(this.value, 10);
+        progSincronizarMangas(progState.ots);
         progSave();
         renderProgramacion();
       }
@@ -479,7 +586,7 @@ function progReset() {
   if (!progState.ots.length) return;
   const ok = window.confirm('¿Vaciar la programación actual? Esto borra todas las asignaciones cargadas (no afecta el Excel original).');
   if (!ok) return;
-  progState = { mes: document.getElementById('prog-mes-input').value || '', ots: [] };
+  progState = { mes: document.getElementById('prog-mes-input').value || '', ots: [], mangaGuardia: progState.mangaGuardia || {} };
   progSave();
   renderProgramacion();
 }
