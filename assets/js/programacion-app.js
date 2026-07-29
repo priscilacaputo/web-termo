@@ -505,6 +505,8 @@ function renderProgGuardias() {
   wrap.innerHTML = [1, 2, 3, 4].map(gid => {
     const turno = PROG_GUARDIA_TURNO[gid];
     const items = filtradas.filter(o => o.guardia === gid);
+    const aireEnGuardia = items.filter(o => o.grupo === 'aire').length;
+    const mecEnGuardia  = items.filter(o => o.grupo === 'mecanico').length;
     const alturaEnGuardia = items.filter(o => o.esAltura).length;
     const alturaAireEnGuardia = items.filter(o => o.esAltura && o.grupo === 'aire').length;
     const alturaMecEnGuardia  = items.filter(o => o.esAltura && o.grupo === 'mecanico').length;
@@ -531,7 +533,7 @@ function renderProgGuardias() {
         <div class="prog-guardia-header">
           <span class="prog-guardia-name">${progGuardiaLabel(gid)}</span>
           <span class="turno-badge ${turno === 'noche' ? 'noche' : 'manana'}">${turno === 'noche' ? '🌙 Noche' : '☀️ Mañana'}</span>
-          <span class="prog-guardia-count">${items.length} OT${items.length === 1 ? '' : 's'}${alturaEnGuardia ? ` · ⛰️ ${alturaEnGuardia} (💨 ${alturaAireEnGuardia} aire · 🔧 ${alturaMecEnGuardia} mec)` : ''}</span>
+          <span class="prog-guardia-count">${items.length} OT${items.length === 1 ? '' : 's'} (💨 ${aireEnGuardia} aire · 🔧 ${mecEnGuardia} mec)${alturaEnGuardia ? ` · ⛰️ ${alturaEnGuardia} (💨 ${alturaAireEnGuardia} aire · 🔧 ${alturaMecEnGuardia} mec)` : ''}</span>
         </div>
         <div class="prog-guardia-list">${rows}</div>
       </div>
