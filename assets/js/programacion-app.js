@@ -7,11 +7,17 @@
 
    Dentro de esas reglas, el resto de los equipos (y también los que sí
    tienen regla fija) se reparten entre las guardias del turno que les
-   corresponde optimizando dos criterios, en este orden:
+   corresponde optimizando estos criterios, en este orden:
      1. Equidad de altura: los equipos que pagan altura (ALTURA_EQUIPOS)
         se reparten lo más parejo posible entre las guardias del turno.
-     2. Cercanía física: se prioriza agrupar equipos de la misma zona/
-        edificio en la misma guardia, para no perder tiempo en logística.
+     2. Equidad de carga total: la cantidad total de OTs también se
+        reparte lo más parejo posible entre las guardias del turno.
+     3. Cercanía física: a igualdad de equidad, se prioriza agrupar
+        equipos de la misma zona/edificio en la misma guardia, para no
+        perder tiempo en logística.
+   Aire y Mecánicos se reparten cada uno por separado (ver progHandleFile),
+   así que la equidad (altura y carga total) se calcula de forma
+   independiente para cada gremio, no mezclada.
    Todo queda 100% editable por fila con el desplegable de guardia. */
 
 const PROG_STORAGE_KEY   = 'programacion_ots_v1';
@@ -199,14 +205,14 @@ function progGrupoEquipo(equipo, puesto, regla) {
   return 'mecanico';
 }
 
-/* ─── Asignación de guardia: equidad de altura + cercanía física ──
-   Se procesa agrupando por zona (para favorecer que una misma guardia
-   se quede con los equipos de un mismo edificio) y, dentro de cada
-   zona, primero los que pagan altura (para repartirlos parejo antes
-   de que el resto llene el cupo de cada guardia). Además de la zona
-   (edificio) se usa la ubicación técnica puntual como segundo criterio
-   de cercanía, para agrupar en lo posible el mismo sector físico dentro
-   del edificio y minimizar los traslados de la guardia. */
+/* ─── Asignación de guardia: equidad de altura + equidad de carga total,
+   con cercanía física solo como desempate ──────────────────────────
+   Primero se pareja la altura entre las guardias del turno; a igualdad
+   de altura, se pareja la cantidad total de OTs (para que ninguna
+   guardia quede sobrecargada de OTs de su mismo gremio); recién a
+   igualdad de ambas cosas se usa la cercanía (zona/edificio y, dentro
+   de la zona, la ubicación técnica puntual) para agrupar el mismo
+   sector físico y minimizar los traslados de la guardia. */
 function progCompararClaves(a, b) {
   for (let i = 0; i < a.length; i++) {
     if (a[i] !== b[i]) return a[i] - b[i];
@@ -242,8 +248,8 @@ function progAsignarPendientes(pendientes, yaAsignados) {
       const cercaniaZona  = zonaCount[g][o.zona] || 0;
       const cercaniaUbic  = ubicCount[g][o.ubicacionTecnica] || 0;
       const clave = o.esAltura
-        ? [alturaCount[g], -cercaniaZona, -cercaniaUbic, totalCount[g], g]   // 1° equidad de altura, 2° cercanía por zona, 3° cercanía por ubicación técnica, 4° carga total
-        : [-cercaniaZona, -cercaniaUbic, totalCount[g], g];                   // 1° cercanía por zona, 2° cercanía por ubicación técnica, 3° carga total
+        ? [alturaCount[g], totalCount[g], -cercaniaZona, -cercaniaUbic, g]   // 1° equidad de altura, 2° equidad de carga total, 3° cercanía por zona, 4° cercanía por ubicación técnica
+        : [totalCount[g], -cercaniaZona, -cercaniaUbic, g];                   // 1° equidad de carga total, 2° cercanía por zona, 3° cercanía por ubicación técnica
       if (mejorClave === null || progCompararClaves(clave, mejorClave) < 0) {
         mejorClave = clave;
         mejorGuardia = g;
