@@ -1,5 +1,5 @@
 /* ─── Equipos que requieren Trabajo en Altura ─────────────── */
-/* Fuente: Equipos ALTURA.xlsx (hoja "Unificado"), actualizado 2026-07-24.
+/* Fuente: Equipos ALTURA.xlsx (hoja "Unificado"), actualizado 2026-08-03.
    Se excluyen los equipos cuya Ubicación figura como "Sólo hidrolavado":
    ese texto indica que la tarea en ese equipo es únicamente hidrolavado
    (lavado con hidrolavadora desde el piso), no un trabajo en altura real,
@@ -12,8 +12,9 @@ const ALTURA_EQUIPOS = new Set([
   "AAC3825", "AAC3826", "AAC3827", "AAC3828", "AAC3829", "AAC2167",
   "AAC2168", "AAC2144", "AAC2169", "AAC2170", "AAC2145", "AAC2171",
   "AAC2172", "AAC2146", "AAC2173", "AAC2174", "AAC2147", "AAC3504",
+  "AAC2236",
   "MAN005", "MAN006", "MAN007", "MAN008", "MAN009", "MAN010",
-  "MAN011", "MAN012", "MAN029", "MAN030", "AAC3928", "AAC3929",
+  "MAN011", "MAN012", "MAN029", "MAN030", "MAN0010", "AAC3928", "AAC3929",
   "AAC3930", "AAC3931", "AAC3932", "AAC3933", "AAC2064", "AAC3833",
   "AAC3942", "AAC3943", "AAC9416", "AAC9417", "AAC4109", "AAC2114",
   "AAC2115", "AAC4132", "AAC4110", "AAC4111", "AAC2083", "AAC9313",
@@ -36,7 +37,7 @@ const ALTURA_EQUIPOS = new Set([
   "MEQ1361", "AAC4107", "AAC4108",
 ]);
 
-// Total: 159 equipos
+// Total: 161 equipos
 
 /* ─── Excluidos por ser "Sólo hidrolavado" (no pagan altura) ───────
    Roof Top a los que solo se les hace hidrolavado desde el piso. */

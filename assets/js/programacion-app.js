@@ -574,6 +574,7 @@ function progExportExcel() {
     .map(o => ({
       'Guardia': progGuardiaLabel(o.guardia),
       'Turno': PROG_GUARDIA_TURNO[o.guardia] === 'noche' ? 'Noche' : 'Mañana',
+      'OT': o.ot_num || '',
       'Equipo': o.equipo,
       'Denominación': o.denominacion || '',
       'Zona': o.zona,
