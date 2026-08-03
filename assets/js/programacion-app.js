@@ -8,8 +8,16 @@
    Dentro de esas reglas, el resto de los equipos (y también los que sí
    tienen regla fija) se reparten entre las guardias del turno que les
    corresponde optimizando estos criterios, en este orden:
-     1. Equidad de altura: los equipos que pagan altura (ALTURA_EQUIPOS)
-        se reparten lo más parejo posible entre las guardias del turno.
+     0. Bloque por ubicación (solo altura): los equipos que pagan altura
+        (ALTURA_EQUIPOS) y comparten la misma ubicación técnica puntual
+        (mismo sector físico, p. ej. las 4 UTAs del Comedor de Aeropuertos)
+        van siempre juntos a la misma guardia — nunca se parte un mismo
+        sector entre guardias distintas. Si ese sector ya tenía equipos
+        de altura asignados en meses anteriores, el resto hereda esa
+        misma guardia en vez de recalcularse.
+     1. Equidad de altura: los equipos que pagan altura se reparten lo
+        más parejo posible entre las guardias del turno (a nivel de
+        equipo individual, o de bloque completo cuando aplica la regla 0).
      2. Equidad de carga total: la cantidad total de OTs también se
         reparte lo más parejo posible entre las guardias del turno.
      3. Cercanía física: a igualdad de equidad, se prioriza agrupar
@@ -231,9 +239,61 @@ function progAsignarPendientes(pendientes, yaAsignados) {
     zonaCount[o.guardia][o.zona] = (zonaCount[o.guardia][o.zona] || 0) + 1;
     ubicCount[o.guardia][o.ubicacionTecnica] = (ubicCount[o.guardia][o.ubicacionTecnica] || 0) + 1;
   }
-  yaAsignados.forEach(registrar);
 
-  const ordenados = [...pendientes].sort((a, b) => {
+  /* Guardia que ya venía atendiendo cada sector físico de altura (por
+     ubicación técnica), de meses anteriores. Si un sector nuevo coincide
+     con uno ya asignado, el bloque entero hereda esa guardia. */
+  const guardiaPorUbicacionAltura = {};
+  yaAsignados.forEach(o => {
+    registrar(o);
+    if (o.esAltura && o.ubicacionTecnica && o.ubicacionTecnica !== 'SIN UBICACIÓN') {
+      const key = o.ubicacionTecnica + '|' + (o.turno || '');
+      if (guardiaPorUbicacionAltura[key] == null) guardiaPorUbicacionAltura[key] = o.guardia;
+    }
+  });
+
+  function mejorGuardiaParaGrupo(items) {
+    const pool = PROG_POOL_TURNO[items[0].turno] || PROG_POOL_TURNO.libre;
+    const nAltura = items.filter(o => o.esAltura).length;
+    const nTotal  = items.length;
+    let mejorGuardia = pool[0];
+    let mejorClave = null;
+    pool.forEach(g => {
+      const cercaniaZona = zonaCount[g][items[0].zona] || 0;
+      const cercaniaUbic = ubicCount[g][items[0].ubicacionTecnica] || 0;
+      const clave = [alturaCount[g] + nAltura, totalCount[g] + nTotal, -cercaniaZona, -cercaniaUbic, g];
+      if (mejorClave === null || progCompararClaves(clave, mejorClave) < 0) {
+        mejorClave = clave;
+        mejorGuardia = g;
+      }
+    });
+    return mejorGuardia;
+  }
+
+  /* Equipos de altura que comparten ubicación técnica (mismo sector
+     físico, p. ej. las 4 UTAs del Comedor de Aeropuertos) se agrupan y
+     se asignan en bloque a una única guardia — nunca se reparten entre
+     guardias distintas. Los equipos sin ubicación técnica conocida no se
+     agrupan (no hay evidencia de que compartan sector físico real). */
+  const gruposAltura = {};
+  const individuales = [];
+  pendientes.forEach(o => {
+    if (o.esAltura && o.ubicacionTecnica && o.ubicacionTecnica !== 'SIN UBICACIÓN') {
+      const key = o.ubicacionTecnica + '|' + (o.turno || '');
+      (gruposAltura[key] = gruposAltura[key] || []).push(o);
+    } else {
+      individuales.push(o);
+    }
+  });
+
+  Object.entries(gruposAltura).forEach(([key, grupo]) => {
+    const guardia = guardiaPorUbicacionAltura[key] != null
+      ? guardiaPorUbicacionAltura[key]
+      : mejorGuardiaParaGrupo(grupo);
+    grupo.forEach(o => { o.guardia = guardia; registrar(o); });
+  });
+
+  const ordenados = individuales.sort((a, b) => {
     if (a.zona !== b.zona) return a.zona.localeCompare(b.zona);
     if (a.ubicacionTecnica !== b.ubicacionTecnica) return a.ubicacionTecnica.localeCompare(b.ubicacionTecnica);
     if (a.esAltura !== b.esAltura) return a.esAltura ? -1 : 1;
