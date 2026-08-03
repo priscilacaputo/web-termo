@@ -8,16 +8,22 @@
    Dentro de esas reglas, el resto de los equipos (y también los que sí
    tienen regla fija) se reparten entre las guardias del turno que les
    corresponde optimizando estos criterios, en este orden:
-     0. Bloque por ubicación (solo altura): los equipos que pagan altura
-        (ALTURA_EQUIPOS) y comparten la misma ubicación técnica puntual
-        (mismo sector físico, p. ej. las 4 UTAs del Comedor de Aeropuertos)
-        van siempre juntos a la misma guardia — nunca se parte un mismo
-        sector entre guardias distintas. Si ese sector ya tenía equipos
-        de altura asignados en meses anteriores, el resto hereda esa
-        misma guardia en vez de recalcularse.
+     0. Bloque por sector físico chico (solo altura, lista curada): un
+        puñado de equipos de altura que están físicamente juntos en un
+        sector puntual (p. ej. las 4 UTAs del Comedor de Aeropuertos, ver
+        PROG_ALTURA_GRUPOS_SECTOR) van siempre a la misma guardia. Esto NO
+        se infiere del campo "Ubicación técnica" de SAP porque ese campo
+        suele ser mucho más amplio que un sector real — p. ej. todo el
+        Patio de Valijas comparte un único código técnico — y agrupar
+        automáticamente por él metería decenas de equipos en una sola
+        guardia, rompiendo la equidad. Si el sector ya tenía equipos de
+        altura asignados en meses anteriores, el resto hereda esa misma
+        guardia en vez de recalcularse.
      1. Equidad de altura: los equipos que pagan altura se reparten lo
         más parejo posible entre las guardias del turno (a nivel de
-        equipo individual, o de bloque completo cuando aplica la regla 0).
+        equipo individual, o de bloque completo cuando aplica la regla 0;
+        los bloques más grandes se ubican primero para que el resultado
+        final quede parejo).
      2. Equidad de carga total: la cantidad total de OTs también se
         reparte lo más parejo posible entre las guardias del turno.
      3. Cercanía física: a igualdad de equidad, se prioriza agrupar
@@ -64,6 +70,19 @@ function progMangaDeEquipo(equipo) {
   if (PROG_MANGA_AAC_MAP[eq]) return eq;
   return PROG_AAC_A_MANGA[eq] || null;
 }
+
+/* ─── Sectores físicos chicos con varios equipos de altura juntos ───────
+   Lista curada a mano (no derivada de "Ubicación técnica" de SAP, que es
+   demasiado amplia para esto — ver nota en el bloque de reglas arriba).
+   Cada entrada agrupa equipos que están realmente en el mismo sector
+   puntual y por eso siempre deben quedar en la misma guardia. */
+const PROG_ALTURA_GRUPOS_SECTOR = [
+  ['AAC4107', 'AAC4108', 'AAC4109', 'AAC4132'], // Comedor de Aeropuertos: 4 UTAs del mismo techo
+];
+const PROG_EQUIPO_A_GRUPO_SECTOR = {};
+PROG_ALTURA_GRUPOS_SECTOR.forEach((grupo, i) => {
+  grupo.forEach(eq => { PROG_EQUIPO_A_GRUPO_SECTOR[eq] = i; });
+});
 /* Fuerza que la Manga (MAN*) y sus equipos de Aire asociados compartan
    guardia. Manda la guardia fija elegida a mano en el panel de Mangas
    (progState.mangaGuardia, independiente de si ese mes hay o no una OT
@@ -240,28 +259,27 @@ function progAsignarPendientes(pendientes, yaAsignados) {
     ubicCount[o.guardia][o.ubicacionTecnica] = (ubicCount[o.guardia][o.ubicacionTecnica] || 0) + 1;
   }
 
-  /* Guardia que ya venía atendiendo cada sector físico de altura (por
-     ubicación técnica), de meses anteriores. Si un sector nuevo coincide
-     con uno ya asignado, el bloque entero hereda esa guardia. */
-  const guardiaPorUbicacionAltura = {};
+  /* Guardia que ya venía atendiendo cada sector físico chico (lista
+     curada), de meses anteriores. Si el sector nuevo coincide con uno ya
+     asignado, el resto del grupo hereda esa guardia. */
+  const guardiaPorGrupoSector = {};
   yaAsignados.forEach(o => {
     registrar(o);
-    if (o.esAltura && o.ubicacionTecnica && o.ubicacionTecnica !== 'SIN UBICACIÓN') {
-      const key = o.ubicacionTecnica + '|' + (o.turno || '');
-      if (guardiaPorUbicacionAltura[key] == null) guardiaPorUbicacionAltura[key] = o.guardia;
+    const grupoId = PROG_EQUIPO_A_GRUPO_SECTOR[o.equipo];
+    if (grupoId != null && guardiaPorGrupoSector[grupoId] == null) {
+      guardiaPorGrupoSector[grupoId] = o.guardia;
     }
   });
 
-  function mejorGuardiaParaGrupo(items) {
+  function mejorGuardiaParaUnidad(items) {
     const pool = PROG_POOL_TURNO[items[0].turno] || PROG_POOL_TURNO.libre;
-    const nAltura = items.filter(o => o.esAltura).length;
-    const nTotal  = items.length;
+    const nTotal = items.length;
     let mejorGuardia = pool[0];
     let mejorClave = null;
     pool.forEach(g => {
       const cercaniaZona = zonaCount[g][items[0].zona] || 0;
       const cercaniaUbic = ubicCount[g][items[0].ubicacionTecnica] || 0;
-      const clave = [alturaCount[g] + nAltura, totalCount[g] + nTotal, -cercaniaZona, -cercaniaUbic, g];
+      const clave = [alturaCount[g] + nTotal, totalCount[g] + nTotal, -cercaniaZona, -cercaniaUbic, g];
       if (mejorClave === null || progCompararClaves(clave, mejorClave) < 0) {
         mejorClave = clave;
         mejorGuardia = g;
@@ -270,33 +288,41 @@ function progAsignarPendientes(pendientes, yaAsignados) {
     return mejorGuardia;
   }
 
-  /* Equipos de altura que comparten ubicación técnica (mismo sector
-     físico, p. ej. las 4 UTAs del Comedor de Aeropuertos) se agrupan y
-     se asignan en bloque a una única guardia — nunca se reparten entre
-     guardias distintas. Los equipos sin ubicación técnica conocida no se
-     agrupan (no hay evidencia de que compartan sector físico real). */
-  const gruposAltura = {};
-  const individuales = [];
+  /* Equipos de altura del mismo sector físico chico (lista curada, ver
+     PROG_ALTURA_GRUPOS_SECTOR) se tratan como una sola unidad indivisible;
+     el resto de los equipos de altura son unidades de tamaño 1. Se
+     resuelven de mayor a menor tamaño (heurística LPT) para que la
+     equidad final entre guardias quede lo más pareja posible: si los
+     bloques grandes se dejaran para el final, serían los más difíciles
+     de acomodar y desbalancearían el resultado. */
+  const gruposSector = {};
+  const alturaSueltos = [];
+  const noAltura = [];
   pendientes.forEach(o => {
-    if (o.esAltura && o.ubicacionTecnica && o.ubicacionTecnica !== 'SIN UBICACIÓN') {
-      const key = o.ubicacionTecnica + '|' + (o.turno || '');
-      (gruposAltura[key] = gruposAltura[key] || []).push(o);
+    if (!o.esAltura) { noAltura.push(o); return; }
+    const grupoId = PROG_EQUIPO_A_GRUPO_SECTOR[o.equipo];
+    if (grupoId != null) {
+      (gruposSector[grupoId] = gruposSector[grupoId] || []).push(o);
     } else {
-      individuales.push(o);
+      alturaSueltos.push(o);
     }
   });
 
-  Object.entries(gruposAltura).forEach(([key, grupo]) => {
-    const guardia = guardiaPorUbicacionAltura[key] != null
-      ? guardiaPorUbicacionAltura[key]
-      : mejorGuardiaParaGrupo(grupo);
-    grupo.forEach(o => { o.guardia = guardia; registrar(o); });
+  const unidadesAltura = [
+    ...Object.entries(gruposSector).map(([grupoId, items]) => ({ grupoId: Number(grupoId), items })),
+    ...alturaSueltos.map(o => ({ grupoId: null, items: [o] })),
+  ].sort((a, b) => b.items.length - a.items.length);
+
+  unidadesAltura.forEach(({ grupoId, items }) => {
+    const guardia = (grupoId != null && guardiaPorGrupoSector[grupoId] != null)
+      ? guardiaPorGrupoSector[grupoId]
+      : mejorGuardiaParaUnidad(items);
+    items.forEach(o => { o.guardia = guardia; registrar(o); });
   });
 
-  const ordenados = individuales.sort((a, b) => {
+  const ordenados = noAltura.sort((a, b) => {
     if (a.zona !== b.zona) return a.zona.localeCompare(b.zona);
     if (a.ubicacionTecnica !== b.ubicacionTecnica) return a.ubicacionTecnica.localeCompare(b.ubicacionTecnica);
-    if (a.esAltura !== b.esAltura) return a.esAltura ? -1 : 1;
     return 0;
   });
 
@@ -307,9 +333,7 @@ function progAsignarPendientes(pendientes, yaAsignados) {
     pool.forEach(g => {
       const cercaniaZona  = zonaCount[g][o.zona] || 0;
       const cercaniaUbic  = ubicCount[g][o.ubicacionTecnica] || 0;
-      const clave = o.esAltura
-        ? [alturaCount[g], totalCount[g], -cercaniaZona, -cercaniaUbic, g]   // 1° equidad de altura, 2° equidad de carga total, 3° cercanía por zona, 4° cercanía por ubicación técnica
-        : [totalCount[g], -cercaniaZona, -cercaniaUbic, g];                   // 1° equidad de carga total, 2° cercanía por zona, 3° cercanía por ubicación técnica
+      const clave = [totalCount[g], -cercaniaZona, -cercaniaUbic, g];   // 1° equidad de carga total, 2° cercanía por zona, 3° cercanía por ubicación técnica
       if (mejorClave === null || progCompararClaves(clave, mejorClave) < 0) {
         mejorClave = clave;
         mejorGuardia = g;
