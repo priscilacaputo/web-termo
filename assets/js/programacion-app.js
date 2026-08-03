@@ -19,14 +19,21 @@
         guardia, rompiendo la equidad. Si el sector ya tenía equipos de
         altura asignados en meses anteriores, el resto hereda esa misma
         guardia en vez de recalcularse.
-     1. Equidad de altura: los equipos que pagan altura se reparten lo
-        más parejo posible entre las guardias del turno (a nivel de
-        equipo individual, o de bloque completo cuando aplica la regla 0;
-        los bloques más grandes se ubican primero para que el resultado
-        final quede parejo).
-     2. Equidad de carga total: la cantidad total de OTs también se
+     1. Cintas de Patio de Valijas (MEQ) que pagan altura: se ordenan por
+        su número de secuencia física (el código BF/BC/BFR/VB/GR/TT que
+        trae la denominación, p. ej. BF-1301) y se reparten en tramos
+        contiguos entre las guardias del turno noche — el corte se elige
+        para que la cantidad final quede lo más pareja posible, pero cada
+        guardia se lleva un tramo seguido en vez de cintas salteadas, para
+        no ir y volver por todo el patio.
+     2. Equidad de altura: el resto de los equipos que pagan altura se
+        reparten lo más parejo posible entre las guardias del turno (a
+        nivel de equipo individual, o de bloque completo cuando aplica la
+        regla 0; los bloques más grandes se ubican primero para que el
+        resultado final quede parejo).
+     4. Equidad de carga total: la cantidad total de OTs también se
         reparte lo más parejo posible entre las guardias del turno.
-     3. Cercanía física: a igualdad de equidad, se prioriza agrupar
+     5. Cercanía física: a igualdad de equidad, se prioriza agrupar
         equipos de la misma zona/edificio en la misma guardia, para no
         perder tiempo en logística.
    Aire y Mecánicos se reparten cada uno por separado (ver progHandleFile),
@@ -83,6 +90,20 @@ const PROG_EQUIPO_A_GRUPO_SECTOR = {};
 PROG_ALTURA_GRUPOS_SECTOR.forEach((grupo, i) => {
   grupo.forEach(eq => { PROG_EQUIPO_A_GRUPO_SECTOR[eq] = i; });
 });
+
+/* ─── Número de secuencia física de una cinta de Patio de Valijas (MEQ) ──
+   Se extrae del código (BF/BC/BFR/VB/GR/TT/RX...) que trae la
+   denominación del equipo (p. ej. "Cinta Equipaje - BF-1301" → 1301): ese
+   número marca la posición física de la cinta a lo largo del recorrido,
+   así que dos equipos con números consecutivos están físicamente
+   seguidos. Se usa para repartir las cintas de altura en tramos
+   contiguos entre guardias en vez de salteadas (ver progAsignarPendientes),
+   para minimizar los traslados dentro del Patio de Valijas. */
+function progNumeroSecuenciaCinta(denominacion) {
+  const matches = String(denominacion || '').match(/-(\d+)/g);
+  if (!matches || !matches.length) return null;
+  return parseInt(matches[matches.length - 1].slice(1), 10);
+}
 /* Fuerza que la Manga (MAN*) y sus equipos de Aire asociados compartan
    guardia. Manda la guardia fija elegida a mano en el panel de Mangas
    (progState.mangaGuardia, independiente de si ese mes hay o no una OT
@@ -288,14 +309,41 @@ function progAsignarPendientes(pendientes, yaAsignados) {
     return mejorGuardia;
   }
 
+  /* Reparte una lista de cintas YA ORDENADAS por número de secuencia
+     física en tramos contiguos entre las guardias del pool, buscando el
+     corte que deje la cantidad final de altura lo más pareja posible.
+     Con un solo corte por guardia, cada una se lleva un tramo seguido de
+     la fila en vez de cintas salteadas. */
+  function progRepartirContiguo(itemsOrdenados) {
+    const n = itemsOrdenados.length;
+    if (!n) return;
+    const pool = PROG_POOL_TURNO[itemsOrdenados[0].turno] || PROG_POOL_TURNO.libre;
+    const baseline = pool.map(g => alturaCount[g]);
+    const target = (baseline.reduce((a, b) => a + b, 0) + n) / pool.length;
+    let idx = 0;
+    pool.forEach((g, i) => {
+      const esUltimo = i === pool.length - 1;
+      let cantidad = esUltimo ? (n - idx) : Math.round(target - baseline[i]);
+      cantidad = Math.max(0, Math.min(cantidad, n - idx));
+      for (let j = 0; j < cantidad; j++) {
+        itemsOrdenados[idx].guardia = g;
+        registrar(itemsOrdenados[idx]);
+        idx++;
+      }
+    });
+  }
+
   /* Equipos de altura del mismo sector físico chico (lista curada, ver
      PROG_ALTURA_GRUPOS_SECTOR) se tratan como una sola unidad indivisible;
-     el resto de los equipos de altura son unidades de tamaño 1. Se
-     resuelven de mayor a menor tamaño (heurística LPT) para que la
-     equidad final entre guardias quede lo más pareja posible: si los
-     bloques grandes se dejaran para el final, serían los más difíciles
-     de acomodar y desbalancearían el resultado. */
+     las cintas de Patio de Valijas (MEQ) con número de secuencia física
+     se reparten aparte, en tramos contiguos (progRepartirContiguo); el
+     resto de los equipos de altura son unidades de tamaño 1. Los bloques
+     de sector se resuelven de mayor a menor tamaño (heurística LPT) para
+     que la equidad final entre guardias quede lo más pareja posible: si
+     los bloques grandes se dejaran para el final, serían los más
+     difíciles de acomodar y desbalancearían el resultado. */
   const gruposSector = {};
+  const cintas = [];
   const alturaSueltos = [];
   const noAltura = [];
   pendientes.forEach(o => {
@@ -303,21 +351,36 @@ function progAsignarPendientes(pendientes, yaAsignados) {
     const grupoId = PROG_EQUIPO_A_GRUPO_SECTOR[o.equipo];
     if (grupoId != null) {
       (gruposSector[grupoId] = gruposSector[grupoId] || []).push(o);
+      return;
+    }
+    const numSecuencia = String(o.equipo).toUpperCase().startsWith('MEQ')
+      ? progNumeroSecuenciaCinta(o.denominacion)
+      : null;
+    if (numSecuencia != null) {
+      o._numSecuencia = numSecuencia;
+      cintas.push(o);
     } else {
       alturaSueltos.push(o);
     }
   });
 
-  const unidadesAltura = [
-    ...Object.entries(gruposSector).map(([grupoId, items]) => ({ grupoId: Number(grupoId), items })),
-    ...alturaSueltos.map(o => ({ grupoId: null, items: [o] })),
-  ].sort((a, b) => b.items.length - a.items.length);
-
-  unidadesAltura.forEach(({ grupoId, items }) => {
-    const guardia = (grupoId != null && guardiaPorGrupoSector[grupoId] != null)
+  const bloquesSector = Object.values(gruposSector).sort((a, b) => b.length - a.length);
+  bloquesSector.forEach(items => {
+    const grupoId = PROG_EQUIPO_A_GRUPO_SECTOR[items[0].equipo];
+    const guardia = guardiaPorGrupoSector[grupoId] != null
       ? guardiaPorGrupoSector[grupoId]
       : mejorGuardiaParaUnidad(items);
     items.forEach(o => { o.guardia = guardia; registrar(o); });
+  });
+
+  cintas.sort((a, b) => a._numSecuencia - b._numSecuencia);
+  progRepartirContiguo(cintas);
+  cintas.forEach(o => { delete o._numSecuencia; });
+
+  alturaSueltos.forEach(o => {
+    const guardia = mejorGuardiaParaUnidad([o]);
+    o.guardia = guardia;
+    registrar(o);
   });
 
   const ordenados = noAltura.sort((a, b) => {
