@@ -32,15 +32,34 @@ document.querySelectorAll(".patio-view-btn").forEach(btn => {
     document.getElementById("patio-table-view") .classList.toggle("hidden", view !== "table");
     document.getElementById("patio-planes-view").classList.toggle("hidden", !planesVisible);
     document.querySelector("#page-patio .patio-filters").classList.toggle("hidden", planesVisible);
+    document.querySelector("#page-patio .search-wrap").classList.toggle("hidden", planesVisible);
   });
 });
 
 /* ─── Filtros ────────────────────────────────────────────── */
 const patioClaseFilter = document.getElementById("patioClaseFilter");
 const patioSistemaFilter = document.getElementById("patioSistemaFilter");
+const patioSearchInput = document.getElementById("patio-search");
+const patioClearSearch = document.getElementById("patio-clear-search");
 
 patioClaseFilter.addEventListener("change",   () => { renderPatioGrid(); renderPatioTable(); });
 patioSistemaFilter.addEventListener("change", () => { renderPatioGrid(); renderPatioTable(); });
+
+/* ─── Búsqueda por número (BF/BFR/BC) ───────────────────── */
+let patioSearchTerm = "";
+patioSearchInput.addEventListener("input", function () {
+  patioSearchTerm = this.value.trim().toLowerCase();
+  patioClearSearch.style.display = patioSearchTerm ? "flex" : "none";
+  renderPatioGrid();
+  renderPatioTable();
+});
+patioClearSearch.addEventListener("click", function () {
+  patioSearchTerm = "";
+  patioSearchInput.value = "";
+  this.style.display = "none";
+  renderPatioGrid();
+  renderPatioTable();
+});
 
 /* ─── Altura filter ──────────────────────────────────────── */
 let patioAlturaOnly = false;
@@ -58,6 +77,10 @@ function getFilteredPatio() {
     if (clase   && e.clase !== clase) return false;
     if (sistema && patioSubsistema(e.denominacion) !== sistema) return false;
     if (patioAlturaOnly && !ALTURA_EQUIPOS.has(e.equipo)) return false;
+    if (patioSearchTerm) {
+      const hay = `${e.equipo} ${e.denominacion}`.toLowerCase();
+      if (!hay.includes(patioSearchTerm)) return false;
+    }
     return true;
   });
 }
