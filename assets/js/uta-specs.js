@@ -504,5 +504,7 @@ const UTA_SPECS = {
   "AAC108": {"Equipo": "AAC108", "Codigo": "C18 LENNOX", "Filtros aire": "600x420x50 (4)", "Correas": "B56 (1)"},
   "AAC2102": {"Equipo": "AAC2102", "Codigo": "WESTRIC 20 TN", "Filtros aire": "600X600X50 (3); 600X450X50 (1); 500X450X50 (5)", "Correas": "B49 (1)"},
   "AAC2103": {"Equipo": "AAC2103", "Codigo": "WESTRIC 30 TN", "Filtros aire": "600X600X50 (3); 600X450X50 (1); 500X450X50 (5)", "Correas": "B49 (1)"},
-  "AAC2736": {"Equipo": "AAC2736", "Codigo": "MI IDEA VIALIDAD", "Filtros aire": "620X500X50 (3)"}
+  "AAC2736": {"Equipo": "AAC2736", "Codigo": "MI IDEA VIALIDAD", "Filtros aire": "620X500X50 (3)"},
+  "AAC9314": {"Equipo": "AAC9314", "Codigo": "Keyter Manga Pos 4", "Filtros aire": "570x550x20 (2)"},
+  "AAC9316": {"Equipo": "AAC9316", "Codigo": "Keyter Manga Pos 5", "Filtros aire": "570x550x20 (2)"}
 };

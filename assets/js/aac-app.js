@@ -417,6 +417,7 @@ function openAACModal(equipo) {
   const tipoColor = AAC_TIPO_COLORS[e.tipo]  || '#6b7280';
   const zonaColor = AAC_ZONA_COLORS[zona]     || '#6b7280';
   const uta       = UTA_SPECS && UTA_SPECS[equipo]; // Get UTA specs if available
+  const ficha     = (typeof AAC_FICHAS !== 'undefined') && AAC_FICHAS[equipo]; // Ficha técnica de placa
 
   document.getElementById('aac-modal-header').innerHTML = `
     <span class="modal-equipo">${e.equipo}</span>
@@ -458,6 +459,17 @@ function openAACModal(equipo) {
         ${mf('Correas', uta['Correas'])}
         ${mf('Motor Alimentación', uta['Motor Alimentación'])}
         ${mf('Motor Retorno', uta['Motor Retorno'])}
+      </div>
+    `;
+  }
+
+  // Add nameplate spec sheet (ficha técnica de placa) if available
+  if (ficha) {
+    const fichaFull = ['Descripción', 'Alimentación eléctrica', 'Lugar de fabricación'];
+    bodyHTML += `
+      <div style="margin-top:20px; padding-top:20px; border-top:2px solid var(--color-border)">
+        <h4 style="color:var(--color-navy); font-weight:700; margin-bottom:12px; font-size:14px">🏷️ Ficha técnica (placa)</h4>
+        ${Object.entries(ficha).map(([k, v]) => mf(k, v, fichaFull.includes(k))).join('')}
       </div>
     `;
   }
