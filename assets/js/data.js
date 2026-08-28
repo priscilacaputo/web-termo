@@ -113,6 +113,38 @@ const FLOTA_DATA = [
     equipo: "AVO999", dominio: "AH 148 ZG", denominacion: "Camioneta Partner Mantenimiento",
     anio: 2025, fabricante: "PEUGEOT", tipo: "PARTNER CONFORT L/23",
     motor: "10JBGR0045634", chasis: "8AEGC9HP3SG546472"
+  },
+
+  /* ── Alta desde export SAP EXPORT_20260828201120 — año s/d en el export ── */
+  {
+    equipo: "AVO219", dominio: "GZM 722", denominacion: "Automóvil",
+    anio: "", fabricante: "FIAT", tipo: "UNO FIRE 1242 MPI 8V",
+    motor: "", chasis: ""
+  },
+  {
+    equipo: "AVO305", dominio: "OHP 940", denominacion: "Camioneta",
+    anio: "", fabricante: "TOYOTA", tipo: "HILUX L/12 DC DX 4X4",
+    motor: "", chasis: "8AJFR22G6F4574561"
+  },
+  {
+    equipo: "AVO1001", dominio: "AH 148 HE", denominacion: "Camioneta Pañol",
+    anio: "", fabricante: "PEUGEOT", tipo: "PARTNER CONFORT L/23",
+    motor: "", chasis: "8AEGC9HP5SG545307"
+  },
+  {
+    equipo: "AVO1005", dominio: "AI 317 YY", denominacion: "Camioneta",
+    anio: "", fabricante: "TOYOTA", tipo: "HILUX 4X2 DC DX 2.4",
+    motor: "", chasis: "8AJCB3DDXT3929345"
+  },
+  {
+    equipo: "AVO1006", dominio: "AI 317 YX", denominacion: "Camioneta",
+    anio: "", fabricante: "TOYOTA", tipo: "HILUX 4X2 DC DX 2.4",
+    motor: "", chasis: "8AJCB3DD9T3929398"
+  },
+  {
+    equipo: "AVO1007", dominio: "AI 451 PC", denominacion: "Camioneta",
+    anio: "", fabricante: "", tipo: "",
+    motor: "", chasis: ""
   }
 ];
 

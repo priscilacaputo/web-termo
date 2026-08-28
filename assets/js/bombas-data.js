@@ -1,5 +1,4 @@
 const BOMBAS_DATA = [
-  { equipo:"MBO001",  denominacion:"Bomba Sumergible de achique Lugones Mete",     dimension:"",                  ubicacion:"AEP-LAA",                    fabricante:"",                          modelo:"",                         ubi_desc:"Lado Aire"                              },
   { equipo:"MBO002",  denominacion:"Bomba Sumergible de achique Cata Lugones",      dimension:"",                  ubicacion:"AEP-LAA",                    fabricante:"",                          modelo:"",                         ubi_desc:"Lado Aire"                              },
   { equipo:"MBO1144", denominacion:"Bomba Jockey N°1 red contra Incendio",          dimension:"",                  ubicacion:"AEP-ED2-NIVEL0-UBITEC089",   fabricante:"Grundfos",                  modelo:"CR5-24 A-FGJ-A-EHQQE",     ubi_desc:"Sala de Bombas"                         },
   { equipo:"MBO1145", denominacion:"Bomba Jockey N°2 red contra Incendio",          dimension:"",                  ubicacion:"AEP-ED2-NIVEL0-UBITEC089",   fabricante:"Grundfos",                  modelo:"CR5-24 A-FGJ-A-EHQQE",     ubi_desc:"Sala de Bombas"                         },
@@ -19,8 +18,6 @@ const BOMBAS_DATA = [
   { equipo:"MBO1162", denominacion:"Bomba Sumergible Cloacal N°2",                  dimension:"3,1 KW / 6,8A TRIF.",ubicacion:"AEP-ED7-NIVEL0-UBITEC009",  fabricante:"Flygt",                     modelo:"3102",                     ubi_desc:"Vialidad Exterior"                      },
   { equipo:"MBO1163", denominacion:"Bomba Sumergible Cloacal N°3",                  dimension:"3,1 KW / 6,8A TRIF.",ubicacion:"AEP-ED7-NIVEL0-UBITEC009",  fabricante:"Flygt",                     modelo:"3102",                     ubi_desc:"Vialidad Exterior"                      },
   { equipo:"MBO1164", denominacion:"Bomba Sumergible Cloacal Vertical Texelrio",    dimension:"",                  ubicacion:"AEP-ED8-NIVEL0-UBITEC020",   fabricante:"",                          modelo:"",                         ubi_desc:"Texel Rio"                              },
-  { equipo:"MBO1165", denominacion:"Bomba Sumergible Cloacal N°1 - Mantenim.",      dimension:"",                  ubicacion:"AEP-LAA-UBI225",             fabricante:"",                          modelo:"",                         ubi_desc:"Taller Mantenimiento Jefes"             },
-  { equipo:"MBO1166", denominacion:"Bomba Sumergible Cloacal N°2 - Mantenim.",      dimension:"",                  ubicacion:"AEP-LAA-UBI225",             fabricante:"",                          modelo:"",                         ubi_desc:"Taller Mantenimiento Jefes"             },
   { equipo:"MBO1354", denominacion:"Bomba Multietapa Vertical N°1 - Agua Pot.",     dimension:"15 KW / 28A TRIF.", ubicacion:"AEP-ED2-NIVEL0-UBITEC089",   fabricante:"Grundfos",                  modelo:"CRE64-22AFAEHQQE",         ubi_desc:"Sala de Bombas"                         },
   { equipo:"MBO1355", denominacion:"Bomba Multietapa Vertical N°2 - Agua Pot.",     dimension:"15 KW / 28A TRIF.", ubicacion:"AEP-ED2-NIVEL0-UBITEC089",   fabricante:"Grundfos",                  modelo:"CRE64-22AFAEHQQE",         ubi_desc:"Sala de Bombas"                         },
   { equipo:"MBO1356", denominacion:"Bomba Multietapa Vertical N°3 - Agua Pot.",     dimension:"15 KW / 28A TRIF.", ubicacion:"AEP-ED2-NIVEL0-UBITEC089",   fabricante:"Grundfos",                  modelo:"CRE64-22AFAEHQQE",         ubi_desc:"Sala de Bombas"                         },
@@ -500,8 +497,8 @@ const BOMBAS_PLANES = [
     id: "sumergible",
     denominacion: "Bombas Sumergibles (Cloacales, Pluviales, Achique y Napa)",
     equipos: [
-      "MBO001","MBO002",
-      "MBO1161","MBO1162","MBO1163","MBO1164","MBO1165","MBO1166",
+      "MBO002",
+      "MBO1161","MBO1162","MBO1163","MBO1164",
       "MBO1431","MBO1432","MBO1433","MBO1434","MBO1435","MBO1436",
       "MBO1437","MBO1438","MBO1439","MBO1440","MBO1441","MBO1442",
       "MBO1443","MBO1444","MBO1445","MBO1446","MBO1447","MBO1448",
