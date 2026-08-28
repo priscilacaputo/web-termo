@@ -230,6 +230,13 @@ function openPatioModal(equipo) {
     ${modalField('Banda — descripción', ex['Repuesto banda descripcion'], true)}
     ${modalField('Doc. repuestos', ex['Doc repuestos'], true, true)}
 
+    ${(ex['Repuesto rodillo recomendado'] || ex['Repuesto rodamiento recomendado'] || ex['Doc rodillos/rodamientos']) ? modalSection('Repuestos rodillos / rodamientos') : ''}
+    ${modalField('Repuesto rodillo (cód.)', ex['Repuesto rodillo recomendado'], true, true)}
+    ${modalField('Rodillo — descripción', ex['Repuesto rodillo descripcion'], true)}
+    ${modalField('Repuesto rodamiento (cód.)', ex['Repuesto rodamiento recomendado'], true, true)}
+    ${modalField('Rodamiento — descripción', ex['Repuesto rodamiento descripcion'], true)}
+    ${modalField('Doc. rodillos / rodamientos', ex['Doc rodillos/rodamientos'], true, true)}
+
     ${(ex['PDF origen'] || ex['Documento VDL'] || ex['Doc fallas/averias']) ? modalSection('Documentación') : ''}
     ${modalField('Documento VDL', docVDL, false, true)}
     ${modalField('PDF de especificación', ex['PDF origen'], true, true)}
