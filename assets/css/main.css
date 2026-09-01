@@ -2214,6 +2214,16 @@ a.mant-tab:hover {
   color: #fff;
   box-shadow: 0 2px 8px rgba(15,76,129,.3);
 }
+#prog-hidro-toggle.active {
+  background: #0e7490;
+  border-color: #0e7490;
+  box-shadow: 0 2px 8px rgba(14,116,144,.3);
+}
+#prog-hidro-toggle.active:hover {
+  background: #0e7490;
+  border-color: #0e7490;
+  color: #fff;
+}
 
 /* ─── Badge Pago de Altura ──────────────────────────────── */
 .altura-badge {

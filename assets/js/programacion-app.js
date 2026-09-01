@@ -159,7 +159,7 @@ function progSincronizarEquipos(items, guardiaPrev) {
   });
 }
 
-let progState  = { mes: '', ots: [], mangaGuardia: {} };
+let progState  = { mes: '', ots: [], mangaGuardia: {}, hidrolavado: false };
 let progSearch = '';
 let progFiltroTurno  = '';
 let progFiltroRegla  = '';
@@ -232,6 +232,7 @@ function progLoad() {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.ots)) {
         if (!parsed.mangaGuardia) parsed.mangaGuardia = {};
+        if (typeof parsed.hidrolavado !== 'boolean') parsed.hidrolavado = false;
         progState = parsed;
       }
     }
@@ -240,6 +241,43 @@ function progLoad() {
 function progSave() {
   try { localStorage.setItem(PROG_STORAGE_KEY, JSON.stringify(progState)); }
   catch (e) { progToast('⚠ No se pudo guardar en este navegador.', 'error'); }
+}
+
+/* ─── ¿El equipo paga altura este mes? ─────────────────────────────
+   Base: estar en ALTURA_EQUIPOS (lista completa del Excel de altura).
+   Excepción: los Roof Top sin manga de ALTURA_HIDROLAVADO sólo pagan
+   altura cuando está activado el botón "Hidrolavados ON"; con el botón
+   apagado (default) NO cuentan como altura. */
+function progEsAltura(equipo) {
+  const eq = String(equipo || '').trim().toUpperCase();
+  if (typeof ALTURA_EQUIPOS === 'undefined' || !ALTURA_EQUIPOS.has(eq)) return false;
+  if (!progState.hidrolavado
+      && typeof ALTURA_HIDROLAVADO !== 'undefined'
+      && ALTURA_HIDROLAVADO.has(eq)) return false;
+  return true;
+}
+
+/* Activa/desactiva el modo Hidrolavados y recalcula el flag de altura de
+   todas las OTs ya cargadas (badges y stats). No re-reparte las guardias
+   para no pisar los ajustes manuales: si querés redistribuir con el
+   cambio, volvé a cargar el Excel del mes con el botón en el estado
+   deseado. */
+function progSetHidrolavado(on) {
+  progState.hidrolavado = !!on;
+  progState.ots.forEach(o => { o.esAltura = progEsAltura(o.equipo); });
+  progSave();
+  progRenderHidroToggle();
+  renderProgramacion();
+}
+function progRenderHidroToggle() {
+  const btn = document.getElementById('prog-hidro-toggle');
+  if (!btn) return;
+  const on = !!progState.hidrolavado;
+  btn.classList.toggle('active', on);
+  btn.textContent = on ? '💦 Hidrolavados ON' : '💦 Hidrolavados OFF';
+  btn.title = on
+    ? 'Los Roof Top sin manga cuentan como altura (se está hidrolavando)'
+    : 'Los Roof Top sin manga NO cuentan como altura (activar si se hidrolava)';
 }
 
 /* ─── Clasificación por Puesto de trabajo principal (Aire / Mecánicos) ──
@@ -515,7 +553,7 @@ function progHandleFile(file) {
         const rec  = idx[equipo];
         const denominacion = r.denominacion || (rec && rec.denominacion) || (prev && prev.denominacion) || '';
         const { regla, turno } = progClasificar(equipo, denominacion, r.tipo);
-        const esAltura = (typeof ALTURA_EQUIPOS !== 'undefined') && ALTURA_EQUIPOS.has(equipo);
+        const esAltura = progEsAltura(equipo);
         const zona = progZonaEquipo(equipo, (rec && rec.ubicacion) || r.ubicacion_tecnica);
         const ubicacionTecnica = progUbicacionTecnicaEquipo(equipo, r.ubicacion_tecnica);
         const puesto = r.puesto_trabajo ? progClasificarPuesto(r.puesto_trabajo) : ((prev && prev.puesto) || null);
@@ -849,6 +887,9 @@ function progToast(msg, type = 'success') {
     this.classList.toggle('active', progFiltroAltura);
     renderProgGuardias();
   });
+  const hidroBtn = document.getElementById('prog-hidro-toggle');
+  if (hidroBtn) hidroBtn.addEventListener('click', () => progSetHidrolavado(!progState.hidrolavado));
 
+  progRenderHidroToggle();
   renderProgramacion();
 })();
