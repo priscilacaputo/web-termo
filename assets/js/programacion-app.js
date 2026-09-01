@@ -128,6 +128,37 @@ function progSincronizarMangas(items) {
   });
 }
 
+/* Todas las OTs de un mismo equipo físico van a la misma guardia.
+   Caso típico: las balanzas de check-in traen una OT de la balanza
+   ("MP Balanza VanderLande") y otra de la cinta ("MP Cintas balanzas
+   VDL 6M") por separado, pero es un solo equipo (mismo código MEQ****)
+   y lo atiende una sola guardia, así que no tiene sentido repartir cada
+   OT por su lado. Manda, en este orden: la guardia que el equipo ya
+   tenía de meses anteriores (guardiaPrev); si no, la guardia de una de
+   sus OTs con regla fija de turno; si no, la de la primera OT asignada.
+   Se saltean los equipos de Manga, que ya sincroniza
+   progSincronizarMangas con su propia lógica, y los grupos que mezclan
+   OTs de turnos distintos (no se pueden unir sin romper la regla de
+   turno de alguna). */
+function progSincronizarEquipos(items, guardiaPrev) {
+  const prev = guardiaPrev || {};
+  const porEquipo = {};
+  items.forEach(o => {
+    if (progMangaDeEquipo(o.equipo)) return;
+    (porEquipo[o.equipo] = porEquipo[o.equipo] || []).push(o);
+  });
+  Object.entries(porEquipo).forEach(([equipo, grupo]) => {
+    if (grupo.length < 2) return;
+    const turnos = new Set(grupo.map(o => o.turno).filter(Boolean));
+    if (turnos.size > 1) return;
+    const asignadas = grupo.filter(o => o.guardia != null);
+    if (!asignadas.length) return;
+    let destino = prev[equipo];
+    if (destino == null) destino = (asignadas.find(o => o.regla) || asignadas[0]).guardia;
+    grupo.forEach(o => { o.guardia = destino; });
+  });
+}
+
 let progState  = { mes: '', ots: [], mangaGuardia: {} };
 let progSearch = '';
 let progFiltroTurno  = '';
@@ -517,6 +548,17 @@ function progHandleFile(file) {
         );
       });
       progSincronizarMangas(merged);
+
+      /* Une las OTs de un mismo equipo en una sola guardia (p. ej. la OT
+         de la balanza y la de la cinta de una misma balanza de check-in).
+         Prioriza la guardia que el equipo ya tenía cargada de antes. */
+      const guardiaPrevPorEquipo = {};
+      yaAsignados.forEach(o => {
+        if (o.guardia != null && guardiaPrevPorEquipo[o.equipo] == null) {
+          guardiaPrevPorEquipo[o.equipo] = o.guardia;
+        }
+      });
+      progSincronizarEquipos(merged, guardiaPrevPorEquipo);
 
       progState.ots = merged;
       if (!progState.mes) progState.mes = document.getElementById('prog-mes-input').value || new Date().toISOString().slice(0, 7);
