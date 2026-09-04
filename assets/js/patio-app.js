@@ -164,6 +164,35 @@ function modalField(label, value, full = false, mono = false) {
   </div>`;
 }
 
+/* ─── Repuesto (VDL/Dinamic) ↔ material de pañol (SAP) ──────
+   `arr` = [{cod, nota}]. cod referencia PANOL_DATA[].cod — descripción y
+   stock se resuelven en vivo. Ver campos "Repuesto ... SAP" en patio-extra.js. */
+function sapRepuestoField(label, arr) {
+  if (!arr || !arr.length || typeof PANOL_DATA === 'undefined') return '';
+  const rows = arr.map(({ cod, nota }) => {
+    const m = PANOL_DATA.find(p => p.cod === cod);
+    const stock = m ? Number(m.stock) || 0 : null;
+    const stockHtml = stock === null
+      ? '<span class="panol-stock panol-stock-unk">—</span>'
+      : (stock > 0 ? `<span class="panol-stock panol-stock-ok">${stock.toLocaleString('es-AR')}</span>`
+                   : '<span class="panol-stock panol-stock-zero">Sin stock</span>');
+    return `<tr>
+      <td><span class="equipo-tag">${cod}</span></td>
+      <td>${m ? m.desc : '<span class="no-data">no encontrado en pañol</span>'}${nota ? ` <span class="panol-nota">— ${nota}</span>` : ''}</td>
+      <td>${stockHtml}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="modal-field full">
+    <span class="modal-field-label">${label} — en pañol (SAP)</span>
+    <span class="modal-field-value">
+      <div class="table-wrap"><table class="panol-rep-table">
+        <thead><tr><th>Código</th><th>Identificado como</th><th>Stock</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </span>
+  </div>`;
+}
+
 function openPatioModal(equipo) {
   const eq = PATIO_DATA.find(x => x.equipo === equipo);
   if (!eq) return;
@@ -228,6 +257,8 @@ function openPatioModal(equipo) {
     ${modalField('Motor — descripción', ex['Repuesto motor descripcion'], true)}
     ${modalField('Repuesto banda (cód.)', ex['Repuesto banda recomendado'], false, true)}
     ${modalField('Banda — descripción', ex['Repuesto banda descripcion'], true)}
+    ${sapRepuestoField('Motor', ex['Repuesto motor SAP'])}
+    ${sapRepuestoField('Banda', ex['Repuesto banda SAP'])}
     ${modalField('Doc. repuestos', ex['Doc repuestos'], true, true)}
 
     ${(ex['Repuesto rodillo recomendado'] || ex['Repuesto rodamiento recomendado'] || ex['Doc rodillos/rodamientos']) ? modalSection('Repuestos rodillos / rodamientos') : ''}
@@ -235,6 +266,8 @@ function openPatioModal(equipo) {
     ${modalField('Rodillo — descripción', ex['Repuesto rodillo descripcion'], true)}
     ${modalField('Repuesto rodamiento (cód.)', ex['Repuesto rodamiento recomendado'], true, true)}
     ${modalField('Rodamiento — descripción', ex['Repuesto rodamiento descripcion'], true)}
+    ${sapRepuestoField('Rodillo', ex['Repuesto rodillo SAP'])}
+    ${sapRepuestoField('Rodamiento', ex['Repuesto rodamiento SAP'])}
     ${modalField('Doc. rodillos / rodamientos', ex['Doc rodillos/rodamientos'], true, true)}
 
     ${(ex['PDF origen'] || ex['Documento VDL'] || ex['Doc fallas/averias']) ? modalSection('Documentación') : ''}
