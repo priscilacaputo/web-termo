@@ -47,24 +47,119 @@ const PANOL_REPUESTOS = [
   { equipo: "AAC2075", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
   ] },
+  { equipo: "AAC2081", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2082", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2116", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC2117", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
   { equipo: "AAC2119", materiales: [
     { cod: "20096478", nota: "Eje retorno SAE1040 1300mm Ø1\" chavetero 8mm — coincide con especificación de \"eje retorno UTA1 Check In\"" },
   ] },
+  { equipo: "AAC2151", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2152", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2153", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
   { equipo: "AAC2154", materiales: [
     { cod: "20078448", nota: "Placa control mod. 54115401-50FE1015" },
+    { cod: "20078443", nota: "Compresor Daikin JT170G-P8Y1 (según encabezado de planilla de alta SAP)" },
   ] },
   { equipo: "AAC2155", materiales: [
     { cod: "20078448", nota: "Placa control mod. 54115401-50FE1015" },
+    { cod: "20078443", nota: "Compresor Daikin JT170G-P8Y1 (según encabezado de planilla de alta SAP)" },
   ] },
   { equipo: "AAC2156", materiales: [
     { cod: "20078448", nota: "Placa control mod. 54115401-50FE1015" },
+    { cod: "20078443", nota: "Compresor Daikin JT170G-P8Y1 (según encabezado de planilla de alta SAP)" },
   ] },
   { equipo: "AAC2157", materiales: [
     { cod: "20078448", nota: "Placa control mod. 54115401-50FE1015" },
+    { cod: "20078443", nota: "Compresor Daikin JT170G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2167", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC2168", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC2169", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC2170", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC2171", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC2172", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC2173", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC2174", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
   ] },
   { equipo: "AAC2241", materiales: [
     { cod: "20078442", nota: "Compresor Coopeland ZP16HSE-PFJ-600, R410A" },
     { cod: "20096849", nota: "Placa CVTR condensadora, mod. 54-1154-0" },
+  ] },
+  { equipo: "AAC2249", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2250", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2251", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2252", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2253", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2254", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2255", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2256", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2257", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2258", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2259", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC2260", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
   ] },
   { equipo: "AAC2261", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
@@ -99,6 +194,76 @@ const PANOL_REPUESTOS = [
   { equipo: "AAC3476", materiales: [
     { cod: "20088712", nota: "Placa condensador LG, mod. EAX64656602" },
   ] },
+  { equipo: "AAC3477", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3478", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3479", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3480", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3481", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3482", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3815", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC3816", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC3820", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3821", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3822", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3823", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3824", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3825", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3826", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3827", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3828", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
+  { equipo: "AAC3829", materiales: [
+    { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+  ] },
   { equipo: "AAC3832", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
   ] },
@@ -119,6 +284,27 @@ const PANOL_REPUESTOS = [
   ] },
   { equipo: "AAC3838", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+  ] },
+  { equipo: "AAC3928", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC3929", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC3930", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC3931", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC3932", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC3933", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC9400", materiales: [
+    { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
   ] },
   { equipo: "AVO017", materiales: [
     { cod: "20088680", nota: "Kit escobillas limpiaparabrisas Toyota Hilux 2017-2022" },
