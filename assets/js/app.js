@@ -20,6 +20,7 @@ const PAGE_TITLES = {
   "maint-planes": ["Planes de Mantenimiento", "AEP — Planes preventivos consolidados de todos los equipos"],
   historial:   ["Historial OTs / SAP", "AEP — Historial de órdenes de trabajo · Análisis automático de fallas"],
   kpis:        ["KPIs de Mantenimiento", "AEP — Indicadores clave · Fallas frecuentes · Equipos críticos"],
+  panol:       ["Pañol / Repuestos", "AEP — Stock de pañol (SAP) · Repuestos por equipo"],
 };
 
 /* ─── Page History (para botón de atrás) ──────────── */

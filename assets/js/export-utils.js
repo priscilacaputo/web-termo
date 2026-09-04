@@ -188,6 +188,19 @@ const EXPORT_CONFIGS = [
       { key: 'local',        header: 'Local / Sector' },
     ]
   },
+  {
+    // Headers = export SAP de almacén (para que el mismo archivo sirva al "Subir Excel")
+    btnId: 'panol-export-btn',
+    filename: 'AEP_Panol_Stock',
+    getData: () => PANOL_DATA,
+    columns: [
+      { key: 'cod',   header: 'Material' },
+      { key: 'desc',  header: 'Texto breve de material' },
+      { key: 'um',    header: 'Unidad medida base' },
+      { key: 'stock', header: 'Libre utilización' },
+      { key: 'grupo', header: 'Grupo de artículos' },
+    ]
+  },
 ];
 
 EXPORT_CONFIGS.forEach(cfg => {

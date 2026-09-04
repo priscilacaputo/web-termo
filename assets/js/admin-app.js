@@ -14,6 +14,7 @@ const SECTION_META = {
   aac:         { btnId: 'aac-export-btn',          dataVar: 'AAC_DATA',         key: 'equipo' },
   ecas:        { btnId: 'ecas-export-btn',         dataVar: 'ECAS_DATA',        key: 'equipo' },
   otros:       { btnId: 'otros-export-btn',        dataVar: 'OTROS_DATA',       key: 'equipo' },
+  panol:       { btnId: 'panol-export-btn',        dataVar: 'PANOL_DATA',       key: 'cod' },
 };
 
 function _getExportConfig(section) {
@@ -89,7 +90,7 @@ function _adminLogout() {
 const SECTION_PAGE_IDS = [
   'mangas','ascensores','escaleras','extractores',
   'persianas','cortinas','bombas','patio',
-  'puertas','aac','ecas','otros'
+  'puertas','aac','ecas','otros','panol'
 ];
 
 function _injectUploadButtons() {

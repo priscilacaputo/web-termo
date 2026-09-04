@@ -15,6 +15,8 @@ const SECTION_CONFIG = {
   otros:       { file: 'assets/js/otros-data.js',       varName: 'OTROS_DATA' },
   estados:     { file: 'assets/js/estado-equipos-data.js', varName: 'ESTADO_OVERRIDES' },
   tareas:      { file: 'assets/js/tareas-data.js',      varName: 'TAREAS_DATA' },
+  panol:       { file: 'assets/js/panol-data.js',       varName: 'PANOL_DATA' },
+  'panol-repuestos': { file: 'assets/js/panol-repuestos-data.js', varName: 'PANOL_REPUESTOS' },
 };
 
 function githubRequest(method, path, token, body) {

@@ -119,6 +119,10 @@
       </li>
 
       <li class="nav-section-label">Recursos</li>
+      <li class="nav-item" data-page="panol">
+        <span class="nav-icon">🔩</span>
+        <span class="nav-label">Pañol / Repuestos</span>
+      </li>
       <li class="nav-item disabled" data-page="documentos">
         <span class="nav-icon">📄</span>
         <span class="nav-label">Documentos</span>
@@ -1437,6 +1441,71 @@
 
     </div>
 
+    <!-- ─── PÁGINA: PAÑOL / REPUESTOS ─── -->
+    <div class="page hidden" id="page-panol">
+
+      <div class="stats-grid" id="panol-stats" style="margin-bottom:16px"></div>
+
+      <div class="panol-viewbar" style="margin-bottom:16px">
+        <div class="mangas-view-toggle">
+          <button class="panol-view-btn active" data-view="catalogo">📦 Catálogo / Stock</button>
+          <button class="panol-view-btn" data-view="repuestos">🔩 Repuestos por equipo</button>
+        </div>
+      </div>
+
+      <!-- Vista: Catálogo / Stock -->
+      <div id="panol-catalogo-view">
+        <div class="toolbar" style="margin-bottom:16px">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="panol-search" class="search-input" placeholder="Buscar por código de material o descripción..." />
+            <button class="clear-btn" id="panol-clear-search" title="Limpiar" style="display:none">✕</button>
+          </div>
+          <div class="filter-group">
+            <select id="panol-grupo-filter" class="filter-select">
+              <option value="">Todos los grupos</option>
+            </select>
+            <label class="panol-checkbox"><input type="checkbox" id="panol-solo-stock" /> Solo con stock</label>
+          </div>
+          <button class="export-btn" id="panol-export-btn">⬇ Excel</button>
+          <span id="panol-result-count" class="puertas-result-count"></span>
+        </div>
+
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Código SAP</th>
+                  <th>Descripción</th>
+                  <th>UM</th>
+                  <th>Grupo</th>
+                  <th>Stock</th>
+                </tr>
+              </thead>
+              <tbody id="panol-tbody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <button id="panol-more-btn" class="export-btn" style="display:none">Mostrar más</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista: Repuestos por equipo -->
+      <div id="panol-repuestos-view" class="hidden">
+        <div class="mant-section-header">
+          <div>
+            <h2 class="mant-section-title">Repuestos de pañol por equipo</h2>
+            <p class="mant-section-desc">Materiales de pañol asociados a cada equipo, con su stock actual. La carga y edición se hace desde el modo administrador.</p>
+          </div>
+          <button class="export-btn" id="panol-rep-add-btn" style="display:none">➕ Asignar repuestos a un equipo</button>
+        </div>
+        <div id="panol-rep-list"></div>
+      </div>
+
+    </div>
+
     <!-- ─── PÁGINA: ANALYTICS ─── -->
     <div class="page hidden" id="page-analytics">
       <div class="stats-grid" id="analytics-stats" style="margin-bottom:24px"></div>
@@ -1758,6 +1827,36 @@
     </div>
   </div>
 
+  <!-- Modal material de pañol -->
+  <div class="modal-overlay" id="panol-modal-overlay">
+    <div class="modal" id="panol-modal">
+      <button class="modal-close" id="panol-modal-close">✕</button>
+      <div class="modal-header" id="panol-modal-header"></div>
+      <div class="modal-body" id="panol-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Editor de repuestos por equipo (admin) -->
+  <div id="panol-rep-editor" class="admin-overlay">
+    <div class="admin-modal-box admin-edit-box">
+      <h2 id="panol-rep-editor-title" class="admin-modal-title">Asignar repuestos a un equipo</h2>
+      <div class="admin-efield">
+        <label class="admin-efield-label">Equipo</label>
+        <input class="admin-field-input" id="panol-rep-equipo" list="panol-equipos-datalist"
+               placeholder="Código de equipo (ej: AAC2115)" autocomplete="off" />
+        <datalist id="panol-equipos-datalist"></datalist>
+      </div>
+      <div class="admin-extra-sep">Materiales de pañol</div>
+      <div id="panol-rep-mat-rows"></div>
+      <datalist id="panol-mat-datalist"></datalist>
+      <button class="admin-add-field-btn" id="panol-rep-add-mat">＋ Agregar material</button>
+      <div class="admin-modal-actions" style="margin-top:16px">
+        <button class="admin-btn-secondary" id="panol-rep-cancel">Cancelar</button>
+        <button class="admin-btn-primary" id="panol-rep-save">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
   <script src="assets/js/altura-data.js?v=2"></script>
   <script src="assets/js/data.js?v=16"></script>
   <script src="assets/js/mant-data.js?v=15"></script>
@@ -1784,7 +1883,9 @@
   <script src="assets/js/bombas-data.js?v=16"></script>
   <script src="assets/js/patio-extra.js?v=2"></script>
   <script src="assets/js/patio-data.js?v=4"></script>
-  <script src="assets/js/app.js?v=18"></script>
+  <script src="assets/js/panol-data.js?v=1"></script>
+  <script src="assets/js/panol-repuestos-data.js?v=1"></script>
+  <script src="assets/js/app.js?v=19"></script>
   <script src="assets/js/mant-app.js?v=15"></script>
   <script src="assets/js/planes-integrados-app.js?v=9"></script>
   <script src="assets/js/mangas-app.js?v=17"></script>
@@ -1811,7 +1912,8 @@
   <script src="assets/js/analytics-app.js?v=1"></script>
   <script src="assets/js/maint-planes-app.js?v=2"></script>
   <script src="assets/js/global-search.js?v=1"></script>
-  <script src="assets/js/export-utils.js?v=1"></script>
+  <script src="assets/js/export-utils.js?v=2"></script>
+  <script src="assets/js/panol-app.js?v=1"></script>
   <script src="assets/js/programacion-app.js?v=3"></script>
 
   <!-- ── Admin login modal ──────────────────────────────── -->
@@ -1859,7 +1961,7 @@
   <!-- ── Admin toast ─────────────────────────────────────── -->
   <div id="admin-toast" class="admin-toast"></div>
 
-  <script src="assets/js/admin-app.js?v=2"></script>
+  <script src="assets/js/admin-app.js?v=3"></script>
   <script src="assets/js/ots-analyzer.js?v=1"></script>
   <script src="assets/js/ots-app.js?v=1"></script>
   <script src="assets/js/kpis-app.js?v=1"></script>
