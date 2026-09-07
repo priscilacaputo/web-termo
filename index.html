@@ -1492,15 +1492,33 @@
         </div>
       </div>
 
-      <!-- Vista: Repuestos por equipo -->
+      <!-- Vista: Repuestos por equipo (BOM) -->
       <div id="panol-repuestos-view" class="hidden">
         <div class="mant-section-header">
           <div>
-            <h2 class="mant-section-title">Repuestos de pañol por equipo</h2>
-            <p class="mant-section-desc">Materiales de pañol asociados a cada equipo, con su stock actual. La carga y edición se hace desde el modo administrador.</p>
+            <h2 class="mant-section-title">Repuestos de pañol por equipo (BOM)</h2>
+            <p class="mant-section-desc">Lista de materiales (Bill of Materials) por equipo: código SAP, cantidad necesaria, stock actual y cobertura. La carga y edición se hace desde el modo administrador.</p>
           </div>
           <button class="export-btn" id="panol-rep-add-btn" style="display:none">➕ Asignar repuestos a un equipo</button>
         </div>
+
+        <div class="toolbar" style="margin-bottom:16px">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="panol-rep-search" class="search-input" placeholder="Buscar por equipo, denominación, código o descripción de material..." />
+            <button class="clear-btn" id="panol-rep-clear-search" title="Limpiar" style="display:none">✕</button>
+          </div>
+          <div class="filter-group">
+            <select id="panol-rep-fam-filter" class="filter-select">
+              <option value="">Todas las familias</option>
+            </select>
+            <label class="panol-checkbox"><input type="checkbox" id="panol-rep-solo-faltante" /> Solo con faltante</label>
+            <label class="panol-checkbox"><input type="checkbox" id="panol-rep-solo-fuera" /> Solo fuera de catálogo</label>
+          </div>
+          <button class="export-btn" id="panol-rep-export-btn">⬇ Excel BOM</button>
+          <span id="panol-rep-result-count" class="puertas-result-count"></span>
+        </div>
+
         <div id="panol-rep-list"></div>
       </div>
 

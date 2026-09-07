@@ -4392,6 +4392,13 @@ tr:hover .admin-edit-btn { opacity: 1; }
   background: var(--color-surface);
 }
 .panol-rep-denom { font-weight: 600; color: var(--color-text); }
+.panol-rep-fam {
+  font-size: 11.5px;
+  color: var(--color-primary);
+  background: rgba(26,86,164,.08);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
 .panol-rep-count {
   font-size: 11.5px;
   color: var(--color-muted);
@@ -4399,7 +4406,25 @@ tr:hover .admin-edit-btn { opacity: 1; }
   border-radius: 999px;
   padding: 2px 8px;
 }
+.panol-rep-count.warn { background: #fef3c7; color: #b45309; font-weight: 700; }
 .panol-rep-actions { margin-left: auto; display: flex; gap: 6px; }
+
+/* Cantidad necesaria y cobertura (BOM) */
+.panol-rep-qty { font-weight: 700; text-align: right; white-space: nowrap; }
+.panol-rep-row-falt { background: #fff7ed; }
+.panol-cob {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.panol-cob-ok      { background: #dcfce7; color: #15803d; }
+.panol-cob-parcial { background: #fef3c7; color: #b45309; }
+.panol-cob-none    { background: #fee2e2; color: #b91c1c; }
+.panol-cob-unk     { background: transparent; color: var(--color-muted); }
 .panol-mini-btn {
   border: 1px solid var(--color-border);
   background: var(--color-card);
@@ -4462,11 +4487,12 @@ tr:hover .admin-edit-btn { opacity: 1; }
 /* Editor de repuestos (admin) */
 .panol-mat-row {
   display: grid;
-  grid-template-columns: 180px 1fr auto;
+  grid-template-columns: 180px 72px 1fr auto;
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
 }
+.panol-mat-qty { text-align: right; }
 .panol-mat-desc {
   grid-column: 1 / -1;
   font-size: 11.5px;
@@ -4484,5 +4510,5 @@ tr:hover .admin-edit-btn { opacity: 1; }
   color: #dc2626;
 }
 @media (max-width: 640px) {
-  .panol-mat-row { grid-template-columns: 1fr auto; }
+  .panol-mat-row { grid-template-columns: 1fr 64px auto; }
 }

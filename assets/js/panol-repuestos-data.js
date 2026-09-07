@@ -6,14 +6,15 @@
    2026-09-04. Bloques con nota "a confirmar" señalan una ambigüedad real
    en la documentación fuente — ver aviso entregado al usuario.
 
-   Forma de cada entrada:
+   Forma de cada entrada (BOM del equipo):
      { equipo: "AAC2115",
-       materiales: [ { cod: "20089275", nota: "filtro rodete (opcional)" } ] }
+       materiales: [ { cod: "20089275", qty: 2, nota: "filtro rodete (opcional)" } ] }
 
-   `cod` referencia PANOL_DATA[].cod — la descripción y el stock se
-   resuelven en vivo al renderizar. Se edita desde el modo administrador
-   (pestaña "Repuestos por equipo" de Pañol / Repuestos) o reemplazando
-   este archivo entero. */
+   `cod` referencia PANOL_DATA[].cod — la descripción, la UM y el stock se
+   resuelven en vivo al renderizar. `qty` es la cantidad necesaria por
+   equipo (opcional; si falta se asume 1). Se edita desde el modo
+   administrador (pestaña "Repuestos por equipo" de Pañol / Repuestos) o
+   reemplazando este archivo entero. */
 
 const PANOL_REPUESTOS = [
   { equipo: "AAC1986", materiales: [
