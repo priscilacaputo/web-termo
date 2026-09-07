@@ -182,6 +182,7 @@ const PANOL_REPUESTOS = [
     { cod: "20006585", qty: 2, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
     { cod: "20005469", qty: 2, nota: "Correa BXS 69 — ficha técnica UTA" },
     { cod: "20088191", qty: 2, nota: "Motor alimentación 5.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+    { cod: "20056059", opciones: ["20056058", "20056057"], nota: "Resistencia calefactora forma U aletada, largo 860mm, 18A (Calortec) — planilla Alta de Materiales \"Resistencia Calefactora UTA 1 TROX\"; catálogo tiene 790/940/1320mm, confirmar largo y cantidad" },
   ] },
   { equipo: "AAC2120", materiales: [
     { cod: "20006585", qty: 2, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
