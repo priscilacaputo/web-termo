@@ -48,6 +48,11 @@ function panolOpcionesHTML(cods) {
   }).join('');
   return `<div class="panol-opciones"><span class="panol-opciones-lbl">Opciones equivalentes:</span> ${chips}</div>`;
 }
+/* ¿La línea de BOM es un repuesto crítico? Flag explícito o nota que lo dice. */
+function panolMatCritico(x) {
+  if (x && x.critico === true) return true;
+  return !!(x && x.nota && /\bcr[íi]tico\b/i.test(x.nota));
+}
 /* Cobertura de una línea: stock disponible vs cantidad necesaria */
 function panolCobertura(stock, qty) {
   if (stock == null) return { cls: 'unk',     txt: '—' };
@@ -150,6 +155,25 @@ let panolShown = 0;
   document.getElementById('panol-rep-solo-fuera').addEventListener('change', panolRenderRepuestos);
   document.getElementById('panol-rep-export-btn').addEventListener('click', panolExportBOM);
 
+  // Filtros de la vista "Repuestos críticos"
+  const critSearch = document.getElementById('panol-crit-search');
+  const critClear  = document.getElementById('panol-crit-clear-search');
+  let critSearchTimer = null;
+  critSearch.addEventListener('input', () => {
+    critClear.style.display = critSearch.value ? 'flex' : 'none';
+    clearTimeout(critSearchTimer);
+    critSearchTimer = setTimeout(panolRenderCriticos, 180);
+  });
+  critClear.addEventListener('click', () => {
+    critSearch.value = ''; critClear.style.display = 'none'; panolRenderCriticos();
+  });
+  document.getElementById('panol-crit-solo-sin').addEventListener('change', panolRenderCriticos);
+  document.getElementById('panol-crit-export-btn').addEventListener('click', panolExportCriticos);
+  document.getElementById('panol-crit-tbody').addEventListener('click', e => {
+    const chip = e.target.closest('[data-goto]');
+    if (chip) panolGotoEquipo(chip.dataset.goto);
+  });
+
   document.querySelectorAll('.panol-view-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.panol-view-btn').forEach(b => b.classList.remove('active'));
@@ -157,7 +181,9 @@ let panolShown = 0;
       const v = btn.dataset.view;
       document.getElementById('panol-catalogo-view').classList.toggle('hidden', v !== 'catalogo');
       document.getElementById('panol-repuestos-view').classList.toggle('hidden', v !== 'repuestos');
+      document.getElementById('panol-criticos-view').classList.toggle('hidden', v !== 'criticos');
       if (v === 'repuestos') panolRenderRepuestos();
+      if (v === 'criticos') panolRenderCriticos();
     });
   });
 
@@ -192,6 +218,7 @@ let panolShown = 0;
     if (!document.getElementById('panol-repuestos-view').classList.contains('hidden')) panolRenderRepuestos();
     else document.getElementById('panol-rep-add-btn').style.display =
       document.body.classList.contains('admin-mode') ? '' : 'none';
+    if (!document.getElementById('panol-criticos-view').classList.contains('hidden')) panolRenderCriticos();
   }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 })();
 
@@ -199,12 +226,15 @@ let panolShown = 0;
 function panolRenderStats() {
   const con = PANOL_DATA.filter(m => (Number(m.stock) || 0) > 0).length;
   const grupos = new Set(PANOL_DATA.map(m => m.grupo).filter(Boolean)).size;
+  const crit = panolCriticosAgg();
+  const critSin = crit.filter(g => g.stock == null || g.stock === 0).length;
   const cards = [
     { label: 'Materiales en catálogo', value: PANOL_DATA.length.toLocaleString('es-AR'), icon: '📦', color: '#1a56a4' },
     { label: 'Con stock disponible',   value: con.toLocaleString('es-AR'),               icon: '✅', color: '#10b981' },
     { label: 'Sin stock (en 0)',       value: (PANOL_DATA.length - con).toLocaleString('es-AR'), icon: '⚪', color: '#6b7280' },
     { label: 'Grupos de artículos',    value: grupos,                                    icon: '🗂️', color: '#7c3aed' },
     { label: 'Equipos con repuestos',  value: PANOL_REPUESTOS.length,                    icon: '🔩', color: '#d97706' },
+    { label: 'Repuestos críticos',     value: `${crit.length}${critSin ? ` · ${critSin} s/stock` : ''}`, icon: '⚠️', color: '#dc2626' },
   ];
   document.getElementById('panol-stats').innerHTML = cards.map(c => `
     <div class="stat-card" style="--stat-color:${c.color}">
@@ -362,6 +392,7 @@ function panolRepFiltered() {
           desc: m ? m.desc : '', um: m ? m.um : '',
           stock: st, enCatalogo: !!m,
           faltante: st != null && st < qty,
+          critico: panolMatCritico(x),
         };
       });
       return { equipo: entry.equipo, denom, famLbl, mats };
@@ -414,7 +445,7 @@ function panolRenderRepuestos() {
     const mats = entry.mats;
     const nFalt = mats.filter(x => x.faltante).length;
     const rows = mats.map(x => `<tr${x.faltante ? ' class="panol-rep-row-falt"' : ''}>
-        <td><span class="equipo-tag">${panolEsc(x.cod)}</span></td>
+        <td><span class="equipo-tag">${panolEsc(x.cod)}</span>${x.critico ? ' <span class="panol-crit-tag" title="Repuesto crítico">⚠️</span>' : ''}</td>
         <td>${x.enCatalogo ? panolEsc(x.desc) : '<span class="no-data">Código fuera del catálogo</span>'}${
           x.nota ? ` <span class="panol-nota">— ${panolEsc(x.nota)}</span>` : ''}${panolOpcionesHTML(x.opciones)}</td>
         <td class="panol-rep-qty">${panolNum(x.qty)}</td>
@@ -477,6 +508,121 @@ function panolExportBOM() {
   ], 'AEP_Panol_BOM_por_equipo');
 }
 
+/* ─── Vista: Repuestos críticos ──────────────────────────── */
+/* Agrupa todas las líneas de BOM marcadas como críticas por código SAP. */
+function panolCriticosAgg() {
+  const map = new Map();
+  PANOL_REPUESTOS.forEach(entry => {
+    (entry.materiales || []).forEach(x => {
+      if (!panolMatCritico(x)) return;
+      const cod = String(x.cod);
+      let g = map.get(cod);
+      if (!g) {
+        const m = PANOL_BY_COD.get(cod);
+        g = {
+          cod, enCatalogo: !!m,
+          desc: m ? m.desc : '', um: m ? m.um : '',
+          stock: panolStockNum(cod),
+          equipos: [],
+        };
+        map.set(cod, g);
+      }
+      g.equipos.push({
+        equipo: entry.equipo,
+        denom: panolEquipoDenom(entry.equipo),
+        fam: panolEquipoFamLabel(entry.equipo),
+        nota: x.nota || '',
+      });
+    });
+  });
+  return [...map.values()];
+}
+
+function panolCritRiesgo(g) {
+  if (g.stock == null || g.stock === 0) return { cls: 'none', txt: 'Alto', ord: 0 };
+  if (g.stock < g.equipos.length)       return { cls: 'parcial', txt: 'Medio', ord: 1 };
+  return { cls: 'ok', txt: 'Cubierto', ord: 2 };
+}
+
+function panolCriticosFiltered() {
+  const q   = (document.getElementById('panol-crit-search').value || '').trim().toLowerCase();
+  const sin = document.getElementById('panol-crit-solo-sin').checked;
+  return panolCriticosAgg()
+    .filter(g => {
+      if (sin && !(g.stock == null || g.stock === 0)) return false;
+      if (q) {
+        const hay = (g.cod + ' ' + g.desc + ' ' +
+          g.equipos.map(e => e.equipo + ' ' + e.denom + ' ' + e.fam).join(' ')).toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    })
+    .sort((a, b) =>
+      panolCritRiesgo(a).ord - panolCritRiesgo(b).ord ||
+      b.equipos.length - a.equipos.length ||
+      String(a.cod).localeCompare(String(b.cod)));
+}
+
+function panolRenderCriticos() {
+  const tbody = document.getElementById('panol-crit-tbody');
+  const list  = panolCriticosFiltered();
+  const countEl = document.getElementById('panol-crit-result-count');
+
+  if (!list.length) {
+    const total = panolCriticosAgg().length;
+    if (countEl) countEl.textContent = total ? 'Sin resultados' : '';
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">${total ? '🔍' : '⚠️'}</div>
+      <p>${total
+        ? 'Ningún repuesto crítico coincide con los filtros.'
+        : 'Todavía no hay repuestos marcados como críticos. Se marcan desde el modo administrador al editar los repuestos de un equipo.'}</p></div></td></tr>`;
+    return;
+  }
+
+  const sinStock = list.filter(g => g.stock == null || g.stock === 0).length;
+  if (countEl) {
+    countEl.textContent = `${list.length} repuesto${list.length === 1 ? '' : 's'} crítico${list.length === 1 ? '' : 's'}` +
+      (sinStock ? ` · ${sinStock} sin stock` : '');
+  }
+
+  tbody.innerHTML = list.map(g => {
+    const r = panolCritRiesgo(g);
+    const eqs = [...g.equipos].sort((a, b) => String(a.equipo).localeCompare(String(b.equipo)));
+    const chips = eqs.map(e =>
+      `<button class="panol-usa-chip" data-goto="${panolEsc(e.equipo)}" title="${panolEsc(e.denom)}"><span class="equipo-tag">${panolEsc(e.equipo)}</span></button>`).join('');
+    return `<tr>
+      <td><span class="panol-cob panol-cob-${r.cls}">${r.txt}</span></td>
+      <td><span class="equipo-tag">${panolEsc(g.cod)}</span></td>
+      <td>${g.enCatalogo ? panolEsc(g.desc) : '<span class="no-data">Fuera del catálogo</span>'}</td>
+      <td>${g.enCatalogo ? panolEsc(g.um) : ''}</td>
+      <td>${panolStockBadge(g.stock)}</td>
+      <td><div class="panol-usa-list">${chips}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+function panolExportCriticos() {
+  const list = panolCriticosFiltered();
+  if (!list.length) { panolToast('No hay repuestos críticos para exportar con los filtros actuales.', 'error'); return; }
+  const rows = list.map(g => ({
+    riesgo: panolCritRiesgo(g).txt,
+    cod: g.cod,
+    desc: g.enCatalogo ? g.desc : 'FUERA DE CATÁLOGO',
+    um: g.um,
+    stock: g.stock == null ? '' : g.stock,
+    n_equipos: g.equipos.length,
+    equipos: [...new Set(g.equipos.map(e => e.equipo))].sort().join(' / '),
+  }));
+  exportToExcel(rows, [
+    { key: 'riesgo',    header: 'Riesgo' },
+    { key: 'cod',       header: 'Código SAP' },
+    { key: 'desc',      header: 'Descripción' },
+    { key: 'um',        header: 'UM' },
+    { key: 'stock',     header: 'Stock actual' },
+    { key: 'n_equipos', header: 'N° equipos' },
+    { key: 'equipos',   header: 'Equipos' },
+  ], 'AEP_Panol_Repuestos_criticos');
+}
+
 /* ─── Editor de repuestos (admin) ────────────────────────── */
 let panolEditing = null;
 
@@ -509,12 +655,12 @@ function panolOpenEditor(equipo) {
   const rowsHost = document.getElementById('panol-rep-mat-rows');
   rowsHost.innerHTML = '';
   const mats = (entry && entry.materiales && entry.materiales.length) ? entry.materiales : [{ cod: '', nota: '' }];
-  mats.forEach(m => panolAddMatRow(m.cod, m.nota, panolMatQty(m), panolMatOpciones(m)));
+  mats.forEach(m => panolAddMatRow(m.cod, m.nota, panolMatQty(m), panolMatOpciones(m), panolMatCritico(m)));
 
   document.getElementById('panol-rep-editor').classList.add('open');
 }
 
-function panolAddMatRow(cod, nota, qty, opciones) {
+function panolAddMatRow(cod, nota, qty, opciones, critico) {
   const host = document.getElementById('panol-rep-mat-rows');
   const row = document.createElement('div');
   row.className = 'panol-mat-row';
@@ -525,6 +671,7 @@ function panolAddMatRow(cod, nota, qty, opciones) {
     <input class="admin-field-input panol-mat-cod" list="panol-mat-datalist" placeholder="Código de material" value="${panolEsc(cod || '')}" />
     <input class="admin-field-input panol-mat-qty" type="number" min="1" step="1" title="Cantidad necesaria" value="${Number(qty) > 0 ? Number(qty) : 1}" />
     <input class="admin-field-input panol-mat-nota" placeholder="Nota (opcional)" value="${panolEsc(nota || '')}" />
+    <label class="panol-mat-crit-lbl" title="Marcar como repuesto crítico"><input type="checkbox" class="panol-mat-crit"${critico ? ' checked' : ''} /> crítico</label>
     <span class="panol-mat-desc"></span>
     <button class="panol-mat-rm" title="Quitar">✕</button>`;
   host.appendChild(row);
@@ -577,6 +724,8 @@ async function panolSaveEditor() {
     let opc = [];
     try { opc = JSON.parse(row.dataset.opciones || '[]'); } catch (e) { opc = []; }
     if (opc.length && row.dataset.baseCod === cod) m.opciones = opc;
+    const critEl = row.querySelector('.panol-mat-crit');
+    if (critEl && critEl.checked) m.critico = true;
     if (nota) m.nota = nota;
     materiales.push(m);
   });

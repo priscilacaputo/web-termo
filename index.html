@@ -1450,6 +1450,7 @@
         <div class="mangas-view-toggle">
           <button class="panol-view-btn active" data-view="catalogo">📦 Catálogo / Stock</button>
           <button class="panol-view-btn" data-view="repuestos">🔩 Repuestos por equipo</button>
+          <button class="panol-view-btn" data-view="criticos">⚠️ Repuestos críticos</button>
         </div>
       </div>
 
@@ -1520,6 +1521,47 @@
         </div>
 
         <div id="panol-rep-list"></div>
+      </div>
+
+      <!-- Vista: Repuestos críticos -->
+      <div id="panol-criticos-view" class="hidden">
+        <div class="mant-section-header">
+          <div>
+            <h2 class="mant-section-title">Repuestos críticos</h2>
+            <p class="mant-section-desc">Materiales marcados como críticos en el BOM (rotura = equipo fuera de servicio, sin sustituto o con reposición lenta). Un renglón por código SAP, con su stock y los equipos que lo necesitan. Se marca/desmarca desde el modo administrador al editar los repuestos de un equipo.</p>
+          </div>
+        </div>
+
+        <div class="toolbar" style="margin-bottom:16px">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="panol-crit-search" class="search-input" placeholder="Buscar por código, descripción o equipo..." />
+            <button class="clear-btn" id="panol-crit-clear-search" title="Limpiar" style="display:none">✕</button>
+          </div>
+          <div class="filter-group">
+            <label class="panol-checkbox"><input type="checkbox" id="panol-crit-solo-sin" /> Solo sin stock</label>
+          </div>
+          <button class="export-btn" id="panol-crit-export-btn">⬇ Excel</button>
+          <span id="panol-crit-result-count" class="puertas-result-count"></span>
+        </div>
+
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Riesgo</th>
+                  <th>Código SAP</th>
+                  <th>Descripción</th>
+                  <th>UM</th>
+                  <th>Stock</th>
+                  <th>Equipos</th>
+                </tr>
+              </thead>
+              <tbody id="panol-crit-tbody"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
     </div>

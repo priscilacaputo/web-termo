@@ -4508,12 +4508,22 @@ tr:hover .admin-edit-btn { opacity: 1; }
 /* Editor de repuestos (admin) */
 .panol-mat-row {
   display: grid;
-  grid-template-columns: 180px 72px 1fr auto;
+  grid-template-columns: 170px 64px 1fr auto auto;
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
 }
 .panol-mat-qty { text-align: right; }
+.panol-mat-crit-lbl {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: #b91c1c;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.panol-mat-crit-lbl input { accent-color: #dc2626; }
 .panol-mat-desc {
   grid-column: 1 / -1;
   font-size: 11.5px;
@@ -4531,5 +4541,8 @@ tr:hover .admin-edit-btn { opacity: 1; }
   color: #dc2626;
 }
 @media (max-width: 640px) {
-  .panol-mat-row { grid-template-columns: 1fr 64px auto; }
+  .panol-mat-row { grid-template-columns: 1fr 56px auto auto; }
 }
+
+/* Marca de repuesto crítico en la tabla BOM */
+.panol-crit-tag { font-size: 12px; cursor: help; }
