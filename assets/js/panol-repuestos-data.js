@@ -24,6 +24,14 @@
    categoría (Motor / Rodillo / Rodamiento / Banda). NO editar estas
    entradas a mano: regenerar desde PATIO_EXTRA si cambia la fuente.
 
+   2026-09-08 (2): repuestos de Patio derivados de CONSUMO REAL — join de
+   movimientos SAP (materiales por orden) contra el listado de operaciones
+   de mantenimiento (orden ↔ objeto técnico MEQ). Nota "Consumo real: N OT
+   (año) — movimientos SAP; total histórico …". Se filtraron consumibles
+   de taller (ferretería, abrasivos, pintura, EPP, herramientas). El total
+   histórico NO es cantidad de BOM: es lo consumido acumulado en esas OT.
+   Se irá ampliando a medida que lleguen más lotes de OT.
+
    Forma de cada entrada (BOM del equipo):
      { equipo: "AAC2115",
        materiales: [ { cod: "20089275", qty: 2, opciones: ["20090001"],
@@ -1446,6 +1454,7 @@ const PANOL_REPUESTOS = [
     { cod: "20034275", nota: "Rodillo: Conjunto polea tensora Ø205mm (0L8343-00001) — parte del conjunto; el código de la rueda Ø90 principal (0L8342-00001) no está en el catálogo actual" },
     { cod: "20067338", nota: "Rodamiento: Casquillo cónico anillo ret. 2517-35" },
     { cod: "20034265", nota: "Rodamiento: Embrague rueda libre GFR-35-F1F2/L (sólo motorización redundante)" },
+    { cod: "20034266", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1075", materiales: [
     { cod: "20034275", nota: "Rodillo: Conjunto polea tensora Ø205mm (0L8343-00001) — parte del conjunto; el código de la rueda Ø90 principal (0L8342-00001) no está en el catálogo actual" },
@@ -1456,6 +1465,8 @@ const PANOL_REPUESTOS = [
     { cod: "20034275", nota: "Rodillo: Conjunto polea tensora Ø205mm (0L8343-00001) — parte del conjunto; el código de la rueda Ø90 principal (0L8342-00001) no está en el catálogo actual" },
     { cod: "20067338", nota: "Rodamiento: Casquillo cónico anillo ret. 2517-35" },
     { cod: "20034265", nota: "Rodamiento: Embrague rueda libre GFR-35-F1F2/L (sólo motorización redundante)" },
+    { cod: "20054885", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 2 C/U" },
+    { cod: "20067332", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 14 C/U" },
   ] },
   { equipo: "MEQ1078", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -1464,6 +1475,9 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20087829", nota: "Banda: E8/2 U0/V5H/MT-SE W=1000 (endless) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 0.3 M" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1.3 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 0.8 C/U" },
   ] },
   { equipo: "MEQ1240", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -1604,6 +1618,7 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20040700", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1260", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -1758,6 +1773,7 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20069055", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1282", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -1765,6 +1781,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065221", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20011522", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20069055", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1283", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -1800,6 +1819,7 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065166", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1288", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -1807,6 +1827,8 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065166", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20065222", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1289", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -1828,6 +1850,7 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065304", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1292", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -1891,6 +1914,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20053852", nota: "Consumo real: 2 OT (2025-2026) — movimientos SAP; total histórico 12.75 M" },
+    { cod: "20001016", nota: "Consumo real: 2 OT (2025-2026) — movimientos SAP; total histórico 2.7 C/U" },
+    { cod: "20011092", nota: "Consumo real: 2 OT (2025-2026) — movimientos SAP; total histórico 4.5 M" },
   ] },
   { equipo: "MEQ1301", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -1905,6 +1931,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20053852", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 5.5 M" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 2 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 0.8 C/U" },
   ] },
   { equipo: "MEQ1303", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -1964,6 +1993,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065497", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 14.78 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 0.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1.2 M" },
   ] },
   { equipo: "MEQ1313", materiales: [
     { cod: "20067802", nota: "Rodillo: Rodillo motriz CB4-06-01-01" },
@@ -1981,6 +2013,7 @@ const PANOL_REPUESTOS = [
     { cod: "20067802", nota: "Rodillo: Rodillo motriz CB4-06-01-01" },
     { cod: "20067803", nota: "Rodillo: Rodillo conducido CB4-06-01-02" },
     { cod: "20066760", nota: "Rodamiento: Rodamiento a bolas 6003 2RS/C3 — equivalente a 6003-2RSR del manual" },
+    { cod: "20058373", nota: "Consumo real: 2 OT (2025) — movimientos SAP; total histórico 2 C/U" },
   ] },
   { equipo: "MEQ1316", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2002,6 +2035,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 2.5 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 2 C/U" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 6.2 M" },
   ] },
   { equipo: "MEQ1319", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2016,6 +2052,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 6.65 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 0.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1.2 M" },
   ] },
   { equipo: "MEQ1321", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2030,6 +2069,7 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20054885", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1324", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2037,6 +2077,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 4.5 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 0.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1.2 M" },
   ] },
   { equipo: "MEQ1326", materiales: [
     { cod: "20087854", nota: "Rodillo: Rodillo con eje 001093-000-00498 — una de las variantes citadas (rodillo estándar 001090-* y conducido 001092-* no están en el catálogo actual)" },
@@ -2052,6 +2095,12 @@ const PANOL_REPUESTOS = [
     { cod: "20067802", nota: "Rodillo: Rodillo motriz CB4-06-01-01" },
     { cod: "20067803", nota: "Rodillo: Rodillo conducido CB4-06-01-02" },
     { cod: "20066760", nota: "Rodamiento: Rodamiento a bolas 6003 2RS/C3 — equivalente a 6003-2RSR del manual" },
+    { cod: "20065190", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20067806", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20065189", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20065188", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 2 C/U" },
+    { cod: "20058373", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20064445", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1329", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2083,6 +2132,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065499", nota: "Consumo real: 7 OT (2025-2026) — movimientos SAP; total histórico 26.75 M" },
+    { cod: "20001016", nota: "Consumo real: 7 OT (2025-2026) — movimientos SAP; total histórico 11.48 C/U" },
+    { cod: "20011092", nota: "Consumo real: 7 OT (2025-2026) — movimientos SAP; total histórico 14.5 M" },
   ] },
   { equipo: "MEQ1335", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2097,6 +2149,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 5.55 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 0.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1.2 M" },
   ] },
   { equipo: "MEQ1337", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2125,6 +2180,10 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 6 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 0.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1.2 M" },
+    { cod: "20067798", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1341", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2132,6 +2191,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1.6 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1.2 M" },
+    { cod: "20053852", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 4.17 M" },
   ] },
   { equipo: "MEQ1342", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2175,6 +2237,13 @@ const PANOL_REPUESTOS = [
     { cod: "20067802", nota: "Rodillo: Rodillo motriz CB4-06-01-01" },
     { cod: "20067803", nota: "Rodillo: Rodillo conducido CB4-06-01-02" },
     { cod: "20066760", nota: "Rodamiento: Rodamiento a bolas 6003 2RS/C3 — equivalente a 6003-2RSR del manual" },
+    { cod: "20058373", nota: "Consumo real: 3 OT (2025-2026) — movimientos SAP; total histórico 3 C/U" },
+    { cod: "20067800", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20070482", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20065187", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20085024", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20087762", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U · código dado de baja en el catálogo actual" },
+    { cod: "20077847", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1351", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2187,6 +2256,11 @@ const PANOL_REPUESTOS = [
     { cod: "20067802", nota: "Rodillo: Rodillo motriz CB4-06-01-01" },
     { cod: "20067803", nota: "Rodillo: Rodillo conducido CB4-06-01-02" },
     { cod: "20066760", nota: "Rodamiento: Rodamiento a bolas 6003 2RS/C3 — equivalente a 6003-2RSR del manual" },
+    { cod: "20085020", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20065187", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20065189", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20058373", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20081008", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1353", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2199,6 +2273,11 @@ const PANOL_REPUESTOS = [
     { cod: "20067802", nota: "Rodillo: Rodillo motriz CB4-06-01-01" },
     { cod: "20067803", nota: "Rodillo: Rodillo conducido CB4-06-01-02" },
     { cod: "20066760", nota: "Rodamiento: Rodamiento a bolas 6003 2RS/C3 — equivalente a 6003-2RSR del manual" },
+    { cod: "20087762", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U · código dado de baja en el catálogo actual" },
+    { cod: "20065190", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 2 C/U" },
+    { cod: "20065187", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20067806", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 2 C/U" },
+    { cod: "20065188", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1355", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2207,12 +2286,22 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
   ] },
+  { equipo: "MEQ1356", materiales: [
+    { cod: "20065499", nota: "Consumo real: 2 OT (2025-2026) — movimientos SAP; total histórico 12.9 M" },
+    { cod: "20011092", nota: "Consumo real: 3 OT (2025-2026) — movimientos SAP; total histórico 3.4 M" },
+    { cod: "20001016", nota: "Consumo real: 3 OT (2025-2026) — movimientos SAP; total histórico 6 C/U" },
+    { cod: "20053852", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 8.28 M" },
+  ] },
   { equipo: "MEQ1357", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
     { cod: "20090711", nota: "Rodillo: Assy tambor Vertibelt (082783-939) — sólo si el accionamiento es variante Vertibelt" },
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065499", nota: "Consumo real: 2 OT (2025-2026) — movimientos SAP; total histórico 10.7 M" },
+    { cod: "20001016", nota: "Consumo real: 3 OT (2025-2026) — movimientos SAP; total histórico 2.4 C/U" },
+    { cod: "20011092", nota: "Consumo real: 3 OT (2025-2026) — movimientos SAP; total histórico 3.7 M" },
+    { cod: "20064445", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1358", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2227,12 +2316,35 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20011092", nota: "Consumo real: 2 OT (2025-2026) — movimientos SAP; total histórico 2.4 M" },
+    { cod: "20065499", nota: "Consumo real: 2 OT (2025-2026) — movimientos SAP; total histórico 11.86 M" },
+    { cod: "20001016", nota: "Consumo real: 2 OT (2025-2026) — movimientos SAP; total histórico 1.6 C/U" },
   ] },
   { equipo: "MEQ1360", materiales: [
     { cod: "20082966", nota: "Motor: Motorreductor SEW K57 DRN100L4/M6A-0, 2,2kW-48rpm — coincide exacto" },
+    { cod: "20065147", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 2 C/U" },
+    { cod: "20091886", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 82 C/U" },
+    { cod: "20034274", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 712 C/U" },
+    { cod: "20067333", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 200 C/U" },
+    { cod: "20067334", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 210 C/U" },
+    { cod: "20034278", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 11 C/U" },
+    { cod: "20034264", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 2 C/U · código dado de baja en el catálogo actual" },
+    { cod: "20067332", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 4 C/U" },
+    { cod: "20067330", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 36 C/U" },
+    { cod: "20067331", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 4 C/U" },
   ] },
   { equipo: "MEQ1361", materiales: [
     { cod: "20082966", nota: "Motor: Motorreductor SEW K57 DRN100L4/M6A-0, 2,2kW-48rpm — coincide exacto" },
+    { cod: "20067332", nota: "Consumo real: 4 OT (2025-2026) — movimientos SAP; total histórico 8 C/U" },
+    { cod: "20067331", nota: "Consumo real: 5 OT (2025-2026) — movimientos SAP; total histórico 12 C/U" },
+    { cod: "20034273", nota: "Consumo real: 4 OT (2025-2026) — movimientos SAP; total histórico 6 C/U" },
+    { cod: "20034278", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20065144", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 2 C/U · código dado de baja en el catálogo actual" },
+    { cod: "20067330", nota: "Consumo real: 3 OT (2025-2026) — movimientos SAP; total histórico 3 C/U" },
+    { cod: "20034274", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 7 C/U" },
+    { cod: "20067333", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 3 C/U" },
+    { cod: "20067334", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 3 C/U" },
+    { cod: "20067336", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 3 C/U" },
   ] },
   { equipo: "MEQ1480", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2398,6 +2510,7 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20040699", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1501", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2538,6 +2651,8 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065351", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20065348", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U · código dado de baja en el catálogo actual" },
   ] },
   { equipo: "MEQ1521", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2552,6 +2667,8 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 22 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 0.82 C/U" },
   ] },
   { equipo: "MEQ1523", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2566,6 +2683,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065499", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 13.3 M" },
+    { cod: "20011092", nota: "Consumo real: 3 OT (2026) — movimientos SAP; total histórico 6.2 M" },
+    { cod: "20001016", nota: "Consumo real: 3 OT (2026) — movimientos SAP; total histórico 4 C/U" },
   ] },
   { equipo: "MEQ1525", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2580,6 +2700,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 6.5 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 2 M" },
   ] },
   { equipo: "MEQ1527", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2602,6 +2725,11 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
   ] },
+  { equipo: "MEQ1530", materiales: [
+    { cod: "20065499", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 7 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 0.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 2.4 M" },
+  ] },
   { equipo: "MEQ1531", materiales: [
     { cod: "20087854", nota: "Rodillo: Rodillo con eje 001093-000-00498 — una de las variantes citadas (rodillo estándar 001090-* y conducido 001092-* no están en el catálogo actual)" },
   ] },
@@ -2611,6 +2739,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1.2 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 3.75 C/U" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 7.5 M" },
   ] },
   { equipo: "MEQ1533", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2623,6 +2754,10 @@ const PANOL_REPUESTOS = [
     { cod: "20067802", nota: "Rodillo: Rodillo motriz CB4-06-01-01" },
     { cod: "20067803", nota: "Rodillo: Rodillo conducido CB4-06-01-02" },
     { cod: "20066760", nota: "Rodamiento: Rodamiento a bolas 6003 2RS/C3 — equivalente a 6003-2RSR del manual" },
+    { cod: "20058373", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 2 C/U" },
+    { cod: "20067800", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 26 C/U" },
+    { cod: "20065188", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20085024", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1535", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2633,6 +2768,13 @@ const PANOL_REPUESTOS = [
   ] },
   { equipo: "MEQ1543", materiales: [
     { cod: "20082966", nota: "Motor: Motorreductor SEW K57 DRN100L4/M6A-0, 2,2kW-48rpm — coincide exacto" },
+    { cod: "20067330", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 51 C/U" },
+    { cod: "20067333", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 247 C/U" },
+    { cod: "20067334", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 320 C/U" },
+    { cod: "20034274", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 220 C/U" },
+    { cod: "20034273", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 2 C/U" },
+    { cod: "20065142", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U · código dado de baja en el catálogo actual" },
+    { cod: "20070757", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1544", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2654,21 +2796,41 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 M" },
+    { cod: "20081410", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1547", materiales: [
     { cod: "20034275", nota: "Rodillo: Conjunto polea tensora Ø205mm (0L8343-00001) — parte del conjunto; el código de la rueda Ø90 principal (0L8342-00001) no está en el catálogo actual" },
     { cod: "20067338", nota: "Rodamiento: Casquillo cónico anillo ret. 2517-35" },
     { cod: "20034265", nota: "Rodamiento: Embrague rueda libre GFR-35-F1F2/L (sólo motorización redundante)" },
+    { cod: "20034274", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 416 C/U" },
+    { cod: "20067333", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 113 C/U" },
+    { cod: "20067334", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 140 C/U" },
+    { cod: "20034264", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 2 C/U · código dado de baja en el catálogo actual" },
+    { cod: "20034272", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20034266", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 5 C/U" },
+    { cod: "20067332", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1548", materiales: [
     { cod: "20034275", nota: "Rodillo: Conjunto polea tensora Ø205mm (0L8343-00001) — parte del conjunto; el código de la rueda Ø90 principal (0L8342-00001) no está en el catálogo actual" },
     { cod: "20067338", nota: "Rodamiento: Casquillo cónico anillo ret. 2517-35" },
     { cod: "20034265", nota: "Rodamiento: Embrague rueda libre GFR-35-F1F2/L (sólo motorización redundante)" },
+    { cod: "20034273", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20034274", nota: "Consumo real: 2 OT (2025) — movimientos SAP; total histórico 426 C/U" },
+    { cod: "20067334", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 160 C/U" },
+    { cod: "20067333", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 160 C/U" },
+    { cod: "20034264", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 3 C/U · código dado de baja en el catálogo actual" },
+    { cod: "20034266", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 16 C/U" },
   ] },
   { equipo: "MEQ1549", materiales: [
     { cod: "20034275", nota: "Rodillo: Conjunto polea tensora Ø205mm (0L8343-00001) — parte del conjunto; el código de la rueda Ø90 principal (0L8342-00001) no está en el catálogo actual" },
     { cod: "20067338", nota: "Rodamiento: Casquillo cónico anillo ret. 2517-35" },
     { cod: "20034265", nota: "Rodamiento: Embrague rueda libre GFR-35-F1F2/L (sólo motorización redundante)" },
+    { cod: "20034274", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 385 C/U" },
+    { cod: "20067334", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 11 C/U" },
+    { cod: "20067335", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 16 C/U" },
+    { cod: "20034273", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 7 C/U" },
+    { cod: "20034266", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 2 C/U" },
   ] },
   { equipo: "MEQ1550", materiales: [
     { cod: "20034275", nota: "Rodillo: Conjunto polea tensora Ø205mm (0L8343-00001) — parte del conjunto; el código de la rueda Ø90 principal (0L8342-00001) no está en el catálogo actual" },
@@ -2681,6 +2843,8 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20085918", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20081410", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1640", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2710,6 +2874,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065499", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 7.6 M" },
+    { cod: "20011092", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 5.2 M" },
+    { cod: "20001016", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 1.8 C/U" },
   ] },
   { equipo: "MEQ1645", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2717,6 +2884,10 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20090467", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20065499", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 7.97 M" },
+    { cod: "20011092", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 7.5 M" },
+    { cod: "20001016", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 2 C/U" },
   ] },
   { equipo: "MEQ1647", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2745,6 +2916,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 6 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 M" },
   ] },
   { equipo: "MEQ1651", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2752,6 +2926,9 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 5.9 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 0.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1.2 M" },
   ] },
   { equipo: "MEQ1652", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2759,6 +2936,12 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20004042", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 2 C/U" },
+    { cod: "20066761", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 2 C/U · código dado de baja en el catálogo actual" },
+    { cod: "20053852", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 6.1 M" },
+    { cod: "20001016", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 1.6 C/U" },
+    { cod: "20011092", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 2.8 M" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 18 M" },
   ] },
   { equipo: "MEQ1654", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2780,6 +2963,7 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+    { cod: "20054885", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1658", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2787,6 +2971,11 @@ const PANOL_REPUESTOS = [
     { cod: "20037963", nota: "Rodamiento: Rodamiento a bolas 6205 2Z/C3 — equivalente más cercano a 6205/Z-C3-25 del manual" },
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
+  ] },
+  { equipo: "MEQ1659", materiales: [
+    { cod: "20065499", nota: "Consumo real: 2 OT (2025) — movimientos SAP; total histórico 9 M" },
+    { cod: "20001016", nota: "Consumo real: 2 OT (2025) — movimientos SAP; total histórico 1.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 2 OT (2025) — movimientos SAP; total histórico 2.3 M" },
   ] },
   { equipo: "MEQ1660", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2823,6 +3012,7 @@ const PANOL_REPUESTOS = [
     { cod: "20034275", nota: "Rodillo: Conjunto polea tensora Ø205mm (0L8343-00001) — parte del conjunto; el código de la rueda Ø90 principal (0L8342-00001) no está en el catálogo actual" },
     { cod: "20067338", nota: "Rodamiento: Casquillo cónico anillo ret. 2517-35" },
     { cod: "20034265", nota: "Rodamiento: Embrague rueda libre GFR-35-F1F2/L (sólo motorización redundante)" },
+    { cod: "20054885", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 2 C/U" },
   ] },
   { equipo: "MEQ1847", materiales: [
     { cod: "20034275", nota: "Rodillo: Conjunto polea tensora Ø205mm (0L8343-00001) — parte del conjunto; el código de la rueda Ø90 principal (0L8342-00001) no está en el catálogo actual" },
@@ -2852,6 +3042,7 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20040699", nota: "Banda: Banda BREDA 15NF 500x2930mm — coincide con la especificación" },
+    { cod: "20069055", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1851", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2868,6 +3059,7 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20040699", nota: "Banda: Banda BREDA 15NF 500x2930mm — coincide con la especificación" },
+    { cod: "20069055", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1853", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2964,6 +3156,7 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20040699", nota: "Banda: Banda BREDA 15NF 500x2930mm — coincide con la especificación" },
+    { cod: "20069055", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1865", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -2988,6 +3181,7 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20040699", nota: "Banda: Banda BREDA 15NF 500x2930mm — coincide con la especificación" },
+    { cod: "20069055", nota: "Consumo real: 2 OT (2025-2026) — movimientos SAP; total histórico 2 C/U" },
   ] },
   { equipo: "MEQ1868", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3004,6 +3198,7 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20040700", nota: "Banda: Banda ASTER 15W1F 500x3240mm — coincide con la especificación" },
+    { cod: "20005647", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1870", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3179,6 +3374,7 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20087829", nota: "Banda: E8/2 U0/V5H/MT-SE W=1000 (prepared) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20054885", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 2 C/U" },
   ] },
   { equipo: "MEQ1892", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3187,6 +3383,7 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20087829", nota: "Banda: E8/2 U0/V5H/MT-SE W=1000 (prepared) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20054885", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1893", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3226,6 +3423,9 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20090371", nota: "Banda: E8/2 U0/V15/LG-SE W=1000 (endless) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 4 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 0.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 2 M" },
   ] },
   { equipo: "MEQ1898", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3242,6 +3442,11 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20090371", nota: "Banda: E8/2 U0/V15/LG-SE W=1000 (endless) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+  ] },
+  { equipo: "MEQ1900", materiales: [
+    { cod: "20065499", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 7 M" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1.1 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1901", materiales: [
     { cod: "20087854", nota: "Rodillo: Rodillo con eje 001093-000-00498 — una de las variantes citadas (rodillo estándar 001090-* y conducido 001092-* no están en el catálogo actual)" },
@@ -3303,6 +3508,9 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20087829", nota: "Banda: E8/2 U0/V5H/MT-SE W=1000 (endless) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 6 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 0.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1.2 M" },
   ] },
   { equipo: "MEQ1912", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3336,6 +3544,11 @@ const PANOL_REPUESTOS = [
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20090371", nota: "Banda: E8/2 U0/V15/LG-SE W=1000 (endless) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
   ] },
+  { equipo: "MEQ1916", materiales: [
+    { cod: "20065499", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 15 M" },
+    { cod: "20001016", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 6.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 3 OT (2026) — movimientos SAP; total histórico 4.5 M" },
+  ] },
   { equipo: "MEQ1917", materiales: [
     { cod: "20087854", nota: "Rodillo: Rodillo con eje 001093-000-00498 — una de las variantes citadas (rodillo estándar 001090-* y conducido 001092-* no están en el catálogo actual)" },
   ] },
@@ -3346,6 +3559,9 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20087829", nota: "Banda: E8/2 U0/V5H/MT-SE W=1000 (endless) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20065499", nota: "Consumo real: 2 OT (2025-2026) — movimientos SAP; total histórico 12.91 M" },
+    { cod: "20001016", nota: "Consumo real: 2 OT (2025-2026) — movimientos SAP; total histórico 6.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 2 OT (2025-2026) — movimientos SAP; total histórico 3 M" },
   ] },
   { equipo: "MEQ1919", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3375,6 +3591,9 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20087829", nota: "Banda: E8/2 U0/V5H/MT-SE W=1000 (endless) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 6.8 M" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1.5 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 0.25 C/U" },
   ] },
   { equipo: "MEQ1923", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3391,11 +3610,14 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20090371", nota: "Banda: E8/2 U0/V15/LG-SE W=1000 (endless) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20086058", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1925", materiales: [
     { cod: "20067802", nota: "Rodillo: Rodillo motriz CB4-06-01-01" },
     { cod: "20067803", nota: "Rodillo: Rodillo conducido CB4-06-01-02" },
     { cod: "20066760", nota: "Rodamiento: Rodamiento a bolas 6003 2RS/C3 — equivalente a 6003-2RSR del manual" },
+    { cod: "20090467", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20054885", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 2 C/U" },
   ] },
   { equipo: "MEQ1926", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3404,6 +3626,9 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20087829", nota: "Banda: E8/2 U0/V5H/MT-SE W=1000 (prepared) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20083175", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20054885", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 3 C/U" },
+    { cod: "20090467", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 3 C/U" },
   ] },
   { equipo: "MEQ1927", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3420,6 +3645,11 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20090371", nota: "Banda: E8/2 U0/V15/LG-SE W=1000 (endless) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 4.2 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 0.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2025) — movimientos SAP; total histórico 1.2 M" },
+    { cod: "20086058", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20070749", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1930", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3428,6 +3658,9 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20087829", nota: "Banda: E8/2 U0/V5H/MT-SE W=1000 (endless) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 6.1 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 4 M" },
   ] },
   { equipo: "MEQ1931", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3468,6 +3701,7 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20090371", nota: "Banda: E8/2 U0/V15/LG-SE W=1000 (endless) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20054885", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 2 C/U" },
   ] },
   { equipo: "MEQ1936", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3484,6 +3718,9 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20090371", nota: "Banda: E8/2 U0/V15/LG-SE W=1000 (endless) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20065499", nota: "Consumo real: 3 OT (2025-2026) — movimientos SAP; total histórico 13.2 M" },
+    { cod: "20001016", nota: "Consumo real: 2 OT (2025) — movimientos SAP; total histórico 1.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 3 OT (2025-2026) — movimientos SAP; total histórico 3.9 M" },
   ] },
   { equipo: "MEQ1938", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3513,6 +3750,7 @@ const PANOL_REPUESTOS = [
     { cod: "20067802", nota: "Rodillo: Rodillo motriz CB4-06-01-01" },
     { cod: "20067803", nota: "Rodillo: Rodillo conducido CB4-06-01-02" },
     { cod: "20066760", nota: "Rodamiento: Rodamiento a bolas 6003 2RS/C3 — equivalente a 6003-2RSR del manual" },
+    { cod: "20058373", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
   { equipo: "MEQ1942", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3553,6 +3791,9 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20090371", nota: "Banda: E8/2 U0/V15/LG-SE W=1000 (endless) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20065499", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 8 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 0.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 2 OT (2026) — movimientos SAP; total histórico 3 M" },
   ] },
   { equipo: "MEQ1948", materiales: [
     { cod: "20087819", nota: "Rodillo: Rodillo tensor Ø71 L=1191mm (012634-242-01170) — una de varias variantes citadas según el accionamiento; confirmar cuál corresponde a este equipo" },
@@ -3561,5 +3802,11 @@ const PANOL_REPUESTOS = [
     { cod: "20067350", nota: "Rodamiento: Soporte de rodamiento PME-60 redondo" },
     { cod: "20070779", nota: "Rodamiento: Casquillo bronce BP25C (rodamiento deslizante con brida)" },
     { cod: "20087829", nota: "Banda: E8/2 U0/V5H/MT-SE W=1000 (endless) — el catálogo no distingue endless/prepared, confirmar antes de pedir" },
+    { cod: "20065499", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 6.02 M" },
+    { cod: "20001016", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 0.8 C/U" },
+    { cod: "20011092", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1.1 M" },
+  ] },
+  { equipo: "MEQ1998", materiales: [
+    { cod: "20054924", nota: "Consumo real: 1 OT (2026) — movimientos SAP; total histórico 1 C/U" },
   ] },
 ];
