@@ -136,9 +136,11 @@ let panolShown = 0;
   panolBuildRepFamFilter();
   const repSearch = document.getElementById('panol-rep-search');
   const repClear  = document.getElementById('panol-rep-clear-search');
+  let repSearchTimer = null;
   repSearch.addEventListener('input', () => {
     repClear.style.display = repSearch.value ? 'flex' : 'none';
-    panolRenderRepuestos();
+    clearTimeout(repSearchTimer);
+    repSearchTimer = setTimeout(panolRenderRepuestos, 180); // debounce: la lista tiene cientos de equipos
   });
   repClear.addEventListener('click', () => {
     repSearch.value = ''; repClear.style.display = 'none'; panolRenderRepuestos();
