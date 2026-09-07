@@ -11,40 +11,43 @@
    técnicas UTA (assets/js/uta-specs.js): la medida/modelo se matcheó
    contra el catálogo SAP y la cantidad es el número entre paréntesis de
    la ficha ("600x600x50 (2)" → qty 2). Notas con "ficha técnica UTA"
-   marcan esta procedencia; "código SAP a confirmar" (cod que empieza con
-   "?") = no se encontró match exacto en el catálogo; "confirmar calidad"
-   = la medida sólo existe en MERV10/13; los motores son el genérico W22
-   por potencia. Filtros "LAVABLES" no se cargaron.
+   marcan esta procedencia; `opciones` lista los otros códigos SAP de la
+   misma medida (filtros); "código SAP a confirmar" (cod que empieza con
+   "?") = sin match exacto; "confirmar calidad" = la medida sólo existe en
+   MERV10/13; los motores son el genérico W22 por potencia. Filtros
+   "LAVABLES" no se cargaron.
 
    Forma de cada entrada (BOM del equipo):
      { equipo: "AAC2115",
-       materiales: [ { cod: "20089275", qty: 2, nota: "filtro rodete (opcional)" } ] }
+       materiales: [ { cod: "20089275", qty: 2, opciones: ["20090001"],
+                       nota: "filtro rodete (opcional)" } ] }
 
    `cod` referencia PANOL_DATA[].cod — la descripción, la UM y el stock se
    resuelven en vivo al renderizar. `qty` es la cantidad necesaria por
-   equipo (opcional; si falta se asume 1). Se edita desde el modo
-   administrador (pestaña "Repuestos por equipo" de Pañol / Repuestos) o
-   reemplazando este archivo entero. */
+   equipo (opcional; si falta se asume 1). `opciones` es un array de
+   códigos SAP alternativos equivalentes (opcional). Se edita desde el
+   modo administrador (pestaña "Repuestos por equipo" de Pañol /
+   Repuestos) o reemplazando este archivo entero. */
 
 const PANOL_REPUESTOS = [
   { equipo: "AAC047", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
     { cod: "20001806", nota: "Correa B80 — ficha técnica UTA" },
   ] },
   { equipo: "AAC069", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC074", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
     { cod: "20001806", nota: "Correa B80 — ficha técnica UTA" },
   ] },
   { equipo: "AAC075", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
     { cod: "20001806", nota: "Correa B80 — ficha técnica UTA" },
   ] },
   { equipo: "AAC092", materiales: [
-    { cod: "20045232", qty: 4, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
-    { cod: "20006546", qty: 4, nota: "Filtro de aire 500X400X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 4, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
+    { cod: "20006546", qty: 4, opciones: ["20045229", "20008485", "20009325"], nota: "Filtro de aire 500X400X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
     { cod: "?CORREA B-36/37/38", qty: 2, nota: "Correa B-36/37/38 — ficha técnica UTA · código SAP a confirmar" },
   ] },
   { equipo: "AAC097", materiales: [
@@ -56,7 +59,7 @@ const PANOL_REPUESTOS = [
     { cod: "20047395", nota: "Correa A40 — ficha técnica UTA" },
   ] },
   { equipo: "AAC107", materiales: [
-    { cod: "20006546", qty: 4, nota: "Filtro de aire 400X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20006546", qty: 4, opciones: ["20045229", "20008485", "20009325"], nota: "Filtro de aire 400X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
     { cod: "20005298", nota: "Correa A47 — ficha técnica UTA" },
   ] },
   { equipo: "AAC108", materiales: [
@@ -95,38 +98,38 @@ const PANOL_REPUESTOS = [
     { cod: "20096849", nota: "Placa CVTR condensadora, mod. 54-1154-0" },
   ] },
   { equipo: "AAC2064", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2065", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2067", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2068", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2069", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2070", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2071", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2072", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2073", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2074", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2075", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2076", materiales: [
     { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
@@ -135,10 +138,10 @@ const PANOL_REPUESTOS = [
     { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
   ] },
   { equipo: "AAC2078", materiales: [
-    { cod: "20045232", qty: 2, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 2, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2079", materiales: [
-    { cod: "20045232", qty: 2, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 2, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2081", materiales: [
     { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
@@ -186,7 +189,7 @@ const PANOL_REPUESTOS = [
     { cod: "20088191", qty: 2, nota: "Motor alimentación 5.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
   ] },
   { equipo: "AAC2121", materiales: [
-    { cod: "20006544", qty: 8, nota: "Filtro de aire 600X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20006544", qty: 8, opciones: ["20002309", "20005949"], nota: "Filtro de aire 600X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
     { cod: "20005469", qty: 2, nota: "Correa BXS 69 — ficha técnica UTA" },
     { cod: "20088191", nota: "Motor retorno 5.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
   ] },
@@ -443,46 +446,46 @@ const PANOL_REPUESTOS = [
   ] },
   { equipo: "AAC2261", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2262", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2263", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2264", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2265", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2266", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2267", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2271", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2272", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2273", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2274", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2717", materiales: [
     { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
@@ -494,10 +497,10 @@ const PANOL_REPUESTOS = [
     { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
   ] },
   { equipo: "AAC2734", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2735", materiales: [
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC2736", materiales: [
     { cod: "?FILTRO 620X500X50", qty: 3, nota: "Filtro de aire 620X500X50 — ficha técnica UTA · código SAP a confirmar" },
@@ -508,20 +511,20 @@ const PANOL_REPUESTOS = [
   { equipo: "AAC3477", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
-    { cod: "20006544", qty: 4, nota: "Filtro de aire 600X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
-    { cod: "20045232", qty: 4, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20006544", qty: 4, opciones: ["20002309", "20005949"], nota: "Filtro de aire 600X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
+    { cod: "20045232", qty: 4, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC3478", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
-    { cod: "20045232", qty: 8, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
-    { cod: "20006546", qty: 4, nota: "Filtro de aire 500X400X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 8, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
+    { cod: "20006546", qty: 4, opciones: ["20045229", "20008485", "20009325"], nota: "Filtro de aire 500X400X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC3479", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
-    { cod: "20006544", qty: 4, nota: "Filtro de aire 500X600X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
-    { cod: "20045232", qty: 4, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20006544", qty: 4, opciones: ["20002309", "20005949"], nota: "Filtro de aire 500X600X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
+    { cod: "20045232", qty: 4, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC3480", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
@@ -625,18 +628,18 @@ const PANOL_REPUESTOS = [
   ] },
   { equipo: "AAC3833", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC3834", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC3835", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
   ] },
   { equipo: "AAC3836", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
-    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
   ] },
   { equipo: "AAC3837", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },

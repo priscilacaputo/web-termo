@@ -4425,6 +4425,27 @@ tr:hover .admin-edit-btn { opacity: 1; }
 .panol-cob-parcial { background: #fef3c7; color: #b45309; }
 .panol-cob-none    { background: #fee2e2; color: #b91c1c; }
 .panol-cob-unk     { background: transparent; color: var(--color-muted); }
+
+/* Opciones equivalentes de filtro (varios códigos SAP para la misma medida) */
+.panol-opciones {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+}
+.panol-opciones-lbl { color: var(--color-muted); font-weight: 600; }
+.panol-opcion {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: 6px;
+  padding: 1px 6px;
+  color: var(--color-text);
+}
 .panol-mini-btn {
   border: 1px solid var(--color-border);
   background: var(--color-card);

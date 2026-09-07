@@ -32,6 +32,22 @@ function panolMatQty(x) {
   const n = Number(x && x.qty);
   return Number.isFinite(n) && n > 0 ? n : 1;
 }
+/* Códigos SAP alternativos equivalentes para una línea de BOM */
+function panolMatOpciones(x) {
+  return Array.isArray(x && x.opciones) ? x.opciones.map(String).filter(Boolean) : [];
+}
+/* Chips de opciones equivalentes (cod + descripción corta + stock) */
+function panolOpcionesHTML(cods) {
+  if (!cods || !cods.length) return '';
+  const chips = cods.map(c => {
+    const m = PANOL_BY_COD.get(String(c));
+    const st = panolStockNum(c);
+    const title = m ? `${m.desc} · stock ${st == null ? '—' : panolNum(st)}` : 'Fuera del catálogo';
+    return `<span class="panol-opcion" title="${panolEsc(title)}"><span class="equipo-tag">${panolEsc(c)}</span>${
+      m ? ` ${panolEsc(m.desc)}` : ''} ${panolStockBadge(st)}</span>`;
+  }).join('');
+  return `<div class="panol-opciones"><span class="panol-opciones-lbl">Opciones equivalentes:</span> ${chips}</div>`;
+}
 /* Cobertura de una línea: stock disponible vs cantidad necesaria */
 function panolCobertura(stock, qty) {
   if (stock == null) return { cls: 'unk',     txt: '—' };
@@ -338,8 +354,9 @@ function panolRepFiltered() {
         const m   = PANOL_BY_COD.get(String(x.cod));
         const st  = panolStockNum(x.cod);
         const qty = panolMatQty(x);
+        const opciones = panolMatOpciones(x);
         return {
-          cod: String(x.cod), nota: x.nota || '', qty,
+          cod: String(x.cod), nota: x.nota || '', qty, opciones,
           desc: m ? m.desc : '', um: m ? m.um : '',
           stock: st, enCatalogo: !!m,
           faltante: st != null && st < qty,
@@ -353,7 +370,7 @@ function panolRepFiltered() {
       if (fuera && !e.mats.some(x => !x.enCatalogo)) return false;
       if (q) {
         const hay = (e.equipo + ' ' + e.denom + ' ' + e.famLbl + ' ' +
-          e.mats.map(x => x.cod + ' ' + x.desc + ' ' + x.nota).join(' ')).toLowerCase();
+          e.mats.map(x => x.cod + ' ' + x.desc + ' ' + x.nota + ' ' + x.opciones.join(' ')).join(' ')).toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -397,7 +414,7 @@ function panolRenderRepuestos() {
     const rows = mats.map(x => `<tr${x.faltante ? ' class="panol-rep-row-falt"' : ''}>
         <td><span class="equipo-tag">${panolEsc(x.cod)}</span></td>
         <td>${x.enCatalogo ? panolEsc(x.desc) : '<span class="no-data">Código fuera del catálogo</span>'}${
-          x.nota ? ` <span class="panol-nota">— ${panolEsc(x.nota)}</span>` : ''}</td>
+          x.nota ? ` <span class="panol-nota">— ${panolEsc(x.nota)}</span>` : ''}${panolOpcionesHTML(x.opciones)}</td>
         <td class="panol-rep-qty">${panolNum(x.qty)}</td>
         <td>${x.enCatalogo ? panolEsc(x.um) : ''}</td>
         <td>${panolStockBadge(x.stock)}</td>
@@ -438,6 +455,7 @@ function panolExportBOM() {
       um: x.um,
       stock: x.stock == null ? '' : x.stock,
       cobertura: panolCobertura(x.stock, x.qty).txt,
+      opciones: (x.opciones || []).join(' / '),
       nota: x.nota,
     });
   }));
@@ -452,6 +470,7 @@ function panolExportBOM() {
     { key: 'um',           header: 'UM' },
     { key: 'stock',        header: 'Stock actual' },
     { key: 'cobertura',    header: 'Cobertura' },
+    { key: 'opciones',     header: 'Códigos alternativos' },
     { key: 'nota',         header: 'Nota' },
   ], 'AEP_Panol_BOM_por_equipo');
 }
@@ -488,15 +507,18 @@ function panolOpenEditor(equipo) {
   const rowsHost = document.getElementById('panol-rep-mat-rows');
   rowsHost.innerHTML = '';
   const mats = (entry && entry.materiales && entry.materiales.length) ? entry.materiales : [{ cod: '', nota: '' }];
-  mats.forEach(m => panolAddMatRow(m.cod, m.nota, panolMatQty(m)));
+  mats.forEach(m => panolAddMatRow(m.cod, m.nota, panolMatQty(m), panolMatOpciones(m)));
 
   document.getElementById('panol-rep-editor').classList.add('open');
 }
 
-function panolAddMatRow(cod, nota, qty) {
+function panolAddMatRow(cod, nota, qty, opciones) {
   const host = document.getElementById('panol-rep-mat-rows');
   const row = document.createElement('div');
   row.className = 'panol-mat-row';
+  // Se conservan las opciones equivalentes si la fila no cambia de código (no editables por UI)
+  row.dataset.baseCod = cod || '';
+  row.dataset.opciones = JSON.stringify(Array.isArray(opciones) ? opciones : []);
   row.innerHTML = `
     <input class="admin-field-input panol-mat-cod" list="panol-mat-datalist" placeholder="Código de material" value="${panolEsc(cod || '')}" />
     <input class="admin-field-input panol-mat-qty" type="number" min="1" step="1" title="Cantidad necesaria" value="${Number(qty) > 0 ? Number(qty) : 1}" />
@@ -550,6 +572,9 @@ async function panolSaveEditor() {
     seen.add(cod);
     const m = { cod };
     if (qty !== 1) m.qty = qty;
+    let opc = [];
+    try { opc = JSON.parse(row.dataset.opciones || '[]'); } catch (e) { opc = []; }
+    if (opc.length && row.dataset.baseCod === cod) m.opciones = opc;
     if (nota) m.nota = nota;
     materiales.push(m);
   });
@@ -635,7 +660,7 @@ function panolRepuestosBlockHTML(equipo) {
     return `<tr>
       <td><span class="equipo-tag">${panolEsc(x.cod)}</span></td>
       <td>${m ? panolEsc(m.desc) : '<span class="no-data">Fuera del catálogo</span>'}${
-        x.nota ? ` <span class="panol-nota">— ${panolEsc(x.nota)}</span>` : ''}</td>
+        x.nota ? ` <span class="panol-nota">— ${panolEsc(x.nota)}</span>` : ''}${panolOpcionesHTML(panolMatOpciones(x))}</td>
       <td class="panol-rep-qty">${panolNum(qty)}</td>
       <td>${panolStockBadge(st)}</td>
       <td>${panolCoberturaBadge(st, qty)}</td>
