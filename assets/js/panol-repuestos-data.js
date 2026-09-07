@@ -6,6 +6,16 @@
    2026-09-04. Bloques con nota "a confirmar" señalan una ambigüedad real
    en la documentación fuente — ver aviso entregado al usuario.
 
+   2026-09-07: segunda carga automática para equipos de aire. Filtros de
+   aire, correas y motores de alimentación/retorno tomados de las fichas
+   técnicas UTA (assets/js/uta-specs.js): la medida/modelo se matcheó
+   contra el catálogo SAP y la cantidad es el número entre paréntesis de
+   la ficha ("600x600x50 (2)" → qty 2). Notas con "ficha técnica UTA"
+   marcan esta procedencia; "código SAP a confirmar" (cod que empieza con
+   "?") = no se encontró match exacto en el catálogo; "confirmar calidad"
+   = la medida sólo existe en MERV10/13; los motores son el genérico W22
+   por potencia. Filtros "LAVABLES" no se cargaron.
+
    Forma de cada entrada (BOM del equipo):
      { equipo: "AAC2115",
        materiales: [ { cod: "20089275", qty: 2, nota: "filtro rodete (opcional)" } ] }
@@ -17,6 +27,45 @@
    reemplazando este archivo entero. */
 
 const PANOL_REPUESTOS = [
+  { equipo: "AAC047", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20001806", nota: "Correa B80 — ficha técnica UTA" },
+  ] },
+  { equipo: "AAC069", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC074", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20001806", nota: "Correa B80 — ficha técnica UTA" },
+  ] },
+  { equipo: "AAC075", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20001806", nota: "Correa B80 — ficha técnica UTA" },
+  ] },
+  { equipo: "AAC092", materiales: [
+    { cod: "20045232", qty: 4, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20006546", qty: 4, nota: "Filtro de aire 500X400X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "?CORREA B-36/37/38", qty: 2, nota: "Correa B-36/37/38 — ficha técnica UTA · código SAP a confirmar" },
+  ] },
+  { equipo: "AAC097", materiales: [
+    { cod: "20074814", qty: 4, nota: "Filtro de aire 500X400X20 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20001739", nota: "Correa A34 — ficha técnica UTA" },
+  ] },
+  { equipo: "AAC105", materiales: [
+    { cod: "20006520", qty: 2, nota: "Filtro de aire 400X650X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20047395", nota: "Correa A40 — ficha técnica UTA" },
+  ] },
+  { equipo: "AAC107", materiales: [
+    { cod: "20006546", qty: 4, nota: "Filtro de aire 400X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20005298", nota: "Correa A47 — ficha técnica UTA" },
+  ] },
+  { equipo: "AAC108", materiales: [
+    { cod: "?FILTRO 600X420X50", qty: 4, nota: "Filtro de aire 600X420X50 — ficha técnica UTA · código SAP a confirmar" },
+    { cod: "20001793", nota: "Correa B56 — ficha técnica UTA" },
+  ] },
+  { equipo: "AAC183", materiales: [
+    { cod: "20006527", nota: "Filtro de aire 570X550X20 — ficha técnica UTA" },
+  ] },
   { equipo: "AAC1986", materiales: [
     { cod: "20078442", nota: "Compresor Coopeland ZP16HSE-PFJ-600, R410A" },
     { cod: "20096849", nota: "Placa CVTR condensadora, mod. 54-1154-0" },
@@ -45,8 +94,51 @@ const PANOL_REPUESTOS = [
     { cod: "20078442", nota: "Compresor Coopeland ZP16HSE-PFJ-600, R410A" },
     { cod: "20096849", nota: "Placa CVTR condensadora, mod. 54-1154-0" },
   ] },
+  { equipo: "AAC2064", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2065", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2067", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2068", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2069", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2070", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2071", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2072", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2073", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2074", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
   { equipo: "AAC2075", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2076", materiales: [
+    { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+  ] },
+  { equipo: "AAC2077", materiales: [
+    { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+  ] },
+  { equipo: "AAC2078", materiales: [
+    { cod: "20045232", qty: 2, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2079", materiales: [
+    { cod: "20045232", qty: 2, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC2081", materiales: [
     { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
@@ -54,16 +146,187 @@ const PANOL_REPUESTOS = [
   { equipo: "AAC2082", materiales: [
     { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
   ] },
+  { equipo: "AAC2102", materiales: [
+    { cod: "20006585", qty: 3, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20041155", nota: "Filtro de aire 600X450X50 — ficha técnica UTA" },
+    { cod: "20041154", qty: 5, nota: "Filtro de aire 500X450X50 — ficha técnica UTA" },
+    { cod: "20012254", nota: "Correa B49 — ficha técnica UTA" },
+  ] },
+  { equipo: "AAC2103", materiales: [
+    { cod: "20006585", qty: 3, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20041155", nota: "Filtro de aire 600X450X50 — ficha técnica UTA" },
+    { cod: "20041154", qty: 5, nota: "Filtro de aire 500X450X50 — ficha técnica UTA" },
+    { cod: "20012254", nota: "Correa B49 — ficha técnica UTA" },
+  ] },
   { equipo: "AAC2116", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC2117", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
+  ] },
+  { equipo: "AAC2118", materiales: [
+    { cod: "20006585", qty: 4, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20047395", qty: 3, nota: "Correa A40 — ficha técnica UTA" },
   ] },
   { equipo: "AAC2119", materiales: [
     { cod: "20096478", nota: "Eje retorno SAE1040 1300mm Ø1\" chavetero 8mm — coincide con especificación de \"eje retorno UTA1 Check In\"" },
+    { cod: "20006585", qty: 2, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20005469", qty: 2, nota: "Correa BXS 69 — ficha técnica UTA" },
+    { cod: "20088191", qty: 2, nota: "Motor alimentación 5.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2120", materiales: [
+    { cod: "20006585", qty: 2, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20005469", qty: 2, nota: "Correa BXS 69 — ficha técnica UTA" },
+    { cod: "20088191", qty: 2, nota: "Motor alimentación 5.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2121", materiales: [
+    { cod: "20006544", qty: 8, nota: "Filtro de aire 600X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20005469", qty: 2, nota: "Correa BXS 69 — ficha técnica UTA" },
+    { cod: "20088191", nota: "Motor retorno 5.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2122", materiales: [
+    { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20018914", qty: 3, nota: "Correa B58 — ficha técnica UTA" },
+    { cod: "?MOTOR ALIMENTACIÓN 20HP", nota: "Motor alimentación — ficha UTA: \"20HP 1465RPM\" · código SAP a confirmar" },
+    { cod: "20088191", nota: "Motor retorno 5.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2123", materiales: [
+    { cod: "20006585", qty: 2, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20001744", qty: 2, nota: "Correa A42 — ficha técnica UTA" },
+    { cod: "20088187", nota: "Motor alimentación 7.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2124", materiales: [
+    { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20018813", qty: 2, nota: "Correa A54 — ficha técnica UTA" },
+    { cod: "20088191", nota: "Motor alimentación 5.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+    { cod: "20088192", nota: "Motor retorno 12.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2127", materiales: [
+    { cod: "20060095", nota: "Filtro de aire 290X600X50 — ficha técnica UTA · cantidad s/ ficha, verificar" },
+    { cod: "20065067", qty: 2, nota: "Correa SPZ 1087 [R] — ficha técnica UTA" },
+    { cod: "20088186", nota: "Motor alimentación 3HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+    { cod: "20088183", nota: "Motor retorno 10HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2128", materiales: [
+    { cod: "20060095", qty: 3, nota: "Filtro de aire 290X600X50 — ficha técnica UTA" },
+    { cod: "20088187", nota: "Motor alimentación 7.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+    { cod: "20088186", nota: "Motor retorno 3HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2129", materiales: [
+    { cod: "20006585", qty: 4, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20065066", qty: 2, nota: "Correa SPZ 1520 [R] — ficha técnica UTA" },
+    { cod: "20088186", nota: "Motor alimentación 3HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+    { cod: "?MOTOR RETORNO S/D", nota: "Motor retorno — ficha UTA: \"7,5CV 1465RPM\" · código SAP a confirmar" },
+  ] },
+  { equipo: "AAC2130", materiales: [
+    { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20001731", qty: 2, nota: "Correa 5V 750 [I] — ficha técnica UTA" },
+    { cod: "20088188", nota: "Motor alimentación 15HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+    { cod: "20088187", nota: "Motor retorno 7.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2131", materiales: [
+    { cod: "20060095", qty: 5, nota: "Filtro de aire 290X600X50 — ficha técnica UTA" },
+    { cod: "20065062", nota: "Correa 5VX 560 — ficha técnica UTA · cantidad s/ ficha, verificar" },
+    { cod: "?MOTOR ALIMENTACIÓN 20HP", nota: "Motor alimentación — ficha UTA: \"20HP 1465RPM\" · código SAP a confirmar" },
+    { cod: "20088187", nota: "Motor retorno 7.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2132", materiales: [
+    { cod: "20006585", qty: 9, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20065063", qty: 2, nota: "Correa 5V 950 [I] — ficha técnica UTA" },
+    { cod: "?MOTOR ALIMENTACIÓN S/D", nota: "Motor alimentación — ficha UTA: \"10CV 1455RPM\" · código SAP a confirmar" },
+    { cod: "?MOTOR RETORNO S/D", nota: "Motor retorno — ficha UTA: \"20CV 1465RPM\" · código SAP a confirmar" },
+  ] },
+  { equipo: "AAC2133", materiales: [
+    { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20065062", nota: "Correa 5VX 560 — ficha técnica UTA · cantidad s/ ficha, verificar" },
+    { cod: "20088191", nota: "Motor alimentación 5.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+    { cod: "20088188", nota: "Motor retorno 15HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2134", materiales: [
+    { cod: "20006585", qty: 9, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20065069", qty: 2, nota: "Correa B81 [R] — ficha técnica UTA" },
+    { cod: "?MOTOR ALIMENTACIÓN 20HP", nota: "Motor alimentación — ficha UTA: \"WEG 20HP 1465RPM\" · código SAP a confirmar" },
+    { cod: "20088183", nota: "Motor retorno 10HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2135", materiales: [
+    { cod: "20006585", qty: 9, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20065071", qty: 2, nota: "Correa 5V 800 [I] — ficha técnica UTA" },
+    { cod: "?MOTOR ALIMENTACIÓN 20HP", nota: "Motor alimentación — ficha UTA: \"WEG 20HP 1465RPM\" · código SAP a confirmar" },
+    { cod: "20088183", nota: "Motor retorno 10HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2136", materiales: [
+    { cod: "20006585", qty: 2, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20065080", qty: 2, nota: "Correa SPZ1687 [I] — ficha técnica UTA" },
+    { cod: "20088186", nota: "Motor alimentación 3HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+    { cod: "20088193", nota: "Motor retorno 1HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2137", materiales: [
+    { cod: "20006585", qty: 4, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20065064", qty: 2, nota: "Correa B62 [I] — ficha técnica UTA" },
+    { cod: "20088187", nota: "Motor alimentación 7.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+    { cod: "?MOTOR RETORNO S/D", nota: "Motor retorno — ficha UTA: \"3CV 1410RPM\" · código SAP a confirmar" },
+  ] },
+  { equipo: "AAC2138", materiales: [
+    { cod: "20006585", qty: 2, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20069376", qty: 2, nota: "Correa SPZ 1025 [I] — ficha técnica UTA" },
+    { cod: "20088187", nota: "Motor alimentación 7.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+    { cod: "20088186", nota: "Motor retorno 3HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2139", materiales: [
+    { cod: "20006585", qty: 4, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20043980", qty: 2, nota: "Correa 5VX 710 [I] — ficha técnica UTA" },
+    { cod: "20088185", nota: "Motor alimentación 4HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+    { cod: "20088192", nota: "Motor retorno 12.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2140", materiales: [
+    { cod: "20006585", qty: 4, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20056874", qty: 2, nota: "Correa B73 [I] — ficha técnica UTA" },
+    { cod: "20088183", nota: "Motor alimentación 10HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+    { cod: "20088185", nota: "Motor retorno 4HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2141", materiales: [
+    { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20065072", qty: 2, nota: "Correa SPZ 1600 — ficha técnica UTA" },
+    { cod: "?MOTOR ALIMENTACIÓN S/D", nota: "Motor alimentación — ficha UTA: \"12,5 CV 1455RPM\" · código SAP a confirmar" },
+    { cod: "?MOTOR RETORNO S/D", nota: "Motor retorno — ficha UTA: \"5,5CV 1440RPM\" · código SAP a confirmar" },
+  ] },
+  { equipo: "AAC2142", materiales: [
+    { cod: "20006585", qty: 4, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20066260", qty: 2, nota: "Correa B66 [I] — ficha técnica UTA" },
+    { cod: "20088187", nota: "Motor alimentación 7.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+    { cod: "20088186", nota: "Motor retorno 3HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2143", materiales: [
+    { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20065073", qty: 2, nota: "Correa SPB 2000 [I] — ficha técnica UTA" },
+    { cod: "20088192", nota: "Motor alimentación 12.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+    { cod: "20088191", nota: "Motor retorno 5.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2144", materiales: [
+    { cod: "20006585", qty: 2, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20065079", nota: "Correa SPZ 1587 — ficha técnica UTA · cantidad s/ ficha, verificar" },
+    { cod: "20088191", nota: "Motor alimentación 5.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2145", materiales: [
+    { cod: "20006585", qty: 2, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20065079", nota: "Correa SPZ 1587 — ficha técnica UTA · cantidad s/ ficha, verificar" },
+    { cod: "20088191", nota: "Motor alimentación 5.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2146", materiales: [
+    { cod: "20006585", qty: 2, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20065079", nota: "Correa SPZ 1587 — ficha técnica UTA · cantidad s/ ficha, verificar" },
+    { cod: "20088191", nota: "Motor alimentación 5.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
+  ] },
+  { equipo: "AAC2147", materiales: [
+    { cod: "20006585", qty: 2, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+    { cod: "20065079", nota: "Correa SPZ 1587 — ficha técnica UTA · cantidad s/ ficha, verificar" },
+    { cod: "20088191", nota: "Motor alimentación 5.5HP — ficha UTA; motor genérico W22 por potencia, confirmar montaje" },
   ] },
   { equipo: "AAC2151", materiales: [
     { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
@@ -93,34 +356,50 @@ const PANOL_REPUESTOS = [
   { equipo: "AAC2167", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC2168", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC2169", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC2170", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC2171", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC2172", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC2173", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC2174", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC2241", materiales: [
     { cod: "20078442", nota: "Compresor Coopeland ZP16HSE-PFJ-600, R410A" },
@@ -164,33 +443,64 @@ const PANOL_REPUESTOS = [
   ] },
   { equipo: "AAC2261", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC2262", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC2263", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC2264", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC2265", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC2266", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC2267", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC2271", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2272", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC2273", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC2274", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2717", materiales: [
+    { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+  ] },
+  { equipo: "AAC2718", materiales: [
+    { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+  ] },
+  { equipo: "AAC2719", materiales: [
+    { cod: "20006585", qty: 6, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
+  ] },
+  { equipo: "AAC2734", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2735", materiales: [
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+  ] },
+  { equipo: "AAC2736", materiales: [
+    { cod: "?FILTRO 620X500X50", qty: 3, nota: "Filtro de aire 620X500X50 — ficha técnica UTA · código SAP a confirmar" },
   ] },
   { equipo: "AAC3476", materiales: [
     { cod: "20088712", nota: "Placa condensador LG, mod. EAX64656602" },
@@ -198,87 +508,135 @@ const PANOL_REPUESTOS = [
   { equipo: "AAC3477", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20006544", qty: 4, nota: "Filtro de aire 600X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 4, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC3478", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20045232", qty: 8, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20006546", qty: 4, nota: "Filtro de aire 500X400X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC3479", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20006544", qty: 4, nota: "Filtro de aire 500X600X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
+    { cod: "20045232", qty: 4, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC3480", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "?FILTRO 620X500X50", qty: 8, nota: "Filtro de aire 620X500X50 — ficha técnica UTA · código SAP a confirmar" },
   ] },
   { equipo: "AAC3481", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "?FILTRO 620X500X50", qty: 8, nota: "Filtro de aire 620X500X50 — ficha técnica UTA · código SAP a confirmar" },
   ] },
   { equipo: "AAC3482", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "?FILTRO 620X500X50", qty: 8, nota: "Filtro de aire 620X500X50 — ficha técnica UTA · código SAP a confirmar" },
+  ] },
+  { equipo: "AAC3502", materiales: [
+    { cod: "20006526", qty: 4, nota: "Filtro de aire 620X400X20 — ficha técnica UTA" },
+  ] },
+  { equipo: "AAC3503", materiales: [
+    { cod: "20006526", qty: 4, nota: "Filtro de aire 620X400X20 — ficha técnica UTA" },
+  ] },
+  { equipo: "AAC3504", materiales: [
+    { cod: "20006526", qty: 4, nota: "Filtro de aire 620X400X20 — ficha técnica UTA" },
+    { cod: "20002320", qty: 5, nota: "Filtro de aire 350X500X50 — ficha técnica UTA" },
+    { cod: "20006519", qty: 2, nota: "Filtro de aire 350X310X50 — ficha técnica UTA" },
+    { cod: "20006527", nota: "Filtro de aire 550X570X20 — ficha técnica UTA" },
+    { cod: "20007235", qty: 3, nota: "Filtro de aire 410X580X50 — ficha técnica UTA" },
+    { cod: "20006518", qty: 3, nota: "Filtro de aire 400X580X50 — ficha técnica UTA" },
   ] },
   { equipo: "AAC3815", materiales: [
     { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+    { cod: "20006526", qty: 4, nota: "Filtro de aire 620X400X20 — ficha técnica UTA" },
   ] },
   { equipo: "AAC3816", materiales: [
     { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+    { cod: "20006526", qty: 4, nota: "Filtro de aire 620X400X20 — ficha técnica UTA" },
   ] },
   { equipo: "AAC3820", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC3821", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC3822", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC3823", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC3824", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC3825", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC3826", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC3827", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC3828", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC3829", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
     { cod: "20085169", nota: "Válvula inversora Ramco 4 vías V10-418120-1XX (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
+    { cod: "20066702", qty: 2, nota: "Filtro de aire 750X500X50 — ficha técnica UTA" },
+    { cod: "20005296", nota: "Correa A35 — ficha técnica UTA" },
   ] },
   { equipo: "AAC3832", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
   ] },
   { equipo: "AAC3833", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC3834", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC3835", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
   ] },
   { equipo: "AAC3836", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
+    { cod: "20045232", qty: 12, nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones en catálogo, se tomó la de mayor stock/menor MERV" },
   ] },
   { equipo: "AAC3837", materiales: [
     { cod: "20096278", nota: "Eje turbina Roof Top Lennox LGH360" },
@@ -303,6 +661,12 @@ const PANOL_REPUESTOS = [
   ] },
   { equipo: "AAC3933", materiales: [
     { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
+  ] },
+  { equipo: "AAC9314", materiales: [
+    { cod: "20006527", qty: 2, nota: "Filtro de aire 570X550X20 — ficha técnica UTA" },
+  ] },
+  { equipo: "AAC9316", materiales: [
+    { cod: "20006527", qty: 2, nota: "Filtro de aire 570X550X20 — ficha técnica UTA" },
   ] },
   { equipo: "AAC9400", materiales: [
     { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
