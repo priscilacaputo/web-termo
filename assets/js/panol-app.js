@@ -167,6 +167,7 @@ let panolShown = 0;
   critClear.addEventListener('click', () => {
     critSearch.value = ''; critClear.style.display = 'none'; panolRenderCriticos();
   });
+  document.getElementById('panol-crit-fam-filter').addEventListener('change', panolRenderCriticos);
   document.getElementById('panol-crit-solo-sin').addEventListener('change', panolRenderCriticos);
   document.getElementById('panol-crit-export-btn').addEventListener('click', panolExportCriticos);
   document.getElementById('panol-crit-tbody').addEventListener('click', e => {
@@ -544,12 +545,25 @@ function panolCritRiesgo(g) {
   return { cls: 'ok', txt: 'Cubierto', ord: 2 };
 }
 
+function panolBuildCritFamFilter() {
+  const sel = document.getElementById('panol-crit-fam-filter');
+  if (!sel || sel.options.length > 1) return;
+  const labels = [...new Set(panolCriticosAgg().flatMap(g => g.equipos.map(e => e.fam)))].sort();
+  labels.forEach(l => {
+    const o = document.createElement('option');
+    o.value = l; o.textContent = l;
+    sel.appendChild(o);
+  });
+}
+
 function panolCriticosFiltered() {
   const q   = (document.getElementById('panol-crit-search').value || '').trim().toLowerCase();
   const sin = document.getElementById('panol-crit-solo-sin').checked;
+  const fam = document.getElementById('panol-crit-fam-filter').value;
   return panolCriticosAgg()
     .filter(g => {
       if (sin && !(g.stock == null || g.stock === 0)) return false;
+      if (fam && !g.equipos.some(e => e.fam === fam)) return false;
       if (q) {
         const hay = (g.cod + ' ' + g.desc + ' ' +
           g.equipos.map(e => e.equipo + ' ' + e.denom + ' ' + e.fam).join(' ')).toLowerCase();
@@ -565,6 +579,8 @@ function panolCriticosFiltered() {
 
 function panolRenderCriticos() {
   const tbody = document.getElementById('panol-crit-tbody');
+  panolBuildCritFamFilter();
+  const fam   = document.getElementById('panol-crit-fam-filter').value;
   const list  = panolCriticosFiltered();
   const countEl = document.getElementById('panol-crit-result-count');
 
@@ -586,16 +602,20 @@ function panolRenderCriticos() {
 
   tbody.innerHTML = list.map(g => {
     const r = panolCritRiesgo(g);
-    const eqs = [...g.equipos].sort((a, b) => String(a.equipo).localeCompare(String(b.equipo)));
+    let eqs = [...g.equipos].sort((a, b) => String(a.equipo).localeCompare(String(b.equipo)));
+    const totalEq = eqs.length;
+    if (fam) eqs = eqs.filter(e => e.fam === fam);
     const chips = eqs.map(e =>
       `<button class="panol-usa-chip" data-goto="${panolEsc(e.equipo)}" title="${panolEsc(e.denom)}"><span class="equipo-tag">${panolEsc(e.equipo)}</span></button>`).join('');
+    const extra = (fam && totalEq > eqs.length)
+      ? ` <span class="panol-nota">+${totalEq - eqs.length} en otras familias</span>` : '';
     return `<tr>
       <td><span class="panol-cob panol-cob-${r.cls}">${r.txt}</span></td>
       <td><span class="equipo-tag">${panolEsc(g.cod)}</span></td>
       <td>${g.enCatalogo ? panolEsc(g.desc) : '<span class="no-data">Fuera del catálogo</span>'}</td>
       <td>${g.enCatalogo ? panolEsc(g.um) : ''}</td>
       <td>${panolStockBadge(g.stock)}</td>
-      <td><div class="panol-usa-list">${chips}</div></td>
+      <td><div class="panol-usa-list">${chips}${extra}</div></td>
     </tr>`;
   }).join('');
 }
@@ -603,21 +623,27 @@ function panolRenderCriticos() {
 function panolExportCriticos() {
   const list = panolCriticosFiltered();
   if (!list.length) { panolToast('No hay repuestos críticos para exportar con los filtros actuales.', 'error'); return; }
-  const rows = list.map(g => ({
-    riesgo: panolCritRiesgo(g).txt,
-    cod: g.cod,
-    desc: g.enCatalogo ? g.desc : 'FUERA DE CATÁLOGO',
-    um: g.um,
-    stock: g.stock == null ? '' : g.stock,
-    n_equipos: g.equipos.length,
-    equipos: [...new Set(g.equipos.map(e => e.equipo))].sort().join(' / '),
-  }));
+  const fam = document.getElementById('panol-crit-fam-filter').value;
+  const rows = list.map(g => {
+    const eqs = fam ? g.equipos.filter(e => e.fam === fam) : g.equipos;
+    return {
+      riesgo: panolCritRiesgo(g).txt,
+      cod: g.cod,
+      desc: g.enCatalogo ? g.desc : 'FUERA DE CATÁLOGO',
+      um: g.um,
+      stock: g.stock == null ? '' : g.stock,
+      familias: [...new Set(g.equipos.map(e => e.fam))].sort().join(' / '),
+      n_equipos: fam ? eqs.length : g.equipos.length,
+      equipos: [...new Set(eqs.map(e => e.equipo))].sort().join(' / '),
+    };
+  });
   exportToExcel(rows, [
     { key: 'riesgo',    header: 'Riesgo' },
     { key: 'cod',       header: 'Código SAP' },
     { key: 'desc',      header: 'Descripción' },
     { key: 'um',        header: 'UM' },
     { key: 'stock',     header: 'Stock actual' },
+    { key: 'familias',  header: 'Familias' },
     { key: 'n_equipos', header: 'N° equipos' },
     { key: 'equipos',   header: 'Equipos' },
   ], 'AEP_Panol_Repuestos_criticos');
