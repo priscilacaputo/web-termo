@@ -61,8 +61,8 @@
       nota: 'Cruce del export IH08 contra las fichas de la web (abajo).' },
     { dim: 'Ubicación técnica', estado: 'ok',
       nota: 'Marcada como correcta (decisión 2026-09-08). No se audita el campo.' },
-    { dim: 'Planes y asignación a equipo', estado: 'parcial',
-      nota: 'IP24 (TER + MEC) cargado: 1.049 planes, panorama abajo. Falta el objeto técnico / equipo por plan para cruzar equipos sin plan y planes sin equipo.' },
+    { dim: 'Planes y asignación a equipo', estado: 'curso',
+      nota: 'IP24 MOD (TER + MEC) con objeto técnico: cada posición cruzada contra el maestro. Abajo: equipos sin plan, planes a equipos fuera del maestro, planes sobre equipos de baja, posiciones sin equipo.' },
     { dim: 'Periodicidad de los planes', estado: 'curso',
       nota: 'Periodicidad real calculada de las fechas de IP24 (mediana entre tomas). Se marcan los planes que corren a otra frecuencia que la de su nombre.' },
     { dim: 'Materiales de OT y stock', estado: 'parcial',
@@ -247,59 +247,73 @@
   function planesHTML() {
     const P = (typeof PLANES_SAP_RESUMEN !== 'undefined') ? PLANES_SAP_RESUMEN : null;
     if (!P) return '';
-    const bar = (label, n, base, color, right) => {
+    const famLabel = (pfx) => FAMILIA[pfx] || pfx;
+    const bar = (label, n, base, color) => {
       const w = base ? Math.round((n / base) * 100) : 0;
       return `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
         <span style="flex:0 0 200px;color:var(--color-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(label)}</span>
         <span style="flex:1;min-width:60px;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden">
           <span style="display:block;height:100%;width:${w}%;background:${color}"></span></span>
-        <span style="flex:0 0 64px;text-align:right;font-weight:700">${right != null ? right : n.toLocaleString('es-AR')}</span>
+        <span style="flex:0 0 56px;text-align:right;font-weight:700">${n.toLocaleString('es-AR')}</span>
       </div>`;
     };
     const heading = (t) => `<div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">${t}</div>`;
+    const codes = (list) => (list || []).map((c) => `<span class="equipo-tag" style="margin:2px 3px 2px 0;display:inline-block">${esc(c)}</span>`).join('');
     const cmp = P.cumplimiento || {};
     const per = P.porPeriodicidadReal || [];
     const maxPer = Math.max(1, ...per.map((x) => x.n));
-    const fam = P.porFamilia || [];
+    const fam = P.porFamiliaPrefijo || [];
     const maxFam = Math.max(1, ...fam.map((x) => x.n));
-    const desaj = [].concat((P.seEjecutaMenosSeguido && P.seEjecutaMenosSeguido.top) || [],
-                            (P.periodoUnicoNoCoincide && P.periodoUnicoNoCoincide.top) || []);
+    const sinEq = P.planesSinEquipo || [];
+    const noMaestro = P.equiposConPlanNoEnMaestro || [];
+    const baja = P.equiposConPlanDadosDeBaja || [];
+    const sinPlan = P.equiposMaestroSinPlan || { total: 0, porPrefijo: {}, lista: [] };
+    const desaj = [].concat(P.desajusteMenosSeguido || [], P.desajusteNoCoincide || []);
 
     return `<div class="table-card" style="margin-bottom:20px">
       <div style="padding:14px 16px;font-weight:800;font-size:13px;border-bottom:1px solid var(--color-border)">
-        Planes de mantenimiento · IP24 (alcance TER + MEC)
-        <span style="font-weight:500;color:var(--color-muted)"> — periodicidad real = mediana de días entre tomas programadas</span>
+        Planes de mantenimiento · IP24 (TER + MEC)
+        <span style="font-weight:500;color:var(--color-muted)"> — con objeto técnico · periodicidad real = mediana de días entre tomas</span>
       </div>
       <div style="padding:14px 16px">
         <div class="stats-grid" style="margin-bottom:14px">
-          ${card('Planes TER / MEC', P.planes.toLocaleString('es-AR'), '#0096d6', `${P.tomasProgramadas.toLocaleString('es-AR')} tomas programadas`)}
-          ${card('Tomas ya vencidas', (cmp.tomasVencidas || 0).toLocaleString('es-AR'), '#10b981', `${cmp.sinOrden || 0} sin OT generada`)}
-          ${card('Sin próxima toma', (cmp.posSinProxima || 0).toLocaleString('es-AR'), '#f59e0b', 'Posiciones sin fecha futura programada')}
-          ${card('Desajuste texto ↔ real', P.desajusteTotal || 0, '#dc2626', 'El plan corre a otra frecuencia que la de su nombre')}
-        </div>
-        <div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">
-          Contexto: el IP16 sin filtrar traía <strong>${P.ip16TodoAep.toLocaleString('es-AR')}</strong> planes de todo AEP (electricidad, balizamiento, tableros…), fuera del alcance de este portal.
+          ${card('Posiciones de plan', P.posiciones.toLocaleString('es-AR'), '#0096d6', `${(P.equiposConPlan || 0).toLocaleString('es-AR')} equipos con plan`)}
+          ${card('Equipos sin plan', sinPlan.total, '#f59e0b', 'Del maestro, familias TER/MEC — sin preventivo')}
+          ${card('Plan → equipo fuera del maestro', noMaestro.length, '#dc2626', 'El plan apunta a un equipo que no está en IH08')}
+          ${card('Plan sobre equipo de baja', baja.length, '#dc2626', 'Equipo NOAC/PTBO con plan activo')}
         </div>
 
-        ${heading('Periodicidad real de los planes TER / MEC')}
-        ${per.map((x) => bar(x.k, x.n, maxPer, /sin fechas/.test(x.k) ? '#f59e0b' : '#0096d6')).join('')}
+        ${heading('Equipos del maestro (TER/MEC) sin ningún plan · ' + sinPlan.total)}
+        ${Object.entries(sinPlan.porPrefijo).map(([p, n]) => bar(famLabel(p) + ' (' + p + ')', n, Math.max(1, ...Object.values(sinPlan.porPrefijo)), '#f59e0b')).join('')}
+        <details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:var(--color-primary)">ver los ${sinPlan.total} equipos</summary>
+          <div style="margin-top:6px">${codes(sinPlan.lista)}</div></details>
 
-        ${heading('Planes por familia')}
-        ${fam.map((x) => bar(x.k, x.n, maxFam, '#6366f1')).join('')}
+        ${noMaestro.length ? heading('Planes que apuntan a un equipo que no está en el maestro IH08 · ' + noMaestro.length) +
+          `<div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">O el export de altas está incompleto, o son equipos viejos/de baja con plan vivo.</div>
+           <div>${codes(noMaestro)}</div>` : ''}
 
-        ${desaj.length ? heading('Desajuste texto del plan ↔ ejecución real') +
+        ${baja.length ? heading('Planes activos sobre equipos dados de baja · ' + baja.length) +
+          `<div>${codes(baja)}</div>
+           <div style="font-size:11.5px;color:var(--color-muted);margin-top:4px">Dar de baja el plan o reactivar el equipo.</div>` : ''}
+
+        ${sinEq.length ? heading('Posiciones de plan sin equipo asignado · ' + sinEq.length) +
+          sinEq.map((d) => `<div style="font-size:12px;padding:3px 0"><span class="equipo-tag" style="background:#6366f1">${esc(d.pos)}</span> ${esc(d.desc)}${d.ubic ? ` · <span style="color:var(--color-muted)">${esc(d.ubic)}</span>` : ''}</div>`).join('') : ''}
+
+        ${heading('Periodicidad real')}
+        ${per.map((x) => bar(x.k, x.n, maxPer, /s\/fechas/.test(x.k) ? '#f59e0b' : '#0096d6')).join('')}
+
+        ${heading('Posiciones por familia')}
+        ${fam.map((x) => bar(famLabel(x.k) + ' (' + x.k + ')', x.n, maxFam, '#6366f1')).join('')}
+
+        ${desaj.length ? heading('Desajuste nombre del plan ↔ ejecución real') +
           desaj.map((d) => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--color-surface)">
-            <span class="equipo-tag" style="background:#6366f1">${esc(d.pos)}</span>
-            <strong> ${esc(d.desc)}</strong> · ${esc(d.familia)}<br>
+            <span class="equipo-tag" style="background:#6366f1">${esc(d.pos)}</span> ${esc(d.equipo)}
+            <strong> ${esc(d.desc)}</strong><br>
             <span style="color:var(--color-muted)">nombre dice <strong>${esc(d.declara || '—')}</strong> · se ejecuta cada <strong>~${d.realDias}d</strong> (${esc(d.realBucket)})</span>
           </div>`).join('') : ''}
 
         <div style="margin-top:14px;padding:10px 12px;background:var(--color-surface);border-radius:8px;font-size:12px">
-          Cumplimiento OK: de ${(cmp.tomasVencidas || 0).toLocaleString('es-AR')} tomas vencidas solo ${cmp.sinOrden || 0} quedaron sin OT.
-          <strong>Falta para cerrar del todo:</strong>
-          <ul style="margin:6px 0 0;padding-left:18px;line-height:1.7">
-            ${(P.faltaParaCerrar || []).map((f) => `<li>${esc(f)}</li>`).join('')}
-          </ul>
+          Cumplimiento: de ${(cmp.tomasVencidas || 0).toLocaleString('es-AR')} tomas vencidas solo ${cmp.sinOrden || 0} quedaron sin OT.
         </div>
       </div>
     </div>`;

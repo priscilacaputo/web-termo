@@ -6,9 +6,18 @@
    aporta ningún dato nuevo. */
 (function () {
   const IDX = {};
+  const PLAN_IDX = {};
   function build() {
-    if (typeof EQUIPOS_SAP === 'undefined') return;
-    EQUIPOS_SAP.forEach((e) => { if (e && e.equipo) IDX[String(e.equipo).toUpperCase()] = e; });
+    if (typeof EQUIPOS_SAP !== 'undefined') {
+      EQUIPOS_SAP.forEach((e) => { if (e && e.equipo) IDX[String(e.equipo).toUpperCase()] = e; });
+    }
+    if (typeof PLANES_SAP !== 'undefined') {
+      PLANES_SAP.forEach((p) => {
+        if (!p || !p.equipo) return;
+        const k = String(p.equipo).toUpperCase();
+        (PLAN_IDX[k] || (PLAN_IDX[k] = [])).push(p);
+      });
+    }
   }
   build();
 
@@ -35,22 +44,50 @@
   window.getEquipoSAP = function (cod) {
     return cod ? IDX[String(cod).toUpperCase()] || null : null;
   };
+  window.getPlanesEquipo = function (cod) {
+    return cod ? (PLAN_IDX[String(cod).toUpperCase()] || []) : [];
+  };
+
+  function planesBlock(cod) {
+    const ps = window.getPlanesEquipo(cod);
+    if (!ps.length) return '';
+    const filas = ps.map((p) => {
+      const per = p.realBucket && !/s\/fechas/.test(p.realBucket)
+        ? p.realBucket + (p.realDias ? ` (~${p.realDias}d)` : '')
+        : (p.declara || '—');
+      const prox = p.proxima ? ` · próxima ${p.proxima}` : '';
+      const alerta = p.desajuste ? ' ⚠️' : '';
+      return `<div class="modal-field full">
+        <span class="modal-field-label">Pos. ${p.pos}${alerta}</span>
+        <span class="modal-field-value">${String(p.desc || '').replace(/[&<>]/g, '')} — <strong>${per}</strong>${prox}</span>
+      </div>`;
+    }).join('');
+    return `<div style="margin-top:20px;padding-top:20px;border-top:2px solid var(--color-border)">
+      <h4 style="color:var(--color-navy);font-weight:700;margin-bottom:12px;font-size:14px">🔧 Plan preventivo (SAP · IP24)</h4>
+      ${filas}
+    </div>`;
+  }
 
   window.sapFichaHTML = function (cod) {
     const e = window.getEquipoSAP(cod);
-    if (!e) return '';
-    const rows = [
-      field('N° de serie', e.nSerie, { mono: true }),
-      field('N° de pieza / fabricante', e.nParte, { mono: true }),
-      field('Denominación de tipo (SAP)', e.tipoDenom, { mono: true }),
-      field('Fecha puesta en servicio', e.serv),
-      field('Equipo superior', e.equipoSup, { mono: true }),
-      field('Status en SAP', e.status ? (STATUS_TXT[e.status] || e.status) : ''),
-    ].join('');
-    if (!rows) return '';
-    return `<div style="margin-top:20px;padding-top:20px;border-top:2px solid var(--color-border)">
-      <h4 style="color:var(--color-navy);font-weight:700;margin-bottom:12px;font-size:14px">🗂️ Datos de SAP (IH08)</h4>
-      ${rows}
-    </div>`;
+    let out = '';
+    if (e) {
+      const rows = [
+        field('N° de serie', e.nSerie, { mono: true }),
+        field('N° de pieza / fabricante', e.nParte, { mono: true }),
+        field('Denominación de tipo (SAP)', e.tipoDenom, { mono: true }),
+        field('Fecha puesta en servicio', e.serv),
+        field('Equipo superior', e.equipoSup, { mono: true }),
+        field('Status en SAP', e.status ? (STATUS_TXT[e.status] || e.status) : ''),
+      ].join('');
+      if (rows) {
+        out += `<div style="margin-top:20px;padding-top:20px;border-top:2px solid var(--color-border)">
+          <h4 style="color:var(--color-navy);font-weight:700;margin-bottom:12px;font-size:14px">🗂️ Datos de SAP (IH08)</h4>
+          ${rows}
+        </div>`;
+      }
+    }
+    out += planesBlock(cod);
+    return out;
   };
 })();
