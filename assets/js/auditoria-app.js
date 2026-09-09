@@ -62,9 +62,9 @@
     { dim: 'Ubicación técnica', estado: 'ok',
       nota: 'Marcada como correcta (decisión 2026-09-08). No se audita el campo.' },
     { dim: 'Planes y asignación a equipo', estado: 'parcial',
-      nota: 'IP16 cargado (panorama abajo). Falta re-exportar con objeto técnico / equipo por plan para cruzar contra el inventario.' },
-    { dim: 'Periodicidad de los planes', estado: 'parcial',
-      nota: 'Período parseado del texto del plan (abajo). Falta el ciclo estructurado / la estrategia expandida, y el historial de OT correctivas para contrastar.' },
+      nota: 'IP24 (TER + MEC) cargado: 1.049 planes, panorama abajo. Falta el objeto técnico / equipo por plan para cruzar equipos sin plan y planes sin equipo.' },
+    { dim: 'Periodicidad de los planes', estado: 'curso',
+      nota: 'Periodicidad real calculada de las fechas de IP24 (mediana entre tomas). Se marcan los planes que corren a otra frecuencia que la de su nombre.' },
     { dim: 'Materiales de OT y stock', estado: 'parcial',
       nota: 'Pañol → "Repuestos críticos" ya cubre parte. Falta IW38 con componentes + MB52 completo.' },
   ];
@@ -247,54 +247,58 @@
   function planesHTML() {
     const P = (typeof PLANES_SAP_RESUMEN !== 'undefined') ? PLANES_SAP_RESUMEN : null;
     if (!P) return '';
-    const pct = (n) => P.total ? Math.round((n / P.total) * 100) : 0;
-    const bar = (label, n, base, color) => {
+    const bar = (label, n, base, color, right) => {
       const w = base ? Math.round((n / base) * 100) : 0;
       return `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
-        <span style="flex:0 0 190px;color:var(--color-text)">${esc(label)}</span>
-        <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden">
+        <span style="flex:0 0 200px;color:var(--color-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(label)}</span>
+        <span style="flex:1;min-width:60px;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden">
           <span style="display:block;height:100%;width:${w}%;background:${color}"></span></span>
-        <span style="flex:0 0 56px;text-align:right;font-weight:700">${n.toLocaleString('es-AR')}</span>
+        <span style="flex:0 0 64px;text-align:right;font-weight:700">${right != null ? right : n.toLocaleString('es-AR')}</span>
       </div>`;
     };
-    const maxStat = Math.max(...P.porStatus.map((x) => x.n));
-    const per = P.porPeriodoActivos.slice(0, 14);
-    const maxPer = Math.max(...per.map((x) => x.n));
-    const dup = P.topDuplicadosActivos.slice(0, 12);
-    const maxDup = Math.max(...dup.map((x) => x.n));
+    const heading = (t) => `<div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">${t}</div>`;
+    const cmp = P.cumplimiento || {};
+    const per = P.porPeriodicidadReal || [];
+    const maxPer = Math.max(1, ...per.map((x) => x.n));
+    const fam = P.porFamilia || [];
+    const maxFam = Math.max(1, ...fam.map((x) => x.n));
+    const desaj = [].concat((P.seEjecutaMenosSeguido && P.seEjecutaMenosSeguido.top) || [],
+                            (P.periodoUnicoNoCoincide && P.periodoUnicoNoCoincide.top) || []);
 
     return `<div class="table-card" style="margin-bottom:20px">
       <div style="padding:14px 16px;font-weight:800;font-size:13px;border-bottom:1px solid var(--color-border)">
-        Planes de mantenimiento · export IP16
-        <span style="font-weight:500;color:var(--color-muted)"> — layout mínimo (sin equipo ni ciclo estructurado)</span>
+        Planes de mantenimiento · IP24 (alcance TER + MEC)
+        <span style="font-weight:500;color:var(--color-muted)"> — periodicidad real = mediana de días entre tomas programadas</span>
       </div>
       <div style="padding:14px 16px">
-        <div class="stats-grid" style="margin-bottom:16px">
-          ${card('Planes en SAP', P.total.toLocaleString('es-AR'), '#0096d6', 'Todas las posiciones de plan (IP16)')}
-          ${card('Activos (ABIE)', P.activos.toLocaleString('es-AR'), '#10b981', `${pct(P.activos)}% del total`)}
-          ${card('Marcados baja / NOAC', P.baja.toLocaleString('es-AR'), '#dc2626', `${pct(P.baja)}% del total — depurar`)}
-          ${card('Textos distintos (activos)', P.textosDistintosActivos.toLocaleString('es-AR'), '#6366f1', `sobre ${P.activos.toLocaleString('es-AR')} planes activos`)}
+        <div class="stats-grid" style="margin-bottom:14px">
+          ${card('Planes TER / MEC', P.planes.toLocaleString('es-AR'), '#0096d6', `${P.tomasProgramadas.toLocaleString('es-AR')} tomas programadas`)}
+          ${card('Tomas ya vencidas', (cmp.tomasVencidas || 0).toLocaleString('es-AR'), '#10b981', `${cmp.sinOrden || 0} sin OT generada`)}
+          ${card('Sin próxima toma', (cmp.posSinProxima || 0).toLocaleString('es-AR'), '#f59e0b', 'Posiciones sin fecha futura programada')}
+          ${card('Desajuste texto ↔ real', P.desajusteTotal || 0, '#dc2626', 'El plan corre a otra frecuencia que la de su nombre')}
+        </div>
+        <div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">
+          Contexto: el IP16 sin filtrar traía <strong>${P.ip16TodoAep.toLocaleString('es-AR')}</strong> planes de todo AEP (electricidad, balizamiento, tableros…), fuera del alcance de este portal.
         </div>
 
-        <div style="font-weight:700;font-size:12px;margin:14px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">Por status</div>
-        ${P.porStatus.map((x) => bar(x.k, x.n, maxStat, x.k === 'ABIE' ? '#10b981' : '#dc2626')).join('')}
+        ${heading('Periodicidad real de los planes TER / MEC')}
+        ${per.map((x) => bar(x.k, x.n, maxPer, /sin fechas/.test(x.k) ? '#f59e0b' : '#0096d6')).join('')}
 
-        <div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">Periodicidad (planes activos · parseada del texto)</div>
-        ${per.map((x) => bar(x.k, x.n, maxPer, /sin /.test(x.k) ? '#f59e0b' : '#0096d6')).join('')}
-        <div style="font-size:11.5px;color:var(--color-muted);margin-top:6px">
-          ${(per.filter((x) => /sin /.test(x.k)).reduce((a, x) => a + x.n, 0)).toLocaleString('es-AR')} planes activos no declaran período en el texto → sin el ciclo estructurado de SAP no se puede auditar la frecuencia.
-        </div>
+        ${heading('Planes por familia')}
+        ${fam.map((x) => bar(x.k, x.n, maxFam, '#6366f1')).join('')}
 
-        <div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">Textos de plan más repetidos (activos)</div>
-        ${dup.map((x) => bar(x.txt, x.n, maxDup, '#6366f1')).join('')}
-        <div style="font-size:11.5px;color:var(--color-muted);margin-top:6px">
-          Sin el objeto técnico por plan no se puede saber si cada repetición es un equipo/tablero real o duplicación a limpiar.
-        </div>
+        ${desaj.length ? heading('Desajuste texto del plan ↔ ejecución real') +
+          desaj.map((d) => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--color-surface)">
+            <span class="equipo-tag" style="background:#6366f1">${esc(d.pos)}</span>
+            <strong> ${esc(d.desc)}</strong> · ${esc(d.familia)}<br>
+            <span style="color:var(--color-muted)">nombre dice <strong>${esc(d.declara || '—')}</strong> · se ejecuta cada <strong>~${d.realDias}d</strong> (${esc(d.realBucket)})</span>
+          </div>`).join('') : ''}
 
         <div style="margin-top:14px;padding:10px 12px;background:var(--color-surface);border-radius:8px;font-size:12px">
-          <strong>Falta en el export para cerrar las dimensiones:</strong>
+          Cumplimiento OK: de ${(cmp.tomasVencidas || 0).toLocaleString('es-AR')} tomas vencidas solo ${cmp.sinOrden || 0} quedaron sin OT.
+          <strong>Falta para cerrar del todo:</strong>
           <ul style="margin:6px 0 0;padding-left:18px;line-height:1.7">
-            ${P.faltan.map((f) => `<li>${esc(f)}</li>`).join('')}
+            ${(P.faltaParaCerrar || []).map((f) => `<li>${esc(f)}</li>`).join('')}
           </ul>
         </div>
       </div>

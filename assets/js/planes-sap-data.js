@@ -1,432 +1,242 @@
-/* ─── PLANES_SAP_RESUMEN — Resumen del export IP16 ───
-   Fuente: EXPORT_20260909160722.xlsx (IP16 · lista de planes, layout mínimo)
-   El export vino con layout mínimo (número de plan, texto, estrategia,
-   status): NO trae el equipo/objeto técnico ni el ciclo, así que sirve para
-   el panorama de planes pero NO cierra "asignación a equipo" ni "periodicidad".
-   Regenerar desde el próximo export. */
+/* ─── PLANES_SAP_RESUMEN — IP24 (alcance TER + MEC) ───
+   Fuente: IP24.xlsx filtrado por grupo planificación TER + MEC (este portal es
+   exclusivo de Termomecánica/Mecánica) + IP16 sin filtrar solo como contexto.
+   La periodicidad REAL sale de la mediana de días entre tomas programadas
+   consecutivas de cada posición. Sigue faltando el objeto técnico por plan.
+   Regenerar con scratchpad/gen_planes2.py desde el próximo export. */
 
 const PLANES_SAP_RESUMEN = {
-  "fuente": "EXPORT_20260909160722.xlsx (IP16 · lista de planes, layout mínimo)",
-  "total": 60610,
-  "activos": 32010,
-  "baja": 28600,
-  "otros": 0,
-  "textosDistintosActivos": 7022,
-  "porStatus": [
+  "fuente": "IP24.xlsx (grupos planificación TER + MEC) + contexto IP16",
+  "alcance": "TER + MEC — este portal es exclusivo de Termomecánica y Mecánica",
+  "planes": 1049,
+  "tomasProgramadas": 10542,
+  "ip16TodoAep": 60610,
+  "ip16TodoAepActivos": 32010,
+  "cumplimiento": {
+    "tomasVencidas": 4871,
+    "sinOrden": 10,
+    "posSinProxima": 10,
+    "posConVencidaSinOrden": 6
+  },
+  "porPeriodicidadReal": [
     {
-      "k": "ABIE",
-      "n": 32010
+      "k": "Bimestral",
+      "n": 361
     },
     {
-      "k": "PTBO NOAC",
-      "n": 25417
-    },
-    {
-      "k": "ABIE NOAC",
-      "n": 2873
-    },
-    {
-      "k": "PTBO",
-      "n": 310
-    }
-  ],
-  "porEstrategiaActivos": [
-    {
-      "k": "AASDF",
-      "n": 29612
-    },
-    {
-      "k": "AAESD",
-      "n": 1072
-    },
-    {
-      "k": "AASCT",
-      "n": 741
-    },
-    {
-      "k": "AATCA",
-      "n": 506
-    },
-    {
-      "k": "AAEST",
-      "n": 49
-    },
-    {
-      "k": "UYDIA",
-      "n": 25
-    },
-    {
-      "k": "TAGHS",
-      "n": 5
-    }
-  ],
-  "porPeriodoActivos": [
-    {
-      "k": "(MP sin período en el texto)",
-      "n": 11421
-    },
-    {
-      "k": "(sin prefijo MP/PD/IP)",
-      "n": 5884
-    },
-    {
-      "k": "1A",
-      "n": 3764
-    },
-    {
-      "k": "1M",
-      "n": 1736
-    },
-    {
-      "k": "6M",
-      "n": 1278
-    },
-    {
-      "k": "3M",
-      "n": 1238
-    },
-    {
-      "k": "2M",
-      "n": 1065
-    },
-    {
-      "k": "4M",
-      "n": 745
-    },
-    {
-      "k": "1M-6M-1A",
-      "n": 463
-    },
-    {
-      "k": "2M-6M",
-      "n": 459
-    },
-    {
-      "k": "ANUAL",
-      "n": 417
-    },
-    {
-      "k": "7D",
-      "n": 380
-    },
-    {
-      "k": "1M-3M-1A",
-      "n": 378
-    },
-    {
-      "k": "1M-3M-6M",
+      "k": "Mensual",
       "n": 243
     },
     {
-      "k": "6M-1A",
-      "n": 237
+      "k": "Trimestral",
+      "n": 217
     },
     {
-      "k": "MENSUAL",
-      "n": 193
+      "k": "Semestral",
+      "n": 154
     },
     {
-      "k": "TRIMESTRAL",
-      "n": 190
+      "k": "(sin fechas suf.)",
+      "n": 35
     },
     {
-      "k": "1M-6M",
-      "n": 144
+      "k": "Anual",
+      "n": 28
     },
     {
-      "k": "2A",
-      "n": 144
+      "k": "Semanal",
+      "n": 5
     },
     {
-      "k": "3M-1A",
-      "n": 143
+      "k": "Cuatrimestral",
+      "n": 4
     },
     {
-      "k": "1D",
-      "n": 139
+      "k": "otro (~246d)",
+      "n": 1
     },
     {
-      "k": "5A",
-      "n": 132
+      "k": "otro (~273d)",
+      "n": 1
+    }
+  ],
+  "porFamilia": [
+    {
+      "k": "Aire acondicionado",
+      "n": 388
     },
     {
-      "k": "2M-6M-1A",
-      "n": 129
+      "k": "Patio de valijas (BHS)",
+      "n": 313
     },
     {
-      "k": "14D",
-      "n": 101
+      "k": "Puertas automáticas",
+      "n": 79
     },
     {
-      "k": "1M-1A",
-      "n": 98
+      "k": "Balanzas",
+      "n": 45
     },
     {
-      "k": "3A",
-      "n": 81
-    },
-    {
-      "k": "3M-1A-2A",
-      "n": 78
-    },
-    {
-      "k": "SEMESTRAL",
-      "n": 68
-    },
-    {
-      "k": "4M-1A",
-      "n": 63
-    },
-    {
-      "k": "1M-2M-6M",
-      "n": 63
-    },
-    {
-      "k": "2M-1A-3A",
-      "n": 55
-    },
-    {
-      "k": "1M-4M-1A",
-      "n": 54
-    },
-    {
-      "k": "BIMESTRAL",
-      "n": 52
-    },
-    {
-      "k": "2M-1A",
-      "n": 51
-    },
-    {
-      "k": "CUATRIMESTRAL",
+      "k": "Cortinas de aire",
       "n": 36
     },
     {
-      "k": "3M-6M",
+      "k": "Bombas",
+      "n": 32
+    },
+    {
+      "k": "Ascensores",
       "n": 30
     },
     {
-      "k": "3M-1A-3A",
-      "n": 29
+      "k": "Persianas de gatera",
+      "n": 30
     },
     {
-      "k": "1M-6M-3A",
-      "n": 23
+      "k": "Flota vehicular",
+      "n": 27
     },
     {
-      "k": "4A",
-      "n": 23
+      "k": "Válvulas",
+      "n": 22
     },
     {
-      "k": "1M-3M",
-      "n": 21
-    },
-    {
-      "k": "3M-1A-5A",
-      "n": 20
-    },
-    {
-      "k": "2M-3A",
+      "k": "Extractores",
       "n": 19
     },
     {
-      "k": "SEMANAL",
-      "n": 16
-    },
-    {
-      "k": "4M-1A-4A",
-      "n": 16
-    },
-    {
-      "k": "1M-4M",
-      "n": 11
-    },
-    {
-      "k": "1M-2M-3M",
-      "n": 11
-    },
-    {
-      "k": "2M-5A",
+      "k": "Mangas de embarque",
       "n": 10
     },
     {
-      "k": "2M-4M-1A",
-      "n": 10
-    },
-    {
-      "k": "3M-2A",
+      "k": "Escaleras mecánicas",
       "n": 8
     },
     {
-      "k": "1M-4M-6M",
-      "n": 8
+      "k": "Tanques / cisternas",
+      "n": 6
     },
     {
-      "k": "4M-1A-2A",
+      "k": "Compresores",
+      "n": 2
+    },
+    {
+      "k": "Termomecánica (general)",
+      "n": 2
+    }
+  ],
+  "porEstrategia": [
+    {
+      "k": "AASDF",
+      "n": 998
+    },
+    {
+      "k": "AASCT",
+      "n": 46
+    },
+    {
+      "k": "AAEST",
       "n": 4
     },
     {
-      "k": "3M-5A",
-      "n": 4
-    },
-    {
-      "k": "1M-6M-5A",
-      "n": 4
-    },
-    {
-      "k": "DIARIO",
-      "n": 3
-    },
-    {
-      "k": "1M-2M-4M",
-      "n": 3
-    },
-    {
-      "k": "1M-3A-1A",
-      "n": 2
-    },
-    {
-      "k": "6M-1A-2A",
-      "n": 2
-    },
-    {
-      "k": "3M-6M-1A",
-      "n": 2
-    },
-    {
-      "k": "1M-1A-5A",
-      "n": 2
-    },
-    {
-      "k": "6M-2A",
-      "n": 2
-    },
-    {
-      "k": "QUINCENAL",
-      "n": 1
-    },
-    {
-      "k": "1M-1A-2A",
-      "n": 1
-    },
-    {
-      "k": "4M-6M-1A",
-      "n": 1
-    },
-    {
-      "k": "3M-6M-3A",
-      "n": 1
-    },
-    {
-      "k": "15D",
+      "k": "AAESD",
       "n": 1
     }
   ],
-  "topDuplicadosActivos": [
+  "sinFechasSuficientes": 35,
+  "desajusteTotal": 2,
+  "seEjecutaMenosSeguido": {
+    "n": 2,
+    "top": [
+      {
+        "pos": "52104",
+        "plan": "11016",
+        "desc": "Preventivo semestral tanque de agua",
+        "familia": "Tanques / cisternas",
+        "declara": "6M",
+        "realDias": 367,
+        "realBucket": "Anual"
+      },
+      {
+        "pos": "52499",
+        "plan": "16776",
+        "desc": "MP 1M Ascensores Fujitec",
+        "familia": "Ascensores",
+        "declara": "1M",
+        "realDias": 365,
+        "realBucket": "Anual"
+      }
+    ]
+  },
+  "periodoUnicoNoCoincide": {
+    "n": 0,
+    "top": []
+  },
+  "posSinProxima": [
     {
-      "txt": "pd comp. de instalaciones res 900",
-      "n": 837
+      "pos": "71768",
+      "desc": "MP 1A Balanza VanderLande",
+      "familia": "Balanzas",
+      "ultimaEjec": "2026-09-05"
     },
     {
-      "txt": "pd comprobación de instalaciones res 900",
-      "n": 788
+      "pos": "71770",
+      "desc": "MP 1A Balanza VanderLande",
+      "familia": "Balanzas",
+      "ultimaEjec": "2026-09-05"
     },
     {
-      "txt": "predictivo tableros",
-      "n": 773
+      "pos": "71772",
+      "desc": "MP 1A Balanza VanderLande",
+      "familia": "Balanzas",
+      "ultimaEjec": "2026-09-05"
     },
     {
-      "txt": "preventivo tableros de baja",
-      "n": 704
+      "pos": "71774",
+      "desc": "MP 1A Balanza VanderLande",
+      "familia": "Balanzas",
+      "ultimaEjec": "2026-09-05"
     },
     {
-      "txt": "mp 1a tbt seccional",
-      "n": 431
+      "pos": "71776",
+      "desc": "MP 1A Balanza VanderLande",
+      "familia": "Balanzas",
+      "ultimaEjec": "2026-09-05"
     },
     {
-      "txt": "mp 4m tbt seccional",
-      "n": 421
+      "pos": "71778",
+      "desc": "MP 1A Balanza VanderLande",
+      "familia": "Balanzas",
+      "ultimaEjec": "2026-09-05"
     },
     {
-      "txt": "mp 1a tbt seccional moex",
-      "n": 395
+      "pos": "71780",
+      "desc": "MP 1A Balanza VanderLande",
+      "familia": "Balanzas",
+      "ultimaEjec": "2026-09-05"
     },
     {
-      "txt": "mp tbt",
-      "n": 318
+      "pos": "71782",
+      "desc": "MP 1A Balanza VanderLande",
+      "familia": "Balanzas",
+      "ultimaEjec": "2026-09-05"
     },
     {
-      "txt": "pd tableros",
-      "n": 283
+      "pos": "71784",
+      "desc": "MP 1A Balanza VanderLande",
+      "familia": "Balanzas",
+      "ultimaEjec": "2026-09-05"
     },
     {
-      "txt": "pd 1a termografía tableros",
-      "n": 277
-    },
-    {
-      "txt": "mp 6m 1a splits general",
-      "n": 275
-    },
-    {
-      "txt": "medición de continuidad res900",
-      "n": 262
-    },
-    {
-      "txt": "pd 1a termografia",
-      "n": 216
-    },
-    {
-      "txt": "pd 1a comp. de instalaciones res 900",
-      "n": 203
-    },
-    {
-      "txt": "pd 1a termografia tableros",
-      "n": 187
-    },
-    {
-      "txt": "pd termografia anual tbt",
-      "n": 184
-    },
-    {
-      "txt": "iluminación de plataforma moex",
-      "n": 183
-    },
-    {
-      "txt": "mp tableros",
-      "n": 173
-    },
-    {
-      "txt": "mp tableros bms",
-      "n": 172
-    },
-    {
-      "txt": "inspeccion de sanitarios",
-      "n": 160
-    },
-    {
-      "txt": "mp tableros bt",
-      "n": 157
-    },
-    {
-      "txt": "mp bombas centrífugas",
-      "n": 155
-    },
-    {
-      "txt": "ip 2m estanterias",
-      "n": 150
-    },
-    {
-      "txt": "mp calibración interna balanza check in",
-      "n": 146
-    },
-    {
-      "txt": "mp columna de iluminación parking",
-      "n": 144
+      "pos": "71786",
+      "desc": "MP 1A Balanza VanderLande",
+      "familia": "Balanzas",
+      "ultimaEjec": "2026-09-05"
     }
   ],
-  "faltan": [
-    "Objeto técnico / equipo / ubicación técnica por plan (para asignación a equipo)",
-    "Ciclo + unidad del plan, o la estrategia expandida en paquetes (para periodicidad)",
-    "Hoja de ruta y fechas de última / próxima ejecución (IP24 / IP30)"
+  "faltaParaCerrar": [
+    "Objeto técnico / equipo por posición de plan (para cruzar equipos sin plan / planes sin equipo).",
+    "Ciclo + unidad de la estrategia (paquetes) para validar contra el intervalo real."
   ]
 };
