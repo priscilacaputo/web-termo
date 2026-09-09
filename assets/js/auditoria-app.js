@@ -61,10 +61,10 @@
       nota: 'Cruce del export IH08 contra las fichas de la web (abajo).' },
     { dim: 'Ubicación técnica', estado: 'ok',
       nota: 'Marcada como correcta (decisión 2026-09-08). No se audita el campo.' },
-    { dim: 'Planes y asignación a equipo', estado: 'pendiente',
-      nota: 'Falta export IP16 / IP24 + hojas de ruta (IA08).' },
-    { dim: 'Periodicidad de los planes', estado: 'pendiente',
-      nota: 'Falta el ciclo de cada plan + historial de OT correctivas para contrastar.' },
+    { dim: 'Planes y asignación a equipo', estado: 'parcial',
+      nota: 'IP16 cargado (panorama abajo). Falta re-exportar con objeto técnico / equipo por plan para cruzar contra el inventario.' },
+    { dim: 'Periodicidad de los planes', estado: 'parcial',
+      nota: 'Período parseado del texto del plan (abajo). Falta el ciclo estructurado / la estrategia expandida, y el historial de OT correctivas para contrastar.' },
     { dim: 'Materiales de OT y stock', estado: 'parcial',
       nota: 'Pañol → "Repuestos críticos" ya cubre parte. Falta IW38 con componentes + MB52 completo.' },
   ];
@@ -166,6 +166,7 @@
 
     host.innerHTML = `
       ${checklistHTML()}
+      ${planesHTML()}
       ${observacionesHTML()}
 
       <div class="table-card" style="margin-top:24px">
@@ -240,6 +241,63 @@
         ${OBSERVACIONES.map((o) => `<li>${esc(o)}</li>`).join('')}
         ${GHOST.length ? `<li><strong>${GHOST.length} códigos en la web sin alta en este export</strong> — ${esc(famLine)}.</li>` : ''}
       </ul>
+    </div>`;
+  }
+
+  function planesHTML() {
+    const P = (typeof PLANES_SAP_RESUMEN !== 'undefined') ? PLANES_SAP_RESUMEN : null;
+    if (!P) return '';
+    const pct = (n) => P.total ? Math.round((n / P.total) * 100) : 0;
+    const bar = (label, n, base, color) => {
+      const w = base ? Math.round((n / base) * 100) : 0;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
+        <span style="flex:0 0 190px;color:var(--color-text)">${esc(label)}</span>
+        <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden">
+          <span style="display:block;height:100%;width:${w}%;background:${color}"></span></span>
+        <span style="flex:0 0 56px;text-align:right;font-weight:700">${n.toLocaleString('es-AR')}</span>
+      </div>`;
+    };
+    const maxStat = Math.max(...P.porStatus.map((x) => x.n));
+    const per = P.porPeriodoActivos.slice(0, 14);
+    const maxPer = Math.max(...per.map((x) => x.n));
+    const dup = P.topDuplicadosActivos.slice(0, 12);
+    const maxDup = Math.max(...dup.map((x) => x.n));
+
+    return `<div class="table-card" style="margin-bottom:20px">
+      <div style="padding:14px 16px;font-weight:800;font-size:13px;border-bottom:1px solid var(--color-border)">
+        Planes de mantenimiento · export IP16
+        <span style="font-weight:500;color:var(--color-muted)"> — layout mínimo (sin equipo ni ciclo estructurado)</span>
+      </div>
+      <div style="padding:14px 16px">
+        <div class="stats-grid" style="margin-bottom:16px">
+          ${card('Planes en SAP', P.total.toLocaleString('es-AR'), '#0096d6', 'Todas las posiciones de plan (IP16)')}
+          ${card('Activos (ABIE)', P.activos.toLocaleString('es-AR'), '#10b981', `${pct(P.activos)}% del total`)}
+          ${card('Marcados baja / NOAC', P.baja.toLocaleString('es-AR'), '#dc2626', `${pct(P.baja)}% del total — depurar`)}
+          ${card('Textos distintos (activos)', P.textosDistintosActivos.toLocaleString('es-AR'), '#6366f1', `sobre ${P.activos.toLocaleString('es-AR')} planes activos`)}
+        </div>
+
+        <div style="font-weight:700;font-size:12px;margin:14px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">Por status</div>
+        ${P.porStatus.map((x) => bar(x.k, x.n, maxStat, x.k === 'ABIE' ? '#10b981' : '#dc2626')).join('')}
+
+        <div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">Periodicidad (planes activos · parseada del texto)</div>
+        ${per.map((x) => bar(x.k, x.n, maxPer, /sin /.test(x.k) ? '#f59e0b' : '#0096d6')).join('')}
+        <div style="font-size:11.5px;color:var(--color-muted);margin-top:6px">
+          ${(per.filter((x) => /sin /.test(x.k)).reduce((a, x) => a + x.n, 0)).toLocaleString('es-AR')} planes activos no declaran período en el texto → sin el ciclo estructurado de SAP no se puede auditar la frecuencia.
+        </div>
+
+        <div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">Textos de plan más repetidos (activos)</div>
+        ${dup.map((x) => bar(x.txt, x.n, maxDup, '#6366f1')).join('')}
+        <div style="font-size:11.5px;color:var(--color-muted);margin-top:6px">
+          Sin el objeto técnico por plan no se puede saber si cada repetición es un equipo/tablero real o duplicación a limpiar.
+        </div>
+
+        <div style="margin-top:14px;padding:10px 12px;background:var(--color-surface);border-radius:8px;font-size:12px">
+          <strong>Falta en el export para cerrar las dimensiones:</strong>
+          <ul style="margin:6px 0 0;padding-left:18px;line-height:1.7">
+            ${P.faltan.map((f) => `<li>${esc(f)}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
     </div>`;
   }
 
