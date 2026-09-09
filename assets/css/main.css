@@ -4564,3 +4564,12 @@ tr:hover .admin-edit-btn { opacity: 1; }
 .aud-pill.aud-parcial { background: #fef9c3; color: #a16207; }
 .aud-pill.aud-pend    { background: #f1f5f9; color: #64748b; }
 .aud-pill.aud-warn    { background: #fee2e2; color: #b91c1c; }
+
+/* KPI de Auditoría: tarjeta seleccionada como filtro */
+.stat-card.aud-kpi { transition: box-shadow .15s, transform .15s, outline-color .15s; }
+.stat-card.aud-kpi-active {
+  outline: 2px solid var(--stat-color, var(--color-primary));
+  outline-offset: -2px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.12), 0 0 0 1px var(--stat-color, var(--color-primary));
+}
+.stat-card.aud-kpi-active .stat-value { color: var(--stat-color, var(--color-navy)); }

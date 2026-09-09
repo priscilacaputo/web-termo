@@ -89,11 +89,16 @@
   let ROWS = [];              // filas enriquecidas del maestro
   let GHOST = [];             // en la web, sin alta en este export
   let fFamilia = '';
-  let fSoloSinFicha = false;
-  let fSoloNoMont = false;
+  let fCard = '';            // '' | 'ficha' | 'maestro' | 'ghost' | 'aeqs' | 'baja'
   let fQuery = '';
   let sortCol = 'equipo';
   let sortDir = 'asc';
+
+  const CARD_LABEL = {
+    ficha: 'Con ficha temática', maestro: 'Solo en el maestro',
+    ghost: 'En la web sin alta SAP', aeqs: 'AEQS · sobre otro equipo',
+    baja: 'NOAC / PTBO',
+  };
 
   function build() {
     const maestro = getMaestro();
@@ -156,12 +161,12 @@
     const baja = ROWS.filter((r) => r.estadoClase === 'baja').length;
 
     $('auditoria-stats').innerHTML = [
-      card('Alta en SAP', total, '#0096d6', 'Equipos en el export IH08 (centro AEP)'),
-      card('Con ficha temática', conFicha, '#10b981', 'Aparecen en una sección de la web'),
-      card('Solo en el maestro', soloMaestro, '#f59e0b', 'Sin sección temática — visibles acá'),
-      card('En la web sin alta SAP', GHOST.length, '#dc2626', 'Revisar bajas / renombres'),
-      card('AEQS · sobre otro equipo', aeqs, '#6366f1', 'Sub-equipo montado en un equipo superior — OK'),
-      card('NOAC / PTBO · revisar', baja, '#dc2626', 'Marcados para baja en SAP'),
+      card('Alta en SAP', total, '#0096d6', 'Todos — quita el filtro', ''),
+      card('Con ficha temática', conFicha, '#10b981', 'Aparecen en una sección de la web', 'ficha'),
+      card('Solo en el maestro', soloMaestro, '#f59e0b', 'Sin sección temática — visibles acá', 'maestro'),
+      card('En la web sin alta SAP', GHOST.length, '#dc2626', 'Revisar bajas / renombres', 'ghost'),
+      card('AEQS · sobre otro equipo', aeqs, '#6366f1', 'Sub-equipo montado en un equipo superior — OK', 'aeqs'),
+      card('NOAC / PTBO · revisar', baja, '#dc2626', 'Marcados para baja en SAP', 'baja'),
     ].join('');
 
     host.innerHTML = `
@@ -169,7 +174,7 @@
       ${planesHTML()}
       ${observacionesHTML()}
 
-      <div class="table-card" style="margin-top:24px">
+      <div class="table-card" style="margin-top:24px" id="aud-tabla">
         <div style="padding:16px 16px 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
           <input type="text" id="aud-search" class="search-input" style="max-width:280px"
                  placeholder="Buscar equipo, denominación, ubicación…" value="${esc(fQuery)}" />
@@ -178,8 +183,8 @@
             ${[...new Set(ROWS.map((r) => r.familia))].sort().map((f) =>
               `<option value="${esc(f)}"${f === fFamilia ? ' selected' : ''}>${esc(f)}</option>`).join('')}
           </select>
-          <label class="panol-checkbox"><input type="checkbox" id="aud-sinficha"${fSoloSinFicha ? ' checked' : ''}/> Solo sin ficha temática</label>
-          <label class="panol-checkbox"><input type="checkbox" id="aud-nomont"${fSoloNoMont ? ' checked' : ''}/> Solo NOAC / PTBO</label>
+          ${fCard ? `<button class="aud-pill aud-curso" id="aud-clear-card" style="border:0;cursor:pointer;font-size:11px">
+            ${esc(CARD_LABEL[fCard] || fCard)} ✕</button>` : ''}
           <button class="mant-tab" id="aud-export" style="margin-left:auto">⬇ Exportar Excel</button>
         </div>
         <div class="table-wrap" style="margin-top:12px">
@@ -199,8 +204,11 @@
     renderRows();
   }
 
-  function card(label, value, color, sub) {
-    return `<div class="stat-card" style="--stat-color:${color}">
+  function card(label, value, color, sub, cardKey) {
+    const clickable = cardKey !== undefined;
+    const active = clickable && fCard === cardKey && cardKey !== '';
+    return `<div class="stat-card${clickable ? ' stat-card-clickable aud-kpi' : ''}${active ? ' aud-kpi-active' : ''}"
+         style="--stat-color:${color}"${clickable ? ` data-card="${cardKey}" role="button" tabindex="0"` : ''}>
       <span class="stat-label">${label}</span>
       <span class="stat-value">${value}</span>
       <span style="font-size:11px;color:var(--color-muted)">${sub}</span>
@@ -324,12 +332,28 @@
     return `<th class="${cls}" data-col="${col}">${label} <span class="sort-arrow"></span></th>`;
   }
 
+  // Filas base según la tarjeta activa (ghost usa otro dataset).
+  function baseRows() {
+    if (fCard === 'ghost') {
+      return GHOST.map((g) => ({
+        equipo: g.equipo, denom: g.denom, familia: g.familia,
+        ubic: 'Sección web: ' + g.seccion, status: 'sin alta SAP',
+        estadoClase: 'baja', ficha: 'ghost', serv: '', sup: '',
+      }));
+    }
+    return ROWS.filter((r) => {
+      if (fCard === 'ficha') return r.ficha === 'temática';
+      if (fCard === 'maestro') return r.ficha === 'maestro';
+      if (fCard === 'aeqs') return r.estadoClase === 'aeqs';
+      if (fCard === 'baja') return r.estadoClase === 'baja';
+      return true;
+    });
+  }
+
   function filtered() {
     const q = fQuery.trim().toLowerCase();
-    let out = ROWS.filter((r) => {
+    let out = baseRows().filter((r) => {
       if (fFamilia && r.familia !== fFamilia) return false;
-      if (fSoloSinFicha && r.ficha !== 'maestro') return false;
-      if (fSoloNoMont && r.estadoClase !== 'baja') return false;
       if (q) {
         const hay = `${r.equipo} ${r.denom} ${r.ubic} ${r.familia} ${r.status}`.toLowerCase();
         if (!hay.includes(q)) return false;
@@ -367,12 +391,22 @@
               : `<span class="aud-pill aud-warn">${esc(r.status) || '—'}</span>`}</td>
         <td>${r.ficha === 'temática'
               ? '<span class="aud-pill aud-ok">temática</span>'
+              : r.ficha === 'ghost'
+              ? '<span class="aud-pill aud-warn">solo web</span>'
               : '<span class="aud-pill aud-parcial">maestro</span>'}</td>
         <td class="anio-text">${esc(r.serv) || '—'}</td>
       </tr>`).join('');
     }
-    $('aud-count').textContent =
-      `${rows.length} de ${ROWS.length} equipos · ${rows.filter((r) => r.ficha === 'maestro').length} sin ficha temática en la vista`;
+    const universo = fCard === 'ghost' ? GHOST.length : ROWS.length;
+    const etiqueta = fCard ? ` · filtro: ${CARD_LABEL[fCard] || fCard}` : '';
+    $('aud-count').textContent = `${rows.length} de ${universo} equipos${etiqueta}`;
+  }
+
+  function setCard(key) {
+    fCard = (fCard === key) ? '' : key;
+    render();
+    const t = $('aud-tabla');
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function wire() {
@@ -380,12 +414,14 @@
     if (s) s.oninput = debounce(() => { fQuery = s.value; renderRows(); }, 180);
     const fam = $('aud-familia');
     if (fam) fam.onchange = () => { fFamilia = fam.value; renderRows(); };
-    const sf = $('aud-sinficha');
-    if (sf) sf.onchange = () => { fSoloSinFicha = sf.checked; renderRows(); };
-    const nm = $('aud-nomont');
-    if (nm) nm.onchange = () => { fSoloNoMont = nm.checked; renderRows(); };
+    const clr = $('aud-clear-card');
+    if (clr) clr.onclick = () => { fCard = ''; render(); };
     const ex = $('aud-export');
     if (ex) ex.onclick = doExport;
+    document.querySelectorAll('#auditoria-stats .stat-card[data-card]').forEach((el) => {
+      el.onclick = () => setCard(el.dataset.card);
+      el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCard(el.dataset.card); } };
+    });
     document.querySelectorAll('#auditoria-content th.sortable').forEach((el) => {
       el.onclick = () => {
         const c = el.dataset.col;
