@@ -68,7 +68,7 @@
     { dim: 'Materiales de OT y stock', estado: 'curso',
       nota: 'Stock (MB52), maestro (MM60) y consumo 2 años (MB51) cargados: cobertura, faltantes e inmovilizado abajo. Falta solo el link material↔equipo (componentes por plan/OT: IA08 / COOIS / IW3D).' },
     { dim: 'Ejecución de OTs', estado: 'curso',
-      nota: 'IW38 2 años: 1.881 OTs, 946 equipos. Casi ninguna se cierra en SAP (quedan ABIE); 124 equipos con plan no generaron ninguna OT.' },
+      nota: 'IW38 2 años: 18.731 OTs preventivas, 1.022 equipos. 90% se cierran (OTCE), pero solo ~18% de las cerradas lleva notificación de horas/fecha. Backlog abierto 1.826 (191 > 6 meses). 100 equipos con plan sin ninguna OT.' },
   ];
   const EST_META = {
     ok:        { label: 'OK',          cls: 'ok' },
@@ -353,33 +353,45 @@
     const famLabel = (pfx) => FAMILIA[pfx] || pfx;
     const codes = (list) => (list || []).map((c) => `<span class="equipo-tag" style="margin:2px 3px 2px 0;display:inline-block">${esc(c)}</span>`).join('');
     const heading = (t) => `<div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">${t}</div>`;
-    const pctCerr = O.total ? Math.round((O.cerradas / O.total) * 100) : 0;
     const noMaestro = O.equiposConOTfueraDelMaestro || [];
     const planSinOT = O.equiposConPlanSinOT || [];
     const planSinOTpfx = {};
     planSinOT.forEach((e) => { const p = (e.match(/^[A-Za-z]+/) || ['?'])[0]; planSinOTpfx[p] = (planSinOTpfx[p] || 0) + 1; });
     const top = O.topEquiposPorOT || [];
     const maxTop = Math.max(1, ...top.map((x) => x.n));
+    const bl = O.backlogPorEdad || [];
+    const maxBl = Math.max(1, ...bl.map((x) => x.n));
+    const tri = O.creadasPorTrimestre || [];
+    const maxTri = Math.max(1, ...tri.map((x) => x.n));
 
     return `<div class="table-card" style="margin-bottom:20px">
       <div style="padding:14px 16px;font-weight:800;font-size:13px;border-bottom:1px solid var(--color-border)">
         Órdenes de trabajo · IW38 (TER + MEC)
-        <span style="font-weight:500;color:var(--color-muted)"> — ${esc(O.periodo[0])} a ${esc(O.periodo[1])}</span>
+        <span style="font-weight:500;color:var(--color-muted)"> — ${esc(O.periodo[0])} a ${esc(O.periodo[1])} · ${O.total.toLocaleString('es-AR')} OTs preventivas</span>
       </div>
       <div style="padding:14px 16px">
         <div class="stats-grid" style="margin-bottom:14px">
-          ${card('OTs (2 años)', O.total.toLocaleString('es-AR'), '#0096d6', `${(O.equiposConOT || 0).toLocaleString('es-AR')} equipos con OT`)}
-          ${card('OTs cerradas en SAP', O.cerradas, '#dc2626', `${pctCerr}% — el resto quedan ABIE`)}
-          ${card('Correctivas', O.correctivas, '#f59e0b', `de ${O.total.toLocaleString('es-AR')} — historia de fallas muy corta`)}
+          ${card('OTs cerradas', (O.pctCerradas || 0) + '%', '#10b981', `${(O.cerradas || 0).toLocaleString('es-AR')} de ${O.total.toLocaleString('es-AR')} — status OTCE/CTEC`)}
+          ${card('Backlog abierto', (O.abiertas || 0).toLocaleString('es-AR'), '#f59e0b', `${O.backlogViejo || 0} con más de 6 meses`)}
+          ${card('Con parte real (notif.)', (O.notificadas || 0).toLocaleString('es-AR'), '#dc2626', `solo ${O.pctNotificadas || 0}% de las cerradas tiene horas/fecha`)}
           ${card('Planes sin ninguna OT', planSinOT.length, '#dc2626', 'Equipos con plan que no generó OT en 2 años')}
         </div>
 
         <div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">
-          <strong>Hallazgo:</strong> ${(100 - pctCerr)}% de las OTs siguen ABIE (sin cerrar) en SAP — no se puede medir cumplimiento real ni tiempos.
+          El equipo <strong>sí cierra las OT</strong> (${O.pctCerradas || 0}% OTCE), pero <strong>casi ninguna lleva notificación de horas ni fecha real</strong> (${O.notificadas || 0} de ${(O.cerradas || 0).toLocaleString('es-AR')}) → no se puede medir HH reales ni cumplimiento de fechas.
         </div>
 
-        ${heading('Por clase de orden')}
-        ${(O.porClase || []).map((x) => `<div style="font-size:12px;padding:2px 0"><strong>${esc(x.k)}</strong>: ${x.n.toLocaleString('es-AR')}</div>`).join('')}
+        ${bl.length ? heading('Backlog abierto por antigüedad · ' + (O.abiertas || 0)) +
+          bl.map((x) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
+            <span style="flex:0 0 110px">${esc(x.k)}</span>
+            <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round((x.n / maxBl) * 100)}%;background:${/año|6–12/.test(x.k) ? '#dc2626' : '#f59e0b'}"></span></span>
+            <span style="flex:0 0 48px;text-align:right;font-weight:700">${x.n}</span></div>`).join('') : ''}
+
+        ${tri.length ? heading('OTs preventivas creadas por trimestre') +
+          tri.slice(-8).map((x) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
+            <span style="flex:0 0 70px">${esc(x.t)}</span>
+            <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round((x.n / maxTri) * 100)}%;background:#0096d6"></span></span>
+            <span style="flex:0 0 48px;text-align:right;font-weight:700">${x.n.toLocaleString('es-AR')}</span></div>`).join('') : ''}
 
         ${heading('Equipos con más OTs (demanda de trabajo)')}
         ${top.slice(0, 12).map((x) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
@@ -394,7 +406,7 @@
 
         ${noMaestro.length ? heading('Equipos con OT que no están en el maestro IH08 · ' + noMaestro.length) + `<div>${codes(noMaestro)}</div>` : ''}
 
-        ${(O.otSinEquipo || []).length ? heading('OTs preventivas sin equipo asignado · ' + O.otSinEquipo.length) +
+        ${(O.otSinEquipo || []).length ? heading('OTs preventivas sin equipo asignado · ' + (O.otSinEquipoTotal != null ? O.otSinEquipoTotal : O.otSinEquipo.length)) +
           O.otSinEquipo.map((x) => `<div style="font-size:12px;padding:2px 0"><span class="equipo-tag" style="background:#6366f1">${esc(x.orden)}</span> ${esc(x.texto)}</div>`).join('') : ''}
 
         ${opsBlock()}
