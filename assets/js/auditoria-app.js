@@ -65,8 +65,8 @@
       nota: 'IP24 MOD (TER + MEC) con objeto técnico: cada posición cruzada contra el maestro. Abajo: equipos sin plan, planes a equipos fuera del maestro, planes sobre equipos de baja, posiciones sin equipo.' },
     { dim: 'Periodicidad de los planes', estado: 'curso',
       nota: 'Periodicidad real calculada de las fechas de IP24 (mediana entre tomas). Se marcan los planes que corren a otra frecuencia que la de su nombre.' },
-    { dim: 'Materiales de OT y stock', estado: 'parcial',
-      nota: 'Stock (MB52 → catálogo de pañol) y maestro (MM60) cargados y consistentes. Falta el eslabón: componentes por plan/OT (IA08 / COOIS / IW3D) para cruzar repuesto necesario ↔ stock.' },
+    { dim: 'Materiales de OT y stock', estado: 'curso',
+      nota: 'Stock (MB52), maestro (MM60) y consumo 2 años (MB51) cargados: cobertura, faltantes e inmovilizado abajo. Falta solo el link material↔equipo (componentes por plan/OT: IA08 / COOIS / IW3D).' },
     { dim: 'Ejecución de OTs', estado: 'curso',
       nota: 'IW38 2 años: 1.881 OTs, 946 equipos. Casi ninguna se cierra en SAP (quedan ABIE); 124 equipos con plan no generaron ninguna OT.' },
   ];
@@ -176,6 +176,7 @@
       ${planesHTML()}
       ${otsHTML()}
       ${mm60HTML()}
+      ${mb51HTML()}
       ${observacionesHTML()}
 
       <div class="table-card" style="margin-top:24px" id="aud-tabla">
@@ -253,6 +254,53 @@
         ${OBSERVACIONES.map((o) => `<li>${esc(o)}</li>`).join('')}
         ${GHOST.length ? `<li><strong>${GHOST.length} códigos en la web sin alta en este export</strong> — ${esc(famLine)}.</li>` : ''}
       </ul>
+    </div>`;
+  }
+
+  function mb51HTML() {
+    const B = (typeof MB51_RESUMEN !== 'undefined') ? MB51_RESUMEN : null;
+    if (!B) return '';
+    const heading = (t) => `<div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">${t}</div>`;
+    const list = (arr, fmt) => (arr || []).map(fmt).join('');
+    const c261 = B.consumo261 || {};
+    const inm = B.inmovilizado || { total: 0, top: [] };
+    const maxTop = Math.max(1, ...(B.topConsumo || []).map((x) => x.u));
+
+    return `<div class="table-card" style="margin-bottom:20px">
+      <div style="padding:14px 16px;font-weight:800;font-size:13px;border-bottom:1px solid var(--color-border)">
+        Movimientos de material · MB51
+        <span style="font-weight:500;color:var(--color-muted)"> — ${esc(B.periodo[0])} a ${esc(B.periodo[1])} · consumo por material (sin equipo)</span>
+      </div>
+      <div style="padding:14px 16px">
+        <div class="stats-grid" style="margin-bottom:14px">
+          ${card('Consumo (mov. 261)', (c261.movimientos || 0).toLocaleString('es-AR'), '#0096d6', `${(c261.materiales || 0).toLocaleString('es-AR')} materiales · ${(c261.unidades || 0).toLocaleString('es-AR')} u`)}
+          ${card('Faltantes', B.faltantesTotal != null ? B.faltantesTotal : (B.faltantes || []).length, '#dc2626', 'Consumo ≥ 6/año y stock 0')}
+          ${card('Cobertura < 1 mes', B.bajaCoberturaTotal != null ? B.bajaCoberturaTotal : (B.bajaCobertura || []).length, '#f59e0b', 'Stock alcanza para menos de un mes')}
+          ${card('Inmovilizado', inm.total, '#f59e0b', `Stock > 0 y sin consumo en ${B.aniosPeriodo} años`)}
+        </div>
+
+        ${heading('Materiales con más consumo (261)')}
+        ${list(B.topConsumo.slice(0, 12), (x) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
+          <span class="equipo-tag" style="flex:0 0 82px;background:#6366f1">${esc(x.m)}</span>
+          <span style="flex:1;min-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(x.txt)}">${esc(x.txt)}</span>
+          <span style="flex:0 0 90px;text-align:right;font-weight:700">${x.anual.toLocaleString('es-AR')}/año</span></div>`)}
+
+        ${heading('Faltantes — consumo alto, stock 0 · ' + (B.faltantesTotal != null ? B.faltantesTotal : (B.faltantes || []).length))}
+        ${list((B.faltantes || []).slice(0, 15), (x) => `<div style="font-size:12px;padding:2px 0">
+          <span class="equipo-tag" style="background:#dc2626">${esc(x.m)}</span> ${esc(x.txt)} — <strong>~${x.anual.toLocaleString('es-AR')}/año</strong>, stock ${x.stock}</div>`)}
+
+        ${heading('Cobertura crítica (&lt; 1 mes) · ' + (B.bajaCoberturaTotal != null ? B.bajaCoberturaTotal : (B.bajaCobertura || []).length))}
+        ${list((B.bajaCobertura || []).slice(0, 12), (x) => `<div style="font-size:12px;padding:2px 0">
+          <span class="equipo-tag" style="background:#f59e0b">${esc(x.m)}</span> ${esc(x.txt)} — stock ${x.stock} · ~${x.anual}/año · <strong>${x.meses} meses</strong></div>`)}
+
+        ${heading('Stock inmovilizado (sin consumo) · ' + inm.total)}
+        ${list((inm.top || []).slice(0, 10), (x) => `<div style="font-size:12px;padding:2px 0">
+          <span class="equipo-tag" style="background:#94a3b8">${esc(x.m)}</span> ${esc(x.txt)} — stock ${x.stock.toLocaleString('es-AR')}</div>`)}
+
+        <div style="margin-top:14px;padding:10px 12px;background:var(--color-surface);border-radius:8px;font-size:12px">
+          Este MB51 <strong>no trae la orden ni el equipo</strong>, así que el consumo es por material, no por equipo. El eslabón que falta sigue siendo componentes por plan/OT (IA08 / COOIS / IW3D).
+        </div>
+      </div>
     </div>`;
   }
 
