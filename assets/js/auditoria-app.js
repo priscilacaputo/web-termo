@@ -62,7 +62,7 @@
     { dim: 'Ubicación técnica', estado: 'ok',
       nota: 'Marcada como correcta (decisión 2026-09-08). No se audita el campo.' },
     { dim: 'Planes y asignación a equipo', estado: 'curso',
-      nota: 'IP24 MOD (TER + MEC) con objeto técnico: cada posición cruzada contra el maestro. Abajo: equipos sin plan, planes a equipos fuera del maestro, planes sobre equipos de baja, posiciones sin equipo.' },
+      nota: 'IP24 MOD cruzado contra el maestro. Los "planes sin equipo en el maestro" son 100 de otros aeropuertos (EPA/SFD que también gestiona TER/MEC) + 39 de AEP con preventivo pero sin el equipo dado de alta (persianas MCD, tanques TNQ…).' },
     { dim: 'Periodicidad de los planes', estado: 'curso',
       nota: 'Periodicidad real calculada de las fechas de IP24 (mediana entre tomas). Se marcan los planes que corren a otra frecuencia que la de su nombre.' },
     { dim: 'Materiales de OT y stock', estado: 'curso',
@@ -453,6 +453,9 @@
     const maxFam = Math.max(1, ...fam.map((x) => x.n));
     const sinEq = P.planesSinEquipo || [];
     const noMaestro = P.equiposConPlanNoEnMaestro || [];
+    const noMaestroC = P.noEnMaestroPorCentro || {};
+    const noMaestroAEP = noMaestroC.AEP || [];
+    const otrosAero = [].concat(noMaestroC.EPA || [], noMaestroC.SFD || [], noMaestroC.otro || []);
     const baja = P.equiposConPlanDadosDeBaja || [];
     const sinPlan = P.equiposMaestroSinPlan || { total: 0, porPrefijo: {}, lista: [] };
     const desaj = [].concat(P.desajusteMenosSeguido || [], P.desajusteNoCoincide || []);
@@ -466,7 +469,7 @@
         <div class="stats-grid" style="margin-bottom:14px">
           ${card('Posiciones de plan', P.posiciones.toLocaleString('es-AR'), '#0096d6', `${(P.equiposConPlan || 0).toLocaleString('es-AR')} equipos con plan`)}
           ${card('Equipos sin plan', sinPlan.total, '#f59e0b', 'Del maestro, familias TER/MEC — sin preventivo')}
-          ${card('Plan → equipo fuera del maestro', noMaestro.length, '#dc2626', 'El plan apunta a un equipo que no está en IH08')}
+          ${card('Plan sin equipo en el maestro AEP', noMaestroAEP.length, '#dc2626', `+ ${otrosAero.length} de otros aeropuertos (EPA/SFD)`)}
           ${card('Plan sobre equipo de baja', baja.length, '#dc2626', 'Equipo NOAC/PTBO con plan activo')}
         </div>
 
@@ -475,9 +478,13 @@
         <details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:var(--color-primary)">ver los ${sinPlan.total} equipos</summary>
           <div style="margin-top:6px">${codes(sinPlan.lista)}</div></details>
 
-        ${noMaestro.length ? heading('Planes que apuntan a un equipo que no está en el maestro IH08 · ' + noMaestro.length) +
-          `<div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">O el export de altas está incompleto, o son equipos viejos/de baja con plan vivo.</div>
-           <div>${codes(noMaestro)}</div>` : ''}
+        ${noMaestroAEP.length ? heading('AEP — plan activo pero el equipo no está dado de alta en SAP · ' + noMaestroAEP.length) +
+          `<div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">Se les hace preventivo pero nunca se creó el equipo (objeto técnico sí, equipo no): persianas MCD, tanques TNQ, etc. Crear el equipo o reasignar el plan.</div>
+           <div>${codes(noMaestroAEP)}</div>` : ''}
+
+        ${otrosAero.length ? heading('Otros aeropuertos que gestiona TER/MEC — fuera del portal AEP · ' + otrosAero.length) +
+          `<div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">El grupo de planificación TER/MEC también cubre El Palomar (EPA ${(noMaestroC.EPA || []).length}) y San Fernando (SFD ${(noMaestroC.SFD || []).length}). Este portal es solo Aeroparque.</div>
+           <details><summary style="cursor:pointer;font-size:12px;color:var(--color-primary)">ver los ${otrosAero.length}</summary><div style="margin-top:6px">${codes(otrosAero)}</div></details>` : ''}
 
         ${baja.length ? heading('Planes activos sobre equipos dados de baja · ' + baja.length) +
           `<div>${codes(baja)}</div>
