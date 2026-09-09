@@ -68,36 +68,6 @@ const OTS_SAP_RESUMEN = {
    "orden": "400371444",
    "texto": "PD Anual Mangas Thyssen",
    "clase": "Preventivo"
-  },
-  {
-   "orden": "800067984",
-   "texto": "ATENCION DE RECLAMOS (TERMO)",
-   "clase": "Recorrida / otros"
-  },
-  {
-   "orden": "800067986",
-   "texto": "SETEO DE EQUIPOS (BMS)",
-   "clase": "Recorrida / otros"
-  },
-  {
-   "orden": "800067985",
-   "texto": "RECORRIDA DE SALAS TECNICAS",
-   "clase": "Recorrida / otros"
-  },
-  {
-   "orden": "800068018",
-   "texto": "Recorrida de salas técnicas.",
-   "clase": "Recorrida / otros"
-  },
-  {
-   "orden": "800068017",
-   "texto": "Seteo de equipos, UTAS, BMS.",
-   "clase": "Recorrida / otros"
-  },
-  {
-   "orden": "800068019",
-   "texto": "Atención de reclamos (Mec)",
-   "clase": "Recorrida / otros"
   }
  ],
  "equiposConOTfueraDelMaestro": [

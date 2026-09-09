@@ -394,7 +394,7 @@
 
         ${noMaestro.length ? heading('Equipos con OT que no están en el maestro IH08 · ' + noMaestro.length) + `<div>${codes(noMaestro)}</div>` : ''}
 
-        ${(O.otSinEquipo || []).length ? heading('OTs sin equipo asignado · ' + O.otSinEquipo.length) +
+        ${(O.otSinEquipo || []).length ? heading('OTs preventivas sin equipo asignado · ' + O.otSinEquipo.length) +
           O.otSinEquipo.map((x) => `<div style="font-size:12px;padding:2px 0"><span class="equipo-tag" style="background:#6366f1">${esc(x.orden)}</span> ${esc(x.texto)}</div>`).join('') : ''}
 
         <div style="margin-top:14px;padding:10px 12px;background:var(--color-surface);border-radius:8px;font-size:12px">
