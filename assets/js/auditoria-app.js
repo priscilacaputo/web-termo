@@ -66,7 +66,9 @@
     { dim: 'Periodicidad de los planes', estado: 'curso',
       nota: 'Periodicidad real calculada de las fechas de IP24 (mediana entre tomas). Se marcan los planes que corren a otra frecuencia que la de su nombre.' },
     { dim: 'Materiales de OT y stock', estado: 'parcial',
-      nota: 'Pañol → "Repuestos críticos" ya cubre parte. Falta IW38 con componentes + MB52 completo.' },
+      nota: 'IW38 cargado (panel de OTs abajo) pero SIN componentes. Falta lista de componentes de OT (COOIS/IW3D) + MB52 + MB51 para cruzar consumo vs stock.' },
+    { dim: 'Ejecución de OTs', estado: 'curso',
+      nota: 'IW38 2 años: 1.881 OTs, 946 equipos. Casi ninguna se cierra en SAP (quedan ABIE); 124 equipos con plan no generaron ninguna OT.' },
   ];
   const EST_META = {
     ok:        { label: 'OK',          cls: 'ok' },
@@ -172,6 +174,7 @@
     host.innerHTML = `
       ${checklistHTML()}
       ${planesHTML()}
+      ${otsHTML()}
       ${observacionesHTML()}
 
       <div class="table-card" style="margin-top:24px" id="aud-tabla">
@@ -249,6 +252,63 @@
         ${OBSERVACIONES.map((o) => `<li>${esc(o)}</li>`).join('')}
         ${GHOST.length ? `<li><strong>${GHOST.length} códigos en la web sin alta en este export</strong> — ${esc(famLine)}.</li>` : ''}
       </ul>
+    </div>`;
+  }
+
+  function otsHTML() {
+    const O = (typeof OTS_SAP_RESUMEN !== 'undefined') ? OTS_SAP_RESUMEN : null;
+    if (!O) return '';
+    const famLabel = (pfx) => FAMILIA[pfx] || pfx;
+    const codes = (list) => (list || []).map((c) => `<span class="equipo-tag" style="margin:2px 3px 2px 0;display:inline-block">${esc(c)}</span>`).join('');
+    const heading = (t) => `<div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">${t}</div>`;
+    const pctCerr = O.total ? Math.round((O.cerradas / O.total) * 100) : 0;
+    const noMaestro = O.equiposConOTfueraDelMaestro || [];
+    const planSinOT = O.equiposConPlanSinOT || [];
+    const planSinOTpfx = {};
+    planSinOT.forEach((e) => { const p = (e.match(/^[A-Za-z]+/) || ['?'])[0]; planSinOTpfx[p] = (planSinOTpfx[p] || 0) + 1; });
+    const top = O.topEquiposPorOT || [];
+    const maxTop = Math.max(1, ...top.map((x) => x.n));
+
+    return `<div class="table-card" style="margin-bottom:20px">
+      <div style="padding:14px 16px;font-weight:800;font-size:13px;border-bottom:1px solid var(--color-border)">
+        Órdenes de trabajo · IW38 (TER + MEC)
+        <span style="font-weight:500;color:var(--color-muted)"> — ${esc(O.periodo[0])} a ${esc(O.periodo[1])}</span>
+      </div>
+      <div style="padding:14px 16px">
+        <div class="stats-grid" style="margin-bottom:14px">
+          ${card('OTs (2 años)', O.total.toLocaleString('es-AR'), '#0096d6', `${(O.equiposConOT || 0).toLocaleString('es-AR')} equipos con OT`)}
+          ${card('OTs cerradas en SAP', O.cerradas, '#dc2626', `${pctCerr}% — el resto quedan ABIE`)}
+          ${card('Correctivas', O.correctivas, '#f59e0b', `de ${O.total.toLocaleString('es-AR')} — historia de fallas muy corta`)}
+          ${card('Planes sin ninguna OT', planSinOT.length, '#dc2626', 'Equipos con plan que no generó OT en 2 años')}
+        </div>
+
+        <div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">
+          <strong>Hallazgo:</strong> ${(100 - pctCerr)}% de las OTs siguen ABIE (sin cerrar) en SAP — no se puede medir cumplimiento real ni tiempos.
+        </div>
+
+        ${heading('Por clase de orden')}
+        ${(O.porClase || []).map((x) => `<div style="font-size:12px;padding:2px 0"><strong>${esc(x.k)}</strong>: ${x.n.toLocaleString('es-AR')}</div>`).join('')}
+
+        ${heading('Equipos con más OTs (demanda de trabajo)')}
+        ${top.slice(0, 12).map((x) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
+          <span class="equipo-tag" style="flex:0 0 90px">${esc(x.equipo)}</span>
+          <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round((x.n / maxTop) * 100)}%;background:#6366f1"></span></span>
+          <span style="flex:0 0 40px;text-align:right;font-weight:700">${x.n}</span></div>`).join('')}
+
+        ${heading('Equipos con plan pero SIN ninguna OT en 2 años · ' + planSinOT.length)}
+        ${Object.entries(planSinOTpfx).sort((a, b) => b[1] - a[1]).map(([p, n]) => `<div style="font-size:12px;padding:2px 0">${esc(famLabel(p))} (${p}): <strong>${n}</strong></div>`).join('')}
+        <details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:var(--color-primary)">ver los ${planSinOT.length} equipos</summary>
+          <div style="margin-top:6px">${codes(planSinOT)}</div></details>
+
+        ${noMaestro.length ? heading('Equipos con OT que no están en el maestro IH08 · ' + noMaestro.length) + `<div>${codes(noMaestro)}</div>` : ''}
+
+        ${(O.otSinEquipo || []).length ? heading('OTs sin equipo asignado · ' + O.otSinEquipo.length) +
+          O.otSinEquipo.map((x) => `<div style="font-size:12px;padding:2px 0"><span class="equipo-tag" style="background:#6366f1">${esc(x.orden)}</span> ${esc(x.texto)}</div>`).join('') : ''}
+
+        <div style="margin-top:14px;padding:10px 12px;background:var(--color-surface);border-radius:8px;font-size:12px">
+          Este IW38 <strong>no trae componentes/materiales</strong> ni historial de correctivas cerradas. Para cerrar "Materiales de OT y stock" falta: lista de componentes de OT (COOIS/IW3D) + MB52 + MB51.
+        </div>
+      </div>
     </div>`;
   }
 

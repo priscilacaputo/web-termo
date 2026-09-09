@@ -88,6 +88,21 @@
       }
     }
     out += planesBlock(cod);
+    out += otsBlock(cod);
     return out;
   };
+
+  function otsBlock(cod) {
+    if (typeof OTS_SAP_POR_EQUIPO === 'undefined') return '';
+    const o = OTS_SAP_POR_EQUIPO[String(cod || '').toUpperCase()];
+    if (!o) return '';
+    const partes = [`<strong>${o.n}</strong> OT` + (o.n === 1 ? '' : 's') + ' (últ. 2 años)'];
+    if (o.abiertas) partes.push(`${o.abiertas} abierta${o.abiertas === 1 ? '' : 's'}`);
+    if (o.correctivas) partes.push(`${o.correctivas} correctiva${o.correctivas === 1 ? '' : 's'}`);
+    if (o.ult) partes.push(`última ${o.ult}`);
+    return `<div style="margin-top:20px;padding-top:20px;border-top:2px solid var(--color-border)">
+      <h4 style="color:var(--color-navy);font-weight:700;margin-bottom:12px;font-size:14px">🧾 Órdenes de trabajo (SAP · IW38)</h4>
+      <div class="modal-field full"><span class="modal-field-value">${partes.join(' · ')}</span></div>
+    </div>`;
+  }
 })();
