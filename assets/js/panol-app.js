@@ -64,6 +64,15 @@ function panolCoberturaBadge(stock, qty) {
   const c = panolCobertura(stock, qty);
   return `<span class="panol-cob panol-cob-${c.cls}">${c.txt}</span>`;
 }
+/* Meses de stock al ritmo de consumo real (MB51). null = sin consumo registrado */
+function panolMesesBadge(meses, consAnual) {
+  if (consAnual == null)        return '<span class="no-data">—</span>';
+  if (consAnual === 0)          return '<span class="panol-cob panol-cob-unk" title="Sin consumo en el período">sin mov.</span>';
+  if (meses == null)            return '<span class="no-data">—</span>';
+  const cls = meses < 1 ? 'none' : meses < 3 ? 'parcial' : 'ok';
+  const txt = meses >= 24 ? '24+ m' : (meses < 1 ? '<1 m' : meses.toFixed(1).replace('.0', '') + ' m');
+  return `<span class="panol-cob panol-cob-${cls}">${txt}</span>`;
+}
 
 /* ─── Familias de equipos (para resolver denominación y navegar) ── */
 const PANOL_FAMILIAS = [
@@ -388,12 +397,16 @@ function panolRepFiltered() {
         const st  = panolStockNum(x.cod);
         const qty = panolMatQty(x);
         const opciones = panolMatOpciones(x);
+        const cons = (typeof MB51_CONSUMO !== 'undefined') ? MB51_CONSUMO[String(x.cod)] : null;
+        const consAnual = cons ? cons[2] : null;   // [uTot, nMov, consumoAnual, ult]
+        const mesesCob = (consAnual && consAnual > 0 && st != null) ? (st / (consAnual / 12)) : null;
         return {
           cod: String(x.cod), nota: x.nota || '', qty, opciones,
           desc: m ? m.desc : '', um: m ? m.um : '',
           stock: st, enCatalogo: !!m,
           faltante: st != null && st < qty,
           critico: panolMatCritico(x),
+          consAnual, mesesCob,
         };
       });
       return { equipo: entry.equipo, denom, famLbl, mats };
@@ -453,6 +466,8 @@ function panolRenderRepuestos() {
         <td>${x.enCatalogo ? panolEsc(x.um) : ''}</td>
         <td>${panolStockBadge(x.stock)}</td>
         <td>${panolCoberturaBadge(x.stock, x.qty)}</td>
+        <td class="panol-rep-qty">${x.consAnual != null ? panolNum(x.consAnual) : '<span class="no-data">—</span>'}</td>
+        <td>${panolMesesBadge(x.mesesCob, x.consAnual)}</td>
       </tr>`).join('');
     return `<div class="panol-rep-card">
       <div class="panol-rep-head">
@@ -467,8 +482,8 @@ function panolRenderRepuestos() {
         </span>` : ''}
       </div>
       <div class="table-wrap"><table class="panol-rep-table">
-        <thead><tr><th>Código SAP</th><th>Descripción</th><th>Cant.</th><th>UM</th><th>Stock</th><th>Cobertura</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="6"><span class="no-data">Sin materiales</span></td></tr>'}</tbody>
+        <thead><tr><th>Código SAP</th><th>Descripción</th><th>Cant.</th><th>UM</th><th>Stock</th><th>Cobertura</th><th title="Consumo real anual — MB51, mov. 261">Consumo/año</th><th title="Meses de stock al ritmo de consumo actual">Meses stock</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="8"><span class="no-data">Sin materiales</span></td></tr>'}</tbody>
       </table></div>
     </div>`;
   }).join('');
@@ -489,6 +504,8 @@ function panolExportBOM() {
       um: x.um,
       stock: x.stock == null ? '' : x.stock,
       cobertura: panolCobertura(x.stock, x.qty).txt,
+      consumoAnual: x.consAnual == null ? '' : x.consAnual,
+      mesesStock: x.consAnual == null ? '' : (x.consAnual === 0 ? 'sin mov.' : (x.mesesCob == null ? '' : Math.round(x.mesesCob * 10) / 10)),
       opciones: (x.opciones || []).join(' / '),
       nota: x.nota,
     });
@@ -504,6 +521,8 @@ function panolExportBOM() {
     { key: 'um',           header: 'UM' },
     { key: 'stock',        header: 'Stock actual' },
     { key: 'cobertura',    header: 'Cobertura' },
+    { key: 'consumoAnual', header: 'Consumo/año (MB51)' },
+    { key: 'mesesStock',   header: 'Meses de stock' },
     { key: 'opciones',     header: 'Códigos alternativos' },
     { key: 'nota',         header: 'Nota' },
   ], 'AEP_Panol_BOM_por_equipo');
