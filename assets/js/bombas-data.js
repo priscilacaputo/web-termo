@@ -51,6 +51,11 @@ const BOMBAS_DATA = [
   { equipo:"MBO1453", denominacion:"Bomba Depresora de Napa 5",                     dimension:"",                  ubicacion:"AEP-PKR-EMBOMB-EMBOMB011",   fabricante:"Grundfos",                  modelo:"SP 7-15",                   ubi_desc:"Bombas Depresoras Napas PKR"            },
   { equipo:"MBO1462", denominacion:"Bomba Cloacal N°1 Lado Pista",                  dimension:"2700 RPM / 4A TRIF.",ubicacion:"AEP-ED1-NIVEL0-UBITEC008",  fabricante:"Grundfos",                  modelo:"SEG.40.15.2.50B",           ubi_desc:"Vialidad Exterior Ed 1"                 },
   { equipo:"MBO1463", denominacion:"Bomba Cloacal N°2 Lado Río",                    dimension:"2700 RPM / 4A TRIF.",ubicacion:"AEP-ED1-NIVEL0-UBITEC008",  fabricante:"Grundfos",                  modelo:"SEG.40.15.2.50B",           ubi_desc:"Vialidad Exterior Ed 1"                 },
+
+  /* ── Alta desde export SAP EXPORT_20260908191621 (estaban en SAP, no en la web) ── */
+  { equipo:"MBO001",  denominacion:"Bomba Sumergible de achique Lugones (Meteorología)", dimension:"",               ubicacion:"AEP-LAA",                    fabricante:"",                          modelo:"",                         ubi_desc:"Lado Aire"                              },
+  { equipo:"MBO1165", denominacion:"Bomba Sumergible Cloacal N°1 - Mantenimiento",   dimension:"",                  ubicacion:"AEP-LAA-UBI225",             fabricante:"",                          modelo:"",                         ubi_desc:"Sector Mantenimiento"                   },
+  { equipo:"MBO1166", denominacion:"Bomba Sumergible Cloacal N°2 - Mantenimiento",   dimension:"",                  ubicacion:"AEP-LAA-UBI225",             fabricante:"",                          modelo:"",                         ubi_desc:"Sector Mantenimiento"                   },
 ];
 
 /* Tipo de bomba según denominación */

@@ -16,6 +16,7 @@ const PAGE_TITLES = {
   aac:         ["Equipos de Aire",     "AEP — Aire acondicionado · Splits · VRF · Roof Tops · UTAs · Chillers"],
   ecas:        ["Incendios (ECAs)",    "AEP — Equipos de detección y extinción de incendios · Sprinklers · Hidrantes"],
   otros:       ["Otros Equipos",       "AEP — Arcos de lectura · Cisternas · Compresores"],
+  auditoria:   ["Auditoría SAP", "AEP — Barrido de datos maestros · Inventario de equipos (export IH08)"],
   analytics:   ["Distribución de Equipos", "AEP — Análisis de distribución por edificio y piso · Todos los equipos"],
   "maint-planes": ["Planes de Mantenimiento", "AEP — Planes preventivos consolidados de todos los equipos"],
   historial:   ["Historial OTs / SAP", "AEP — Historial de órdenes de trabajo · Análisis automático de fallas"],

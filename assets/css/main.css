@@ -4546,3 +4546,21 @@ tr:hover .admin-edit-btn { opacity: 1; }
 
 /* Marca de repuesto crítico en la tabla BOM */
 .panol-crit-tag { font-size: 12px; cursor: help; }
+
+/* ─── Auditoría SAP — pills de estado ─────────────────────── */
+.aud-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1.7;
+}
+.aud-pill.aud-ok      { background: #dcfce7; color: #15803d; }
+.aud-pill.aud-curso   { background: #e0f2fe; color: #0369a1; }
+.aud-pill.aud-parcial { background: #fef9c3; color: #a16207; }
+.aud-pill.aud-pend    { background: #f1f5f9; color: #64748b; }
+.aud-pill.aud-warn    { background: #fee2e2; color: #b91c1c; }

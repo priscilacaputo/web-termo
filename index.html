@@ -101,6 +101,10 @@
       </li>
 
       <li class="nav-section-label">Análisis</li>
+      <li class="nav-item" data-page="auditoria">
+        <span class="nav-icon">🔎</span>
+        <span class="nav-label">Auditoría SAP</span>
+      </li>
       <li class="nav-item" data-page="analytics">
         <span class="nav-icon">📊</span>
         <span class="nav-label">Distribución de Equipos</span>
@@ -1569,6 +1573,12 @@
 
     </div>
 
+    <!-- ─── PÁGINA: AUDITORÍA SAP ─── -->
+    <div class="page hidden" id="page-auditoria">
+      <div class="stats-grid" id="auditoria-stats" style="margin-bottom:24px"></div>
+      <div id="auditoria-content"></div>
+    </div>
+
     <!-- ─── PÁGINA: ANALYTICS ─── -->
     <div class="page hidden" id="page-analytics">
       <div class="stats-grid" id="analytics-stats" style="margin-bottom:24px"></div>
@@ -1921,7 +1931,7 @@
   </div>
 
   <script src="assets/js/altura-data.js?v=2"></script>
-  <script src="assets/js/data.js?v=16"></script>
+  <script src="assets/js/data.js?v=17"></script>
   <script src="assets/js/mant-data.js?v=15"></script>
   <script src="assets/js/mangas-data.js?v=15"></script>
   <script src="assets/js/mangas-plans.js?v=1"></script>
@@ -1943,12 +1953,13 @@
   <script src="assets/js/extractores-data.js?v=15"></script>
   <script src="assets/js/persianas-data.js?v=15"></script>
   <script src="assets/js/cortinas-data.js?v=15"></script>
-  <script src="assets/js/bombas-data.js?v=16"></script>
+  <script src="assets/js/bombas-data.js?v=17"></script>
   <script src="assets/js/patio-extra.js?v=3"></script>
   <script src="assets/js/patio-data.js?v=4"></script>
   <script src="assets/js/panol-data.js?v=1"></script>
   <script src="assets/js/panol-repuestos-data.js?v=1"></script>
-  <script src="assets/js/app.js?v=19"></script>
+  <script src="assets/js/equipos-sap-data.js?v=1"></script>
+  <script src="assets/js/app.js?v=20"></script>
   <script src="assets/js/mant-app.js?v=15"></script>
   <script src="assets/js/planes-integrados-app.js?v=9"></script>
   <script src="assets/js/mangas-app.js?v=17"></script>
@@ -1962,7 +1973,7 @@
   <script src="assets/js/personal-app.js?v=2"></script>
   <script src="assets/js/puertas-data.js?v=5"></script>
   <script src="assets/js/puertas-app.js?v=6"></script>
-  <script src="assets/js/aac-data.js?v=3"></script>
+  <script src="assets/js/aac-data.js?v=4"></script>
   <script src="assets/js/uta-specs.js?v=2"></script>
   <script src="assets/js/aac-fichas.js?v=1"></script>
   <script src="assets/js/aac-mapa-data.js?v=4"></script>
@@ -1973,6 +1984,7 @@
   <script src="assets/js/ecas-analytics.js?v=1"></script>
   <script src="assets/js/ecas-app.js?v=2"></script>
   <script src="assets/js/analytics-app.js?v=1"></script>
+  <script src="assets/js/auditoria-app.js?v=1"></script>
   <script src="assets/js/maint-planes-app.js?v=2"></script>
   <script src="assets/js/global-search.js?v=1"></script>
   <script src="assets/js/export-utils.js?v=2"></script>
