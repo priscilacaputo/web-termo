@@ -397,11 +397,26 @@
         ${(O.otSinEquipo || []).length ? heading('OTs preventivas sin equipo asignado · ' + O.otSinEquipo.length) +
           O.otSinEquipo.map((x) => `<div style="font-size:12px;padding:2px 0"><span class="equipo-tag" style="background:#6366f1">${esc(x.orden)}</span> ${esc(x.texto)}</div>`).join('') : ''}
 
+        ${opsBlock()}
+
         <div style="margin-top:14px;padding:10px 12px;background:var(--color-surface);border-radius:8px;font-size:12px">
-          Este IW38 <strong>no trae componentes/materiales</strong> ni historial de correctivas cerradas. Para cerrar "Materiales de OT y stock" falta: lista de componentes de OT (COOIS/IW3D) + MB52 + MB51.
+          Ni IW38 ni la lista de operaciones traen <strong>componentes/materiales</strong> ni ejecución real (todo queda PEND / ABIE en SAP). El link material↔equipo se mantiene con el BOM manual + consumo MB51.
         </div>
       </div>
     </div>`;
+  }
+
+  function opsBlock() {
+    const S = (typeof OPS_SAP_RESUMEN !== 'undefined') ? OPS_SAP_RESUMEN : null;
+    if (!S) return '';
+    const heading = (t) => `<div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">${t}</div>`;
+    const maxH = Math.max(1, ...(S.porPuestoHH || []).map((x) => x.h));
+    return heading('Carga de trabajo planificada · lista de operaciones (2 años)') +
+      `<div style="font-size:12px;margin-bottom:6px">${S.operaciones.toLocaleString('es-AR')} operaciones · <strong>${S.hhPlanificadasTotal.toLocaleString('es-AR')} HH planificadas</strong> · sin ejecución real cargada</div>` +
+      (S.porPuestoHH || []).map((x) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
+        <span style="flex:0 0 110px">${esc(x.k)}</span>
+        <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round((x.h / maxH) * 100)}%;background:#6366f1"></span></span>
+        <span style="flex:0 0 64px;text-align:right;font-weight:700">${x.h.toLocaleString('es-AR')} h</span></div>`).join('');
   }
 
   function planesHTML() {
