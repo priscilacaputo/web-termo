@@ -66,7 +66,7 @@
     { dim: 'Periodicidad de los planes', estado: 'curso',
       nota: 'Periodicidad real calculada de las fechas de IP24 (mediana entre tomas). Se marcan los planes que corren a otra frecuencia que la de su nombre.' },
     { dim: 'Materiales de OT y stock', estado: 'parcial',
-      nota: 'IW38 cargado (panel de OTs abajo) pero SIN componentes. Falta lista de componentes de OT (COOIS/IW3D) + MB52 + MB51 para cruzar consumo vs stock.' },
+      nota: 'Stock (MB52 → catálogo de pañol) y maestro (MM60) cargados y consistentes. Falta el eslabón: componentes por plan/OT (IA08 / COOIS / IW3D) para cruzar repuesto necesario ↔ stock.' },
     { dim: 'Ejecución de OTs', estado: 'curso',
       nota: 'IW38 2 años: 1.881 OTs, 946 equipos. Casi ninguna se cierra en SAP (quedan ABIE); 124 equipos con plan no generaron ninguna OT.' },
   ];
@@ -175,6 +175,7 @@
       ${checklistHTML()}
       ${planesHTML()}
       ${otsHTML()}
+      ${mm60HTML()}
       ${observacionesHTML()}
 
       <div class="table-card" style="margin-top:24px" id="aud-tabla">
@@ -252,6 +253,49 @@
         ${OBSERVACIONES.map((o) => `<li>${esc(o)}</li>`).join('')}
         ${GHOST.length ? `<li><strong>${GHOST.length} códigos en la web sin alta en este export</strong> — ${esc(famLine)}.</li>` : ''}
       </ul>
+    </div>`;
+  }
+
+  function mm60HTML() {
+    const M = (typeof MM60_RESUMEN !== 'undefined') ? MM60_RESUMEN : null;
+    if (!M) return '';
+    const codes = (list) => (list || []).map((c) => `<span class="equipo-tag" style="margin:2px 3px 2px 0;display:inline-block;background:#6366f1">${esc(c)}</span>`).join('');
+    const heading = (t) => `<div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">${t}</div>`;
+    const pctSinABC = M.materiales ? Math.round((M.sinABC / M.materiales) * 100) : 0;
+    const abcMax = Math.max(1, ...(M.porABC || []).map((x) => x.n));
+
+    return `<div class="table-card" style="margin-bottom:20px">
+      <div style="padding:14px 16px;font-weight:800;font-size:13px;border-bottom:1px solid var(--color-border)">
+        Maestro de materiales · MM60
+      </div>
+      <div style="padding:14px 16px">
+        <div class="stats-grid" style="margin-bottom:14px">
+          ${card('Materiales en MM60', M.materiales.toLocaleString('es-AR'), '#0096d6', 'Centro AEP · códigos distintos')}
+          ${card('Sin clasificación ABC', M.sinABC.toLocaleString('es-AR'), '#f59e0b', `${pctSinABC}% — no se priorizó criticidad en SAP`)}
+          ${card('Con precio 0', (M.precioCero || 0).toLocaleString('es-AR'), '#f59e0b', 'Materiales sin precio cargado')}
+          ${card('Repuestos del BOM sin código real', (M.bomSinCodigoReal || []).length, '#dc2626', 'Entradas "?…" que no matchean SAP')}
+        </div>
+
+        <div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">
+          El catálogo de pañol (stock MB52) tiene <strong>${(M.panolEnMaestro || 0).toLocaleString('es-AR')}</strong> materiales y <strong>todos</strong> figuran en el maestro. El BOM equipo↔repuesto tiene ${M.bomTotal}: ${M.bomEnMaestro} con código real.
+        </div>
+
+        ${heading('Materiales por indicador ABC')}
+        ${(M.porABC || []).map((x) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
+          <span style="flex:0 0 90px">${esc(x.k)}</span>
+          <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round((x.n / abcMax) * 100)}%;background:${/sin ABC/.test(x.k) ? '#f59e0b' : '#0096d6'}"></span></span>
+          <span style="flex:0 0 64px;text-align:right;font-weight:700">${x.n.toLocaleString('es-AR')}</span></div>`).join('')}
+
+        ${(M.bomSinCodigoReal || []).length ? heading('Repuestos del BOM cargados como texto (sin código SAP) · ' + M.bomSinCodigoReal.length) +
+          `<div>${(M.bomSinCodigoReal || []).map((c) => `<div style="font-size:12px;padding:2px 0">• ${esc(c)}</div>`).join('')}</div>` : ''}
+
+        ${(M.bomSinABC || []).length ? heading('Repuestos del BOM sin clasificación ABC en SAP · ' + M.bomSinABC.length) +
+          `<details><summary style="cursor:pointer;font-size:12px;color:var(--color-primary)">ver</summary><div style="margin-top:6px">${codes(M.bomSinABC)}</div></details>` : ''}
+
+        <div style="margin-top:14px;padding:10px 12px;background:var(--color-surface);border-radius:8px;font-size:12px">
+          Ya tenemos stock (MB52 → catálogo de pañol) y maestro (MM60). <strong>Falta el eslabón:</strong> la lista de componentes de cada plan / OT (hoja de ruta IA08 o componentes COOIS/IW3D) para cruzar <em>qué repuesto necesita cada equipo</em> contra stock.
+        </div>
+      </div>
     </div>`;
   }
 
