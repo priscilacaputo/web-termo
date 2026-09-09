@@ -58,7 +58,7 @@
   /* ── Checklist de dimensiones de la auditoría ── */
   const DIMENSIONES = [
     { dim: 'Inventario de equipos', estado: 'curso',
-      nota: 'Cruce del export IH08 contra las fichas de la web (abajo).' },
+      nota: 'Solo alcance TER + MEC: 988 equipos del IH08 que tienen plan TER/MEC, OT TER/MEC o ficha en la web (se descartaron 121 de otros grupos). Cruce contra las fichas de la web abajo.' },
     { dim: 'Ubicación técnica', estado: 'ok',
       nota: 'Marcada como correcta (decisión 2026-09-08). No se audita el campo.' },
     { dim: 'Planes y asignación a equipo', estado: 'curso',
@@ -163,7 +163,7 @@
     const baja = ROWS.filter((r) => r.estadoClase === 'baja').length;
 
     $('auditoria-stats').innerHTML = [
-      card('Alta en SAP', total, '#0096d6', 'Todos — quita el filtro', ''),
+      card('Alta en SAP · TER/MEC', total, '#0096d6', 'Equipos del IH08 en alcance TER/MEC — quita el filtro', ''),
       card('Con ficha temática', conFicha, '#10b981', 'Aparecen en una sección de la web', 'ficha'),
       card('Solo en el maestro', soloMaestro, '#f59e0b', 'Sin sección temática — visibles acá', 'maestro'),
       card('En la web sin alta SAP', GHOST.length, '#dc2626', 'Revisar bajas / renombres', 'ghost'),
