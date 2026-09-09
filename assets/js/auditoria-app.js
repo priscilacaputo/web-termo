@@ -77,6 +77,8 @@
 
   /* ── Observaciones de calidad de datos (revisar con SAP) ── */
   const OBSERVACIONES = [
+    'Status "AEQS": son sub-equipos montados sobre un equipo superior (splits de manga, UTAs de núcleo, bombas de grupo…). Es correcto que sigan en sus secciones — no son un hallazgo.',
+    'Status "MONT NOAC PTBO": marcados para baja. Ya se sacaron de las secciones de Equipos e Instalaciones; quedan solo en este maestro. Los "MONT PTBO" (AVO219, MBR001) quedan pendientes de revisar.',
     'Incendios: la web usa códigos ECA1–ECA27 (propios); SAP los tiene como ECC054–ECC101 y ECC556–ECC561. Hay que mapear ECA ↔ ECC.',
     'Persianas de gatera: las fichas MCD100–MCD135 no aparecen en este export de SAP. Confirmar si están de alta con otro código o si faltan crear.',
     'HER0778 / HER0875 / HER0906 / HER0926 / HER0956: dadas de alta como "equipo" en SAP pero son cajas de herramientas asignadas a personas. Revisar si corresponde que sean objetos técnicos.',
@@ -108,15 +110,19 @@
 
     ROWS = maestro.map((e) => {
       const tok = tokenOf(e.equipo);
+      const st = e.status || '';
       return {
         equipo: e.equipo,
         denom: e.denom || '',
         familia: familiaOf(e.equipo),
         ubic: e.ubic || '',
-        status: e.status || '',
+        status: st,
+        sup: e.equipoSup || '',
+        // AEQS = sub-equipo montado sobre un equipo superior (válido, no es hallazgo).
+        // NOAC / PTBO = marcado para baja → se saca de las secciones temáticas.
+        estadoClase: st === 'MONT' ? 'ok' : /AEQS/.test(st) ? 'aeqs' : 'baja',
         ficha: conFicha.has(tok) ? 'temática' : 'maestro',
         serv: e.serv || '',
-        _mont: (e.status || '').startsWith('MONT') && (e.status || '') === 'MONT',
       };
     });
 
@@ -146,14 +152,16 @@
     const total = ROWS.length;
     const conFicha = ROWS.filter((r) => r.ficha === 'temática').length;
     const soloMaestro = total - conFicha;
-    const noMont = ROWS.filter((r) => r.status !== 'MONT').length;
+    const aeqs = ROWS.filter((r) => r.estadoClase === 'aeqs').length;
+    const baja = ROWS.filter((r) => r.estadoClase === 'baja').length;
 
     $('auditoria-stats').innerHTML = [
       card('Alta en SAP', total, '#0096d6', 'Equipos en el export IH08 (centro AEP)'),
       card('Con ficha temática', conFicha, '#10b981', 'Aparecen en una sección de la web'),
       card('Solo en el maestro', soloMaestro, '#f59e0b', 'Sin sección temática — visibles acá'),
       card('En la web sin alta SAP', GHOST.length, '#dc2626', 'Revisar bajas / renombres'),
-      card('Status ≠ MONT', noMont, '#6366f1', 'Revisar si están operativos o de baja'),
+      card('AEQS · sobre otro equipo', aeqs, '#6366f1', 'Sub-equipo montado en un equipo superior — OK'),
+      card('NOAC / PTBO · revisar', baja, '#dc2626', 'Marcados para baja en SAP'),
     ].join('');
 
     host.innerHTML = `
@@ -170,7 +178,7 @@
               `<option value="${esc(f)}"${f === fFamilia ? ' selected' : ''}>${esc(f)}</option>`).join('')}
           </select>
           <label class="panol-checkbox"><input type="checkbox" id="aud-sinficha"${fSoloSinFicha ? ' checked' : ''}/> Solo sin ficha temática</label>
-          <label class="panol-checkbox"><input type="checkbox" id="aud-nomont"${fSoloNoMont ? ' checked' : ''}/> Solo status ≠ MONT</label>
+          <label class="panol-checkbox"><input type="checkbox" id="aud-nomont"${fSoloNoMont ? ' checked' : ''}/> Solo NOAC / PTBO</label>
           <button class="mant-tab" id="aud-export" style="margin-left:auto">⬇ Exportar Excel</button>
         </div>
         <div class="table-wrap" style="margin-top:12px">
@@ -245,7 +253,7 @@
     let out = ROWS.filter((r) => {
       if (fFamilia && r.familia !== fFamilia) return false;
       if (fSoloSinFicha && r.ficha !== 'maestro') return false;
-      if (fSoloNoMont && r.status === 'MONT') return false;
+      if (fSoloNoMont && r.estadoClase !== 'baja') return false;
       if (q) {
         const hay = `${r.equipo} ${r.denom} ${r.ubic} ${r.familia} ${r.status}`.toLowerCase();
         if (!hay.includes(q)) return false;
@@ -276,8 +284,10 @@
         <td>${esc(r.denom) || '<span class="no-data">—</span>'}</td>
         <td>${esc(r.familia)}</td>
         <td><span class="num-text" title="${esc(r.ubic)}">${esc(r.ubic) || '<span class="no-data">—</span>'}</span></td>
-        <td>${r.status === 'MONT'
+        <td>${r.estadoClase === 'ok'
               ? '<span class="aud-pill aud-ok">MONT</span>'
+              : r.estadoClase === 'aeqs'
+              ? `<span class="aud-pill aud-curso" title="Montado sobre ${esc(r.sup) || 'un equipo superior'}">${esc(r.status)}</span>`
               : `<span class="aud-pill aud-warn">${esc(r.status) || '—'}</span>`}</td>
         <td>${r.ficha === 'temática'
               ? '<span class="aud-pill aud-ok">temática</span>'
@@ -317,6 +327,7 @@
       { key: 'familia', header: 'Familia' },
       { key: 'ubic', header: 'Ubicación técnica' },
       { key: 'status', header: 'Status SAP' },
+      { key: 'sup', header: 'Equipo superior' },
       { key: 'ficha', header: 'Ficha en la web' },
       { key: 'serv', header: 'Fecha alta' },
     ];
