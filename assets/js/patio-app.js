@@ -276,6 +276,8 @@ function openPatioModal(equipo) {
     ${modalField('Doc. fallas / averías', ex['Doc fallas/averias'], true, true)}
   `;
 
+  if (typeof sapFichaHTML === "function") patioModalBody.insertAdjacentHTML("beforeend", sapFichaHTML(equipo));
+
   patioModal.classList.add("open");
 }
 

@@ -151,6 +151,8 @@ function openExtModal(equipo) {
     </div>
   `;
 
+  if (typeof sapFichaHTML === "function") extModalBody.insertAdjacentHTML("beforeend", sapFichaHTML(equipo));
+
   extModal.classList.add("open");
 }
 

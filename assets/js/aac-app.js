@@ -474,6 +474,8 @@ function openAACModal(equipo) {
     `;
   }
 
+  if (typeof sapFichaHTML === 'function') bodyHTML += sapFichaHTML(equipo);
+
   document.getElementById('aac-modal-body').innerHTML = bodyHTML;
 
   document.getElementById('aac-modal-overlay').classList.add('open');

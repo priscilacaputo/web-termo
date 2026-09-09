@@ -139,6 +139,8 @@ function openCorModal(equipo) {
     </div>
   `;
 
+  if (typeof sapFichaHTML === "function") corModalBody.insertAdjacentHTML("beforeend", sapFichaHTML(equipo));
+
   corModal.classList.add("open");
 }
 

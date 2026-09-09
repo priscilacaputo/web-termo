@@ -155,6 +155,8 @@ function openBomModal(equipo) {
     </div>
   `;
 
+  if (typeof sapFichaHTML === "function") bomModalBody.insertAdjacentHTML("beforeend", sapFichaHTML(equipo));
+
   bomModal.classList.add("open");
 }
 

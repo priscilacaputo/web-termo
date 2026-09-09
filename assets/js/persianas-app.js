@@ -168,6 +168,8 @@ function openPersModal(equipo) {
     </div>
   `;
 
+  if (typeof sapFichaHTML === "function") persModalBody.insertAdjacentHTML("beforeend", sapFichaHTML(equipo));
+
   persModal.classList.add("open");
 }
 

@@ -333,6 +333,8 @@ function openModal(equipo) {
     </div>
   `;
 
+  if (typeof sapFichaHTML === "function") modalBody.insertAdjacentHTML("beforeend", sapFichaHTML(equipo));
+
   modalOverlay.classList.add("open");
 }
 

@@ -123,6 +123,8 @@ function openOtrosModal(equipo) {
     ${mf('Ubicación SAP', e.ubicacion, true, true)}
   `;
 
+  if (typeof sapFichaHTML === 'function') document.getElementById('otros-modal-body').insertAdjacentHTML('beforeend', sapFichaHTML(equipo));
+
   document.getElementById('otros-modal-overlay').classList.add('open');
 }
 

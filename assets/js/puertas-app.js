@@ -319,6 +319,8 @@ function openPuertaModal(equipo) {
     ${mf("Ubicación SAP", p.ubicacion, true, true)}
   `;
 
+  if (typeof sapFichaHTML === "function") document.getElementById("puertas-modal-body").insertAdjacentHTML("beforeend", sapFichaHTML(equipo));
+
   document.getElementById("puertas-modal-overlay").classList.add("open");
 }
 

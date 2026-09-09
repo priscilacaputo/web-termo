@@ -181,6 +181,8 @@ function openEscModal(equipo) {
     </div>
   `;
 
+  if (typeof sapFichaHTML === "function") escModalBody.insertAdjacentHTML("beforeend", sapFichaHTML(equipo));
+
   escModal.classList.add("open");
 }
 

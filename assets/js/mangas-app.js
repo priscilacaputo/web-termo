@@ -179,6 +179,8 @@ function openMangaModal(equipo) {
   }
 
   mangaModalBody.innerHTML = mainContent;
+  if (typeof sapFichaHTML === "function") mangaModalBody.insertAdjacentHTML("beforeend", sapFichaHTML(equipo));
+
   mangaModal.classList.add("open");
 }
 

@@ -167,6 +167,8 @@ function openAscModal(equipo) {
     </div>
   `;
 
+  if (typeof sapFichaHTML === "function") ascModalBody.insertAdjacentHTML("beforeend", sapFichaHTML(equipo));
+
   ascModal.classList.add("open");
 }
 
