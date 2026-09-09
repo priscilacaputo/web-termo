@@ -145,12 +145,8 @@ const FLOTA_DATA = [
     equipo: "AVO1007", dominio: "AI 451 PC", denominacion: "Camioneta",
     anio: "", fabricante: "", tipo: "",
     motor: "", chasis: ""
-  },
-  {
-    equipo: "AVO018", dominio: "NHB 055", denominacion: "Camioneta",
-    anio: "", fabricante: "TOYOTA", tipo: "HILUX 4X4 S/C DX",
-    motor: "", chasis: ""
   }
+  /* AVO018 (NHB 055) está en SAP como "MONT NOAC PTBO" → no se lista acá; queda solo en EQUIPOS_SAP. */
 ];
 
 const FAB_COLORS = {

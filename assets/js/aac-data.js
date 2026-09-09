@@ -397,17 +397,8 @@ const AAC_DATA = [
   { equipo:"AAC2103", denominacion:"WESTRIC 30 TN", capacidad:"30 TR", ubicacion:"", fabricante:"Westric", modelo:"", sector:"", tipo:"Roof Top" },
   { equipo:"AAC2736", denominacion:"MI IDEA VIALIDAD", capacidad:"", ubicacion:"", fabricante:"", modelo:"", sector:"", tipo:"Otro" },
 
-  /* ── Alta desde export SAP EXPORT_20260908191621 (equipos que estaban en SAP y no en la web) ── */
-  { equipo:"AAC1272", denominacion:"Split - Baja Silueta 5", capacidad:"", ubicacion:"AEP-TER-AIREAC-AIREAC200", fabricante:"BGH", modelo:"", sector:"", tipo:"Split" },
-  { equipo:"AAC193", denominacion:"Split X Tr Cabina de Peaje", capacidad:"", ubicacion:"AEP-ED1-NIVEL0-UBITEC007", fabricante:"Samsung", modelo:"AQ09VGDA", sector:"", tipo:"Split" },
-  { equipo:"AAC2112", denominacion:"Roof Top - F/C por Bomba", capacidad:"16 TR F/C", ubicacion:"AEP-LAA-UBI225", fabricante:"McQuay", modelo:"M4RT 200 AR-FXDC-R", sector:"", tipo:"Roof Top" },
-  { equipo:"AAC250", denominacion:"Split", capacidad:"3000 FRIG", ubicacion:"AEP-LAA-UBI070", fabricante:"", modelo:"", sector:"", tipo:"Split" },
-  { equipo:"AAC2721", denominacion:"Split F/C", capacidad:"2250 FRIG", ubicacion:"AEP-LAA-UBI209", fabricante:"", modelo:"", sector:"", tipo:"Split" },
-  { equipo:"AAC2722", denominacion:"Split F/C", capacidad:"3000 FRIG", ubicacion:"AEP-LAA-UBI209", fabricante:"", modelo:"", sector:"", tipo:"Split" },
-  { equipo:"AAC2723", denominacion:"Split F/C", capacidad:"4500 FRIG", ubicacion:"AEP-LAA-UBI209", fabricante:"", modelo:"", sector:"", tipo:"Split" },
-  { equipo:"AAC2724", denominacion:"Split F/C", capacidad:"6000 FRIG", ubicacion:"AEP-LAA-UBI209", fabricante:"", modelo:"", sector:"", tipo:"Split" },
-  { equipo:"AAC2725", denominacion:"Split F/C", capacidad:"9000 FRIG", ubicacion:"AEP-LAA-UBI209", fabricante:"", modelo:"", sector:"", tipo:"Split" },
-  { equipo:"AAC2732", denominacion:"Split - Sala Técnica Caseta Central", capacidad:"4500 FRIG", ubicacion:"AEP-TER-AIREAC-AIREAC181", fabricante:"Cool Time", modelo:"CTSC45CQ", sector:"", tipo:"Split" },
+  /* ── Alta desde export SAP EXPORT_20260908191621 (equipos que estaban en SAP y no en la web).
+     Los que en SAP figuran "MONT NOAC PTBO" NO se cargan acá (quedan solo en EQUIPOS_SAP). ── */
   { equipo:"AAC9432", denominacion:"Split N°5 - Sala Técnica 7 (G)", capacidad:"", ubicacion:"AEP-ED5-NIVEL2-UBITEC060", fabricante:"Westric", modelo:"", sector:"", tipo:"Split" },
   { equipo:"AAC9433", denominacion:"Split N°6 - Sala Técnica 7 (G)", capacidad:"", ubicacion:"AEP-ED5-NIVEL2-UBITEC060", fabricante:"Westric", modelo:"", sector:"", tipo:"Split" },
   { equipo:"AAC9434", denominacion:"Casete N°1 YORK Acceso A", capacidad:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"York", modelo:"", sector:"", tipo:"Split" },
