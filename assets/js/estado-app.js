@@ -53,7 +53,7 @@ let estadoFiltroCategoria = '';
 let estadoFiltroEstado = '';
 let estadoVista = 'categorias';
 let estadoHidroMostrarTodos = false;
-const ESTADO_HIDRO_MESES = 6;
+const ESTADO_HIDRO_MESES = 2;
 const estadoCatAbierta = {};
 const estadoDetalleAbierto = {};
 
