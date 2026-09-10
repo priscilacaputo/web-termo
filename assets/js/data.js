@@ -40,11 +40,6 @@ const FLOTA_DATA = [
     motor: "654920W0163061", chasis: "8AC907843RE242332"
   },
   {
-    equipo: "AVO247", dominio: "IKF 180", denominacion: "Automóvil Pañol",
-    anio: 2010, fabricante: "FIAT", tipo: "UNO FIRE 1242 MPI 8V",
-    motor: "178E80119221547", chasis: "9BD158076A6389043"
-  },
-  {
     equipo: "AVO304", dominio: "OHP 939", denominacion: "Camioneta Electrónica",
     anio: 2015, fabricante: "TOYOTA", tipo: "HILUX L/12 DC DX 4X4",
     motor: "2KD-A572193", chasis: "8AJFR22G8F4574514"
@@ -115,36 +110,37 @@ const FLOTA_DATA = [
     motor: "10JBGR0045634", chasis: "8AEGC9HP3SG546472"
   },
 
-  /* ── Alta desde export SAP EXPORT_20260828201120 — año s/d en el export ── */
+  /* ── Alta desde export SAP EXPORT_20260828201120; ficha técnica (año, motor,
+     chasis) completada 2026-09-10 con el export de flota "avooooo.xlsx" ── */
   {
     equipo: "AVO219", dominio: "GZM 722", denominacion: "Automóvil",
-    anio: "", fabricante: "FIAT", tipo: "UNO FIRE 1242 MPI 8V",
+    anio: 2008, fabricante: "FIAT", tipo: "UNO FIRE 1242 MPI 8V",
     motor: "", chasis: ""
   },
   {
     equipo: "AVO305", dominio: "OHP 940", denominacion: "Camioneta",
-    anio: "", fabricante: "TOYOTA", tipo: "HILUX L/12 DC DX 4X4",
-    motor: "", chasis: "8AJFR22G6F4574561"
+    anio: 2015, fabricante: "TOYOTA", tipo: "HILUX L/12 DC DX 4X4",
+    motor: "2KD-A573536", chasis: "8AJFR22G6F4574561"
   },
   {
     equipo: "AVO1001", dominio: "AH 148 HE", denominacion: "Camioneta Pañol",
-    anio: "", fabricante: "PEUGEOT", tipo: "PARTNER CONFORT L/23",
-    motor: "", chasis: "8AEGC9HP5SG545307"
+    anio: 2025, fabricante: "PEUGEOT", tipo: "PARTNER CONFORT L/23",
+    motor: "10JBGR0045348", chasis: "8AEGC9HP5SG545307"
   },
   {
     equipo: "AVO1005", dominio: "AI 317 YY", denominacion: "Camioneta",
-    anio: "", fabricante: "TOYOTA", tipo: "HILUX 4X2 DC DX 2.4",
+    anio: 2026, fabricante: "TOYOTA", tipo: "HILUX 4X2 DC DX 2.4",
     motor: "", chasis: "8AJCB3DDXT3929345"
   },
   {
     equipo: "AVO1006", dominio: "AI 317 YX", denominacion: "Camioneta",
-    anio: "", fabricante: "TOYOTA", tipo: "HILUX 4X2 DC DX 2.4",
+    anio: 2026, fabricante: "TOYOTA", tipo: "HILUX 4X2 DC DX 2.4",
     motor: "", chasis: "8AJCB3DD9T3929398"
   },
   {
     equipo: "AVO1007", dominio: "AI 451 PC", denominacion: "Camioneta",
-    anio: "", fabricante: "", tipo: "",
-    motor: "", chasis: ""
+    anio: "", fabricante: "TOYOTA", tipo: "",
+    motor: "2GD-D558453", chasis: "8AJDB3CD7T6602440"
   }
   /* AVO018 (NHB 055) está en SAP como "MONT NOAC PTBO" → no se lista acá; queda solo en EQUIPOS_SAP. */
 ];

@@ -45,45 +45,6 @@
    Repuestos) o reemplazando este archivo entero. */
 
 const PANOL_REPUESTOS = [
-  { equipo: "AAC047", materiales: [
-    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
-    { cod: "20001806", nota: "Correa B80 — ficha técnica UTA" },
-  ] },
-  { equipo: "AAC069", materiales: [
-    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
-  ] },
-  { equipo: "AAC074", materiales: [
-    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
-    { cod: "20001806", nota: "Correa B80 — ficha técnica UTA" },
-  ] },
-  { equipo: "AAC075", materiales: [
-    { cod: "20045232", qty: 12, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
-    { cod: "20001806", nota: "Correa B80 — ficha técnica UTA" },
-  ] },
-  { equipo: "AAC092", materiales: [
-    { cod: "20045232", qty: 4, opciones: ["20002304", "20006545"], nota: "Filtro de aire 500X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
-    { cod: "20006546", qty: 4, opciones: ["20045229", "20008485", "20009325"], nota: "Filtro de aire 500X400X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
-    { cod: "?CORREA B-36/37/38", qty: 2, nota: "Correa B-36/37/38 — ficha técnica UTA · código SAP a confirmar" },
-  ] },
-  { equipo: "AAC097", materiales: [
-    { cod: "20074814", qty: 4, nota: "Filtro de aire 500X400X20 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
-    { cod: "20001739", nota: "Correa A34 — ficha técnica UTA" },
-  ] },
-  { equipo: "AAC105", materiales: [
-    { cod: "20006520", qty: 2, nota: "Filtro de aire 400X650X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
-    { cod: "20047395", nota: "Correa A40 — ficha técnica UTA" },
-  ] },
-  { equipo: "AAC107", materiales: [
-    { cod: "20006546", qty: 4, opciones: ["20045229", "20008485", "20009325"], nota: "Filtro de aire 400X500X50 — ficha técnica UTA · varias opciones de la misma medida en catálogo (ver alternativas)" },
-    { cod: "20005298", nota: "Correa A47 — ficha técnica UTA" },
-  ] },
-  { equipo: "AAC108", materiales: [
-    { cod: "?FILTRO 600X420X50", qty: 4, nota: "Filtro de aire 600X420X50 — ficha técnica UTA · código SAP a confirmar" },
-    { cod: "20001793", nota: "Correa B56 — ficha técnica UTA" },
-  ] },
-  { equipo: "AAC183", materiales: [
-    { cod: "20006527", nota: "Filtro de aire 570X550X20 — ficha técnica UTA" },
-  ] },
   { equipo: "AAC1986", materiales: [
     { cod: "20078442", nota: "Compresor Coopeland ZP16HSE-PFJ-600, R410A" },
     { cod: "20096849", nota: "Placa CVTR condensadora, mod. 54-1154-0" },
@@ -206,18 +167,6 @@ const PANOL_REPUESTOS = [
   ] },
   { equipo: "AAC2082", materiales: [
     { cod: "20078444", nota: "Compresor Daikin JT125G-P8Y1 (según encabezado de planilla de alta SAP)" },
-  ] },
-  { equipo: "AAC2102", materiales: [
-    { cod: "20006585", qty: 3, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
-    { cod: "20041155", nota: "Filtro de aire 600X450X50 — ficha técnica UTA" },
-    { cod: "20041154", qty: 5, nota: "Filtro de aire 500X450X50 — ficha técnica UTA" },
-    { cod: "20012254", nota: "Correa B49 — ficha técnica UTA" },
-  ] },
-  { equipo: "AAC2103", materiales: [
-    { cod: "20006585", qty: 3, nota: "Filtro de aire 600X600X50 — ficha técnica UTA · en catálogo solo hay MERV13 para esa medida — confirmar calidad" },
-    { cod: "20041155", nota: "Filtro de aire 600X450X50 — ficha técnica UTA" },
-    { cod: "20041154", qty: 5, nota: "Filtro de aire 500X450X50 — ficha técnica UTA" },
-    { cod: "20012254", nota: "Correa B49 — ficha técnica UTA" },
   ] },
   { equipo: "AAC2116", materiales: [
     { cod: "20085168", nota: "Compresor Copeland ZP103KCE-TFD-250, 380V, R410A (asignado a toda la familia Roof Top Trane — modelo exacto sin confirmar)" },
@@ -600,9 +549,6 @@ const PANOL_REPUESTOS = [
     { cod: "20001806", nota: "Correa B80 — consumo real de mantenimiento preventivo Roof Top (planilla SAP \"Materiales Preventivos Roof Top\"): 1 por unidad" },
     { cod: "20085933", nota: "Sensor de temperatura Lennox 93J5301 — planilla Alta de Materiales (Roof Top Lennox LGH/LGM360); confirmar cantidad por unidad" },
     { cod: "20085102", opciones: ["20082642"], nota: "Válvula de expansión BBIZE-8-GA — planilla Alta de Materiales (Roof Top Lennox 30 TR); confirmar cantidad" },
-  ] },
-  { equipo: "AAC2736", materiales: [
-    { cod: "?FILTRO 620X500X50", qty: 3, nota: "Filtro de aire 620X500X50 — ficha técnica UTA · código SAP a confirmar" },
   ] },
   { equipo: "AAC3476", materiales: [
     { cod: "20088712", nota: "Placa condensador LG, mod. EAX64656602" },

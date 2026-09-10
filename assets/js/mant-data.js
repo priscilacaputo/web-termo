@@ -445,7 +445,7 @@ const MANT_KM = [
     id: "fiat",
     modelo: "FIAT UNO / FIORINO FIRE 1242 MPI 8V",
     condicion: "Normal",
-    vehiculos: ["AVO247"],
+    vehiculos: ["AVO219"],
     intervalos: [
       {
         km: 10000,

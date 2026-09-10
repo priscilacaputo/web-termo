@@ -1,9 +1,12 @@
 /* ─── EQUIPOS_SAP — Maestro de equipos SAP, alcance TER + MEC ───
    Fuente: EXPORT_20260908191621.xlsx (IH08, centro AEP) filtrado a los equipos
    que pertenecen a Termomecánica / Mecánica: tienen plan TER/MEC (IP24),
-   OT TER/MEC (IW38) o ficha en la web. 1029 equipos (de 1109 del export; se
-   descartaron 80 de otros grupos: incendio ECC, cajas HER, medición GAS/CAU,
-   y equipos de baja o sin nada asignado).
+   OT TER/MEC (IW38) o ficha en la web. 1081 equipos.
+   2026-09-10: +51 del export "MAS EQUIPOS.xlsx" (IH08) confirmados de alta en SAP
+   por la usuaria — 30 persianas de gatera MCD100-135, 9 AAC "MONT NOAC PTBO",
+   7 MEQ (cinta+scanners gatera), 2 ARC (arcos de lectura), 2 AAC MONT, MAS588.
+   2026-09-10: +1 del export "avooooo.xlsx" (flota) — AVO876 "MONT NOAC PTBO"
+   (Sprinter AG 607 LD, mismo vehículo que AVO1000; código viejo a dar de baja).
    Regenerar con scratchpad/gen_equipos_termec.py. Es la fuente de verdad del
    INVENTARIO TER/MEC. Campos: equipo, denom, ubic, dim, fab, nParte, nSerie,
    equipoSup, status (MONT = montado/operativo), tipoDenom, serv. */
@@ -452,6 +455,7 @@ const EQUIPOS_SAP = [
   {"equipo": "AVO474", "denom": "Camioneta [AG 423 BC]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "", "fab": "TOYOTA", "nParte": "MOTOR: 2GDG453989", "nSerie": "CHASIS: 8AJDB3CD1P1352115", "equipoSup": "", "status": "MONT", "tipoDenom": "HILUX 4X4D/C DX 6M/T", "serv": "2024-06-10"},
   {"equipo": "AVO475", "denom": "Camioneta [AG 423 BE]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2024-06-10"},
   {"equipo": "AVO479", "denom": "Camioneta [AH 941 KM]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "", "fab": "TOYOTA", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "HILUX L/12 DC DX 4X4", "serv": ""},
+  {"equipo": "AVO876", "denom": "Furgón [AG 607 LD]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "", "fab": "MERCEDES BENZ", "nParte": "MOTOR: 654920W0163061", "nSerie": "CHASIS: 8AC907843RE242332", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "SPRINTER 414 CDI 366", "serv": ""},
   {"equipo": "AVO977", "denom": "Camioneta Operaciones [AF663QC]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "", "fab": "Nissan", "nParte": "MOTOR YS23B266C057142", "nSerie": "CHASIS 8ANBD33B0NL108178", "equipoSup": "", "status": "MONT", "tipoDenom": "Frontier", "serv": ""},
   {"equipo": "AVO978", "denom": "Camioneta Mantenimiento [AG064GQ]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "", "fab": "RENAULT", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "KANGOO", "serv": ""},
   {"equipo": "AVO979", "denom": "Camioneta Seguridad [AG064GP]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "", "fab": "RENAULT", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "KANGOO", "serv": ""},
@@ -1038,4 +1042,56 @@ const EQUIPOS_SAP = [
   {"equipo": "VAL289", "denom": "Válv Marip N°21 -Hidrantes Sist Incendio", "ubic": "AEP-ED1-NIVEL5", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-08-17"},
   {"equipo": "VAL290", "denom": "Válv Marip N°22 -Hidrantes Sist Incendio", "ubic": "AEP-ED1-NIVEL6", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-08-17"},
   {"equipo": "VAL387", "denom": "Válv Marip N°1 -Hidrantes Sist Incendio", "ubic": "AEP-ESR-UBITE7-UBITEC001", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": ""},
+
+  {"equipo": "AAC1272", "denom": "Split - Baja Silueta 5", "ubic": "AEP-TER-AIREAC-AIREAC200", "dim": "", "fab": "BGH", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "", "serv": "2019-08-09"},
+  {"equipo": "AAC193", "denom": "Split X Tr Cabina de Peaje", "ubic": "AEP-ED1-NIVEL0-UBITEC007", "dim": "", "fab": "Samsung", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "AQ09VGDA", "serv": "2023-08-14"},
+  {"equipo": "AAC250", "denom": "Split", "ubic": "AEP-LAA-UBI070", "dim": "3000 FRIG", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "", "serv": "2023-08-14"},
+  {"equipo": "AAC2721", "denom": "Split F/C", "ubic": "AEP-LAA-UBI209", "dim": "2250 FRIG", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "", "serv": "2023-08-30"},
+  {"equipo": "AAC2722", "denom": "Split F/C", "ubic": "AEP-LAA-UBI209", "dim": "3000 FRIG", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "", "serv": "2023-08-30"},
+  {"equipo": "AAC2723", "denom": "Split F/C", "ubic": "AEP-LAA-UBI209", "dim": "4500 FRIG", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "", "serv": "2023-08-30"},
+  {"equipo": "AAC2724", "denom": "Split F/C", "ubic": "AEP-LAA-UBI209", "dim": "6000 FRIG", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "", "serv": "2023-08-30"},
+  {"equipo": "AAC2725", "denom": "Split F/C", "ubic": "AEP-LAA-UBI209", "dim": "9000 FRIG", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "", "serv": "2023-08-30"},
+  {"equipo": "AAC2732", "denom": "Split - Sala Técnica Caseta Central", "ubic": "AEP-TER-AIREAC-AIREAC181", "dim": "4500 FRIG.", "fab": "Cool Time", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "CTSC45CQ", "serv": "2021-02-03"},
+  {"equipo": "AAC344", "denom": "Split N°3 - Sala Técnica 1 UPS Ed.II", "ubic": "AEP-ED2-NIVEL0-UBITEC011", "dim": "3000 FRIG", "fab": "Surrey", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "538TFH1304", "serv": ""},
+  {"equipo": "AAC4119", "denom": "U.E Sist. 1 Multi Split F/C Ofi Jfe. ele", "ubic": "AEP-LAA-UBI225", "dim": "", "fab": "LG", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "A5UW30GFA4", "serv": ""},
+  {"equipo": "ARC001", "denom": "Arco Lectura Equipajes", "ubic": "AEP-ED6-NIVEL0-UBITEC497", "dim": "", "fab": "VanderLande", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "ARC002", "denom": "Arco Lectura Equipajes 2", "ubic": "AEP-ED6-NIVEL0-UBITEC497", "dim": "", "fab": "Van Der Lande", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MAS588", "denom": "Elevador automotor 2 columnas", "ubic": "AEP-LAA-UBI226", "dim": "3.30M X 2.80M", "fab": "EWING", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "EW-TP4000", "serv": ""},
+  {"equipo": "MCD100", "denom": "Persiana de gatera PM-200", "ubic": "AEP-ED6-NIVEL0-UBITEC062", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-12-12"},
+  {"equipo": "MCD101", "denom": "Persiana de gatera PM-300", "ubic": "AEP-ED6-NIVEL0-UBITEC062", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-12-12"},
+  {"equipo": "MCD102", "denom": "Persiana de gatera PM-400", "ubic": "AEP-ED6-NIVEL0-UBITEC062", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-12-12"},
+  {"equipo": "MCD103", "denom": "Persiana de gatera PM-500", "ubic": "AEP-ED6-NIVEL0-UBITEC062", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-12-12"},
+  {"equipo": "MCD110", "denom": "Persiana de gatera PM-3003", "ubic": "AEP-ED6-NIVEL0-UBITEC062", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-12-12"},
+  {"equipo": "MCD111", "denom": "Persiana de gatera PM-3004", "ubic": "AEP-ED6-NIVEL0-UBITEC062", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-12-12"},
+  {"equipo": "MCD112", "denom": "Persiana gatera Sur Cinta 1 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1547", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD113", "denom": "Persiana gatera Norte Cinta 1 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1547", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD114", "denom": "Persiana gatera Sur Cinta 2 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1548", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD115", "denom": "Persiana gatera Norte Cinta 2 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1548", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD116", "denom": "Persiana gatera Sur Cinta 3 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1549", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD117", "denom": "Persiana gatera Norte Cinta 3 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1549", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD118", "denom": "Persiana gatera Sur Cinta 4 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1550", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD119", "denom": "Persiana gatera Norte Cinta 4 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1550", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD120", "denom": "Persiana gatera Sur Cinta 5 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1064", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD121", "denom": "Persiana gatera Norte Cinta 5 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1064", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD122", "denom": "Persiana gatera Sur Cinta 6 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1065", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD123", "denom": "Persiana gatera Norte Cinta 6 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1065", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD124", "denom": "Persiana gatera Sur Cinta 7 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1845", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD125", "denom": "Persiana gatera Norte Cinta 7 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1845", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD126", "denom": "Persiana gatera Sur Cinta 8 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1846", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD127", "denom": "Persiana gatera Norte Cinta 8 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1846", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD128", "denom": "Persiana gatera Sur Cinta 9 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1847", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD129", "denom": "Persiana gatera Norte Cinta 9 Nac", "ubic": "AEP-ED4-NIVEL0-UBITEC137", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "MEQ1847", "status": "AEQS", "tipoDenom": "", "serv": "2023-12-13"},
+  {"equipo": "MCD130", "denom": "Persiana gatera Sur Cinta 1 Inter", "ubic": "AEP-ED6-NIVEL0-UBITEC505", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-08-22"},
+  {"equipo": "MCD131", "denom": "Persiana gatera Norte Cinta 1 Inter", "ubic": "AEP-ED6-NIVEL0-UBITEC505", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-08-22"},
+  {"equipo": "MCD132", "denom": "Persiana gatera Sur Cinta 2 Inter", "ubic": "AEP-ED6-NIVEL0-UBITEC513", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-08-22"},
+  {"equipo": "MCD133", "denom": "Persiana gatera Norte Cinta 2 Inter", "ubic": "AEP-ED6-NIVEL0-UBITEC513", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-08-22"},
+  {"equipo": "MCD134", "denom": "Persiana gatera Sur Cinta 3 Inter", "ubic": "AEP-ED6-NIVEL0-UBITEC521", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-08-22"},
+  {"equipo": "MCD135", "denom": "Persiana gatera Norte Cinta 3 Inter", "ubic": "AEP-ED6-NIVEL0-UBITEC521", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-08-22"},
+  {"equipo": "MEQ1948", "denom": "Cinta Equipaje Descendente BF-1216 Car 4", "ubic": "AEP-ED6-NIVEL0-UBITEC497", "dim": "550W /380V - 1,55A", "fab": "Vanderlande", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "KA37DRS71M4BE1HRAND8", "serv": ""},
+  {"equipo": "MEQ1949", "denom": "Scanner RX-205 Gatera N°1", "ubic": "AEP-ED6-NIVEL0-UBITEC497", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": ""},
+  {"equipo": "MEQ1950", "denom": "Scanner RX-305 Gatera N°2", "ubic": "AEP-ED6-NIVEL0-UBITEC497", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": ""},
+  {"equipo": "MEQ1951", "denom": "Scanner RX-405 Gatera N°3", "ubic": "AEP-ED6-NIVEL0-UBITEC497", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": ""},
+  {"equipo": "MEQ1952", "denom": "Scanner RX-505 Gatera N°4", "ubic": "AEP-ED6-NIVEL0-UBITEC497", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": ""},
+  {"equipo": "MEQ1953", "denom": "Scanner RX-1205 Gatera N°5", "ubic": "AEP-ED6-NIVEL0-UBITEC497", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": ""},
+  {"equipo": "MEQ1954", "denom": "Scanner ExRX-1306 ExGatera N°6 (manga 5)", "ubic": "AEP-ED6-NIVEL0-UBITEC497", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": ""},
 ];
