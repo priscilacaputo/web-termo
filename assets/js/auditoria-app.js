@@ -615,9 +615,23 @@
         </div>
 
         ${heading('Equipos del maestro (TER/MEC) sin ningún plan · ' + sinPlan.total)}
-        ${Object.entries(sinPlan.porPrefijo).map(([p, n]) => bar(famLabel(p) + ' (' + p + ')', n, Math.max(1, ...Object.values(sinPlan.porPrefijo)), '#f59e0b')).join('')}
-        <details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:var(--color-primary)">ver los ${sinPlan.total} equipos</summary>
-          <div style="margin-top:6px">${codes(sinPlan.lista)}</div></details>
+        ${(() => {
+          const spEntries = Object.entries(sinPlan.porPrefijo).sort((a, b) => b[1] - a[1]);
+          const spMax = Math.max(1, ...spEntries.map(([, n]) => n));
+          const pfxOf = (c) => (String(c).match(/^[A-Za-z]+/) || [''])[0];
+          return `<div id="aud-sinplan">
+            ${spEntries.map(([p, n]) => `<div class="aud-sp-bar" data-sp-pfx="${esc(p)}" role="button" tabindex="0" title="Filtrar equipos ${esc(famLabel(p))}">${bar(famLabel(p) + ' (' + p + ')', n, spMax, '#f59e0b')}</div>`).join('')}
+            <details id="aud-sp-details" style="margin-top:6px">
+              <summary style="cursor:pointer;font-size:12px;color:var(--color-primary)">ver los ${sinPlan.total} equipos</summary>
+              <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">
+                <button type="button" class="aud-sp-pill aud-sp-on" data-sp-pfx="">Todos · ${sinPlan.total}</button>
+                ${spEntries.map(([p, n]) => `<button type="button" class="aud-sp-pill" data-sp-pfx="${esc(p)}">${esc(famLabel(p))} (${esc(p)}) · ${n}</button>`).join('')}
+              </div>
+              <div id="aud-sp-chips" style="margin-top:8px">${sinPlan.lista.map((c) => `<span class="equipo-tag" data-pfx="${esc(pfxOf(c))}" style="margin:2px 3px 2px 0;display:inline-block">${esc(c)}</span>`).join('')}</div>
+              <div id="aud-sp-count" style="margin-top:6px;font-size:11px;color:var(--color-muted)"></div>
+            </details>
+          </div>`;
+        })()}
 
         ${noMaestro.length ? heading('Plan activo pero el equipo no está dado de alta en SAP · ' + noMaestro.length) +
           `<div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">Se les hace preventivo pero nunca se creó el equipo (objeto técnico sí, equipo no): persianas MCD, tanques TNQ, etc. Crear el equipo o reasignar el plan.</div>
@@ -762,6 +776,40 @@
         render();
       };
     });
+    wireSinPlanFiltro();
+  }
+
+  /* Filtro por tipo de equipo en "Equipos del maestro sin ningún plan". */
+  function wireSinPlanFiltro() {
+    const box = $('aud-sinplan');
+    if (!box) return;
+    const bars = [...box.querySelectorAll('.aud-sp-bar')];
+    const pills = [...box.querySelectorAll('.aud-sp-pill')];
+    const chips = [...box.querySelectorAll('#aud-sp-chips .equipo-tag')];
+    const det = $('aud-sp-details');
+    const count = $('aud-sp-count');
+    let pfx = '';
+
+    const apply = (next, open) => {
+      pfx = (pfx === next) ? '' : next;
+      let vis = 0;
+      chips.forEach((ch) => {
+        const show = !pfx || ch.dataset.pfx === pfx;
+        ch.style.display = show ? 'inline-block' : 'none';
+        if (show) vis++;
+      });
+      bars.forEach((b) => b.classList.toggle('aud-sp-on', !!pfx && b.dataset.spPfx === pfx));
+      pills.forEach((p) => p.classList.toggle('aud-sp-on', (p.dataset.spPfx || '') === pfx));
+      if (count) count.textContent = pfx ? `${vis} equipo${vis === 1 ? '' : 's'} · filtro ${pfx} — clic de nuevo para quitar` : '';
+      if (open && pfx && det) det.open = true;
+    };
+
+    bars.forEach((b) => {
+      b.style.cursor = 'pointer';
+      b.onclick = () => apply(b.dataset.spPfx, true);
+      b.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); apply(b.dataset.spPfx, true); } };
+    });
+    pills.forEach((p) => { p.onclick = () => apply(p.dataset.spPfx || '', false); });
   }
 
   function doExport() {

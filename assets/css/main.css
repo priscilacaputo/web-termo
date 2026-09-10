@@ -4573,3 +4573,22 @@ tr:hover .admin-edit-btn { opacity: 1; }
   box-shadow: 0 6px 20px rgba(0,0,0,.12), 0 0 0 1px var(--stat-color, var(--color-primary));
 }
 .stat-card.aud-kpi-active .stat-value { color: var(--stat-color, var(--color-navy)); }
+
+/* Auditoría — filtro por tipo de equipo en "sin ningún plan" */
+.aud-sp-bar { border-radius: 6px; padding: 0 4px; transition: background .12s; }
+.aud-sp-bar:hover { background: var(--color-surface); }
+.aud-sp-bar.aud-sp-on { background: #fef3c7; }
+.aud-sp-pill {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg, #fff);
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.aud-sp-pill:hover { border-color: #f59e0b; }
+.aud-sp-pill.aud-sp-on { background: #f59e0b; border-color: #f59e0b; color: #fff; }
