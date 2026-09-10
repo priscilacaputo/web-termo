@@ -20,6 +20,15 @@ const OTROS_DATA = [
     local: "Patio de valijas Ed VI"
   },
   {
+    equipo: "AUT474",
+    denominacion: "Autoelevador Caterpillar CAT - Pañol",
+    tipo: "Autoelevador",
+    fabricante: "Caterpillar",
+    capacidad: "",
+    ubicacion: "AEP-LAA-UBI209",
+    local: "Pañol"
+  },
+  {
     equipo: "CMA001",
     denominacion: "Compresor de aire Sist. Preaction",
     tipo: "Compresor",
@@ -61,4 +70,5 @@ const OTROS_TIPO_COLORS = {
   "Arco de Lectura": "#7c3aed",
   "Compresor":       "#d97706",
   "Cisterna":        "#0891b2",
+  "Autoelevador":    "#059669",
 };

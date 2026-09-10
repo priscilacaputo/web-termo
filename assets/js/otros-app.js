@@ -37,6 +37,7 @@ function renderOtrosStats() {
     { label: 'Arcos de Lectura', value: OTROS_DATA.filter(e => e.tipo === 'Arco de Lectura').length, icon: '🔍',  color: '#7c3aed' },
     { label: 'Cisternas',        value: OTROS_DATA.filter(e => e.tipo === 'Cisterna').length,        icon: '💧',  color: '#0891b2' },
     { label: 'Compresores',      value: OTROS_DATA.filter(e => e.tipo === 'Compresor').length,       icon: '🔧',  color: '#d97706' },
+    { label: 'Autoelevadores',   value: OTROS_DATA.filter(e => e.tipo === 'Autoelevador').length,    icon: '🚜',  color: '#059669' },
   ];
 
   document.getElementById('otros-stats').innerHTML = cards.map(c => `
