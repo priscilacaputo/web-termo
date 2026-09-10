@@ -1,11 +1,11 @@
 const ESCALERAS_DATA = [
-  { equipo:"MES101", denominacion:"Escalera - Preembarque Inter N°5",          dimension:"", ubicacion:"AEP-ED7-NIVEL0-UBITEC049", fabricante:"THYSSEN", tipo:"",            ubi_desc:"Migraciones Internacionales" },
-  { equipo:"MES104", denominacion:"Escalera Cruzada (Lado Pista) - N°4",       dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"",            ubi_desc:"Hall Publico Check in" },
-  { equipo:"MES105", denominacion:"Escalera Cruzada (Lado Rio) - N°3",         dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"",            ubi_desc:"Hall Publico Check in" },
-  { equipo:"MES107", denominacion:"Escalera Paralela (Lado Pista) - N°2",      dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"",            ubi_desc:"Hall Publico Check in" },
-  { equipo:"MES108", denominacion:"Escalera Paralela (Lado Rio) - N°1",        dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"",            ubi_desc:"Hall Publico Check in" },
-  { equipo:"MES117", denominacion:"Escalera - Preembarque Inter N°5",          dimension:"", ubicacion:"AEP-ED7-NIVEL0-UBITEC049", fabricante:"FUJITEC", tipo:"",            ubi_desc:"Migraciones Internacionales" },
-  { equipo:"MES118", denominacion:"Escalera - Hall Sur Ed IV N°4",             dimension:"", ubicacion:"AEP-ED4-NIVEL0-UBITEC105", fabricante:"FUJITEC", tipo:"",            ubi_desc:"Hall Publico" },
+  { equipo:"MES101", denominacion:"Escalera - Preembarque Inter N°5",          dimension:"", ubicacion:"AEP-ED7-NIVEL0-UBITEC049", fabricante:"THYSSEN", tipo:"Escalera mecánica",            ubi_desc:"Migraciones Internacionales" },
+  { equipo:"MES104", denominacion:"Escalera Cruzada (Lado Pista) - N°4",       dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"Escalera mecánica",            ubi_desc:"Hall Publico Check in" },
+  { equipo:"MES105", denominacion:"Escalera Cruzada (Lado Rio) - N°3",         dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"Escalera mecánica",            ubi_desc:"Hall Publico Check in" },
+  { equipo:"MES107", denominacion:"Escalera Paralela (Lado Pista) - N°2",      dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"Escalera mecánica",            ubi_desc:"Hall Publico Check in" },
+  { equipo:"MES108", denominacion:"Escalera Paralela (Lado Rio) - N°1",        dimension:"", ubicacion:"AEP-ED6-NIVEL0-UBITEC060", fabricante:"THYSSEN", tipo:"Escalera mecánica",            ubi_desc:"Hall Publico Check in" },
+  { equipo:"MES117", denominacion:"Escalera - Preembarque Inter N°5",          dimension:"", ubicacion:"AEP-ED7-NIVEL0-UBITEC049", fabricante:"FUJITEC", tipo:"Escalera mecánica",            ubi_desc:"Migraciones Internacionales" },
+  { equipo:"MES118", denominacion:"Escalera - Hall Sur Ed IV N°4",             dimension:"", ubicacion:"AEP-ED4-NIVEL0-UBITEC105", fabricante:"FUJITEC", tipo:"Escalera mecánica",            ubi_desc:"Hall Publico" },
   { equipo:"MES120", denominacion:"Escalera - Arribos Nac. N°3 (Lado Pista)", dimension:"", ubicacion:"AEP-ED4-NIVEL0-UBITEC105", fabricante:"FUJITEC", tipo:"GS8000-HV10", ubi_desc:"Hall Publico" },
   { equipo:"MES121", denominacion:"Escalera - Arribos Nac. N°4 (Lado Rio)",   dimension:"", ubicacion:"AEP-ED4-NIVEL0-UBITEC105", fabricante:"FUJITEC", tipo:"GS8000-HV10", ubi_desc:"Hall Publico" },
 ];

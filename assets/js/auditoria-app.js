@@ -441,9 +441,27 @@
     const sem = (estado) => ({ ok: '🟢', rev: '🟡', mal: '🔴' }[estado] || '⚪');
     const codes = (list) => (list || []).map((c) => `<span class="equipo-tag" style="margin:2px 3px 2px 0;display:inline-block">${esc(c)}</span>`).join('');
 
-    // equipo -> tipo (aire acondicionado, la sección con tipificación limpia)
-    const eqTipo = {};
-    if (typeof AAC_DATA !== 'undefined') AAC_DATA.forEach((e) => { if (e && e.equipo) eqTipo[e.equipo] = e.tipo || ''; });
+    // equipo -> {tipo, familia} desde todas las fichas temáticas
+    const SRC = [
+      ['Aire acondicionado', typeof AAC_DATA !== 'undefined' ? AAC_DATA : []],
+      ['Patio de valijas (BHS)', typeof PATIO_DATA !== 'undefined' ? PATIO_DATA : []],
+      ['Bombas', typeof BOMBAS_DATA !== 'undefined' ? BOMBAS_DATA : []],
+      ['Extractores / Ventiladores', typeof EXTRACTORES_DATA !== 'undefined' ? EXTRACTORES_DATA : []],
+      ['Puertas automáticas', typeof PUERTAS_DATA !== 'undefined' ? PUERTAS_DATA : []],
+      ['Persianas de gatera', typeof PERSIANAS_DATA !== 'undefined' ? PERSIANAS_DATA : []],
+      ['Cortinas de aire', typeof CORTINAS_DATA !== 'undefined' ? CORTINAS_DATA : []],
+      ['Ascensores', typeof ASCENSORES_DATA !== 'undefined' ? ASCENSORES_DATA : []],
+      ['Escaleras mecánicas', typeof ESCALERAS_DATA !== 'undefined' ? ESCALERAS_DATA : []],
+      ['Mangas de embarque', typeof MANGAS_DATA !== 'undefined' ? MANGAS_DATA : []],
+    ];
+    const eqTipo = {};       // equipo -> tipo (solo para el check de coherencia AAC)
+    const eqInfo = {};       // equipo -> {tipo, familia} (para consistencia, todas)
+    SRC.forEach(([fam, arr]) => arr.forEach((e) => {
+      if (!e || !e.equipo) return;
+      const t = (e.tipo || e.clase || '').trim();
+      eqInfo[e.equipo] = { tipo: t || fam, familia: fam };
+      if (fam === 'Aire acondicionado') eqTipo[e.equipo] = e.tipo || '';
+    }));
 
     const planTipo = (d) => {
       const s = (d || '').toLowerCase();
@@ -467,22 +485,33 @@
       }
     });
 
-    // 2. Consistencia de periodicidad dentro de cada tipo (aire)
-    const porTipo = {};
+    // 2. Consistencia de periodicidad dentro de cada tipo (todas las familias).
+    //    Un equipo puede tener varias posiciones de plan → se toma su intervalo MÁS CORTO
+    //    (la cadencia efectiva con la que se lo interviene).
+    const efectiva = {};
     PL.forEach((p) => {
-      const te = eqTipo[p.equipo];
-      if (!te || !p.realBucket || /s\/fechas/.test(p.realBucket)) return;
-      (porTipo[te] || (porTipo[te] = [])).push({ equipo: p.equipo, b: p.realBucket, d: p.realDias });
+      if (!p.realDias || /s\/fechas/.test(p.realBucket || '')) return;
+      if (!efectiva[p.equipo] || p.realDias < efectiva[p.equipo].d) {
+        efectiva[p.equipo] = { d: p.realDias, b: p.realBucket };
+      }
     });
-    const consist = Object.entries(porTipo).map(([te, lst]) => {
+    const porTipo = {};
+    Object.entries(efectiva).forEach(([equipo, v]) => {
+      const inf = eqInfo[equipo];
+      if (!inf) return;
+      const key = inf.familia + ' · ' + inf.tipo;
+      (porTipo[key] || (porTipo[key] = [])).push({ equipo, b: v.b, d: v.d });
+    });
+    const consist = Object.entries(porTipo).map(([key, lst]) => {
       const c = {};
       lst.forEach((x) => { c[x.b] = (c[x.b] || 0) + 1; });
       const orden = Object.entries(c).sort((a, b) => b[1] - a[1]);
       const norma = orden[0][0];
       const outliers = lst.filter((x) => x.b !== norma);
-      return { te, n: lst.length, norma, dist: orden, outliers };
-    }).sort((a, b) => b.n - a.n);
-    const totalOutliers = consist.reduce((s, x) => s + x.outliers.length, 0);
+      return { te: key, n: lst.length, norma, dist: orden, outliers };
+    }).filter((x) => x.n >= 3).sort((a, b) => b.n - a.n);
+    // solo cuenta como "problema" si el tipo tiene ≥4 equipos y >1 se aparta
+    const totalOutliers = consist.reduce((s, x) => s + (x.n >= 4 ? x.outliers.length : 0), 0);
 
     // 3. Cobertura (del resumen)
     const sinPlan = (P.equiposMaestroSinPlan || {}).total || 0;
@@ -514,8 +543,8 @@
           'El plan corresponde al tipo de equipo (aire)',
           mismatch.length ? `${mismatch.length} planes nombran un tipo distinto al del equipo. Ej.: ${mismatch.slice(0, 4).map((m) => `${m.equipo} es ${m.teq} y el plan dice ${m.tplan}`).join('; ')}.` : 'Todos los planes de aire coinciden con el tipo de equipo.')}
         ${filaCheck(
-          totalOutliers === 0 ? 'ok' : (totalOutliers > 20 ? 'mal' : 'rev'),
-          'Misma periodicidad para equipos del mismo tipo (aire)',
+          totalOutliers === 0 ? 'ok' : (totalOutliers > 25 ? 'mal' : 'rev'),
+          'Misma periodicidad para equipos del mismo tipo',
           totalOutliers ? `${totalOutliers} equipos se apartan de la periodicidad típica de su tipo (ver abajo).` : 'Cada tipo de equipo corre a una sola periodicidad.')}
         ${filaCheck(
           fueraPaq === 0 ? 'ok' : 'rev',
@@ -529,14 +558,14 @@
         ${mismatch.length ? heading('Planes de aire con tipo que no coincide · ' + mismatch.length) +
           mismatch.map((m) => `<div style="font-size:12px;padding:2px 0"><span class="equipo-tag" style="background:#dc2626">${esc(m.equipo)}</span> equipo <strong>${esc(m.teq)}</strong> · plan <strong>${esc(m.tplan)}</strong> — <span style="color:var(--color-muted)">${esc(m.desc)}</span></div>`).join('') : ''}
 
-        ${heading('Periodicidad real por tipo de equipo de aire')}
+        ${heading('Periodicidad real por tipo de equipo · ' + consist.length + ' tipos')}
         ${consist.map((c) => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--color-surface)">
           <strong>${esc(c.te)}</strong> (${c.n}) — típico <strong>${esc(c.norma)}</strong>: ${c.dist.map(([k, n]) => `${esc(k)} ${n}`).join(' · ')}
           ${c.outliers.length && c.outliers.length <= 20 ? `<br><span style="color:var(--color-muted)">se apartan: ${c.outliers.map((o) => o.equipo + ' (' + o.b + ')').join(', ')}</span>` : ''}
         </div>`).join('')}
 
         <div style="margin-top:12px;padding:10px 12px;background:var(--color-surface);border-radius:8px;font-size:11.5px;color:var(--color-muted)">
-          El diagnóstico de coherencia/consistencia se hace hoy sobre <strong>Equipos de Aire</strong> (la sección con tipificación completa). Para el resto de las familias hace falta cargar el tipo de equipo en sus fichas.
+          El check "el plan corresponde al tipo" se hace sobre Equipos de Aire (donde se dan los cruces Split↔Roof Top). El de consistencia de periodicidad cubre todas las familias con tipo cargado en la ficha.
         </div>
       </div>
     </div>`;
