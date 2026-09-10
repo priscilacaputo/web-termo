@@ -1807,18 +1807,18 @@
       </div>
 
       <div class="prog-reglas-info">
-        <span class="prog-regla-chip libre">🕐 Mañana 06–18 · Tarde 18–06</span>
-        <span class="prog-regla-chip noche">🌆 MEQ → Turno Tarde</span>
-        <span class="prog-regla-chip noche">🌆 Sala VIP → Turno Tarde</span>
-        <span class="prog-regla-chip manana">☀️ Roof Top → Turno Mañana</span>
-        <span class="prog-regla-chip manana">☀️ AVO → Turno Mañana</span>
+        <span class="prog-regla-chip libre">🕐 Turno Día 06–18 · Turno Noche 18–06</span>
+        <span class="prog-regla-chip noche">🌙 MEQ → Turno Noche</span>
+        <span class="prog-regla-chip noche">🌙 Sala VIP → Turno Noche</span>
+        <span class="prog-regla-chip manana">☀️ Roof Top → Turno Día</span>
+        <span class="prog-regla-chip manana">☀️ AVO → Turno Día</span>
         <span class="prog-regla-chip libre">🧳 Patio de valijas: ventanas de <a href="https://patio-de-valijas-aep.vercel.app" target="_blank" rel="noopener">Plan Maestro BHS</a></span>
       </div>
 
       <div id="plan-empty-state" class="prog-empty-state hidden">
         <span class="prog-empty-icon">🗂️</span>
         <h3>Todavía no cargaste datos para planificar</h3>
-        <p>1) Definí la <strong>rotación de guardias</strong> del mes · 2) Cargá el <strong>Excel de OTs</strong> (mismo formato que Programación) · 3) Opcional: importá el <strong>plan del patio</strong> exportado desde la app Plan Maestro BHS. El planificador reparte todo por día, guardia y hora.</p>
+        <p>1) La <strong>rotación de guardias</strong> y la dotación se traen solas de la <a href="https://grilla-inteligente-termo.vercel.app/overview" target="_blank" rel="noopener">Grilla Inteligente</a> · 2) Cargá el <strong>Excel de OTs</strong> (mismo formato que Programación) · 3) Opcional: importá el <strong>plan del patio</strong> exportado desde la app Plan Maestro BHS. El planificador reparte todo por día, guardia y hora.</p>
       </div>
 
       <div id="plan-toolbar">
@@ -1843,8 +1843,8 @@
             <input type="number" id="plan-adhoc-dur" placeholder="min" value="60" min="5" step="5" style="width:80px" />
             <select id="plan-adhoc-turno">
               <option value="">Turno automático</option>
-              <option value="manana">☀️ Mañana</option>
-              <option value="noche">🌆 Tarde</option>
+              <option value="manana">☀️ Día</option>
+              <option value="noche">🌙 Noche</option>
             </select>
             <label class="plan-adhoc-alt"><input type="checkbox" id="plan-adhoc-altura" /> ⛰️ Altura</label>
             <button class="prog-btn prog-btn-primary" id="plan-adhoc-btn">Agregar</button>
@@ -2237,7 +2237,7 @@
   <script src="assets/js/estado-app.js?v=1"></script>
   <script src="assets/js/hdr-data.js?v=2"></script>
   <script src="assets/js/hdr-audit.js?v=3"></script>
-  <script src="assets/js/planificador-data.js?v=3"></script>
-  <script src="assets/js/planificador-app.js?v=3"></script>
+  <script src="assets/js/planificador-data.js?v=5"></script>
+  <script src="assets/js/planificador-app.js?v=5"></script>
 </body>
 </html>

@@ -23,12 +23,14 @@
 let planState = {
   mes: '',
   rotacion: {},          // "YYYY-MM-DD" → { manana: 1..4|null, noche: 1..4|null }
+  grilla: {},            // "YYYY-MM-DD" → { manana:{g,aire,mec,sup,ausentes}, noche:{...} } (Grilla Inteligente)
   cfg: JSON.parse(JSON.stringify(PLAN_DIA_TEMPLATE)),
   hidrolavado: false,
   ots: [],               // ver planNormalizarItem()
 };
 let planDiaSel = null;    // "YYYY-MM-DD" mostrado en el panel del día
 let planHist = { porOt: {}, porEquipo: {} };   // antigüedad desde el historial
+let planGrillaCargando = false;
 
 function planLoad() {
   try {
@@ -39,6 +41,7 @@ function planLoad() {
         planState = Object.assign(planState, p);
         if (!planState.cfg) planState.cfg = JSON.parse(JSON.stringify(PLAN_DIA_TEMPLATE));
         if (!planState.rotacion) planState.rotacion = {};
+        if (!planState.grilla) planState.grilla = {};
       }
     }
   } catch (e) { /* arranque limpio */ }
@@ -100,6 +103,7 @@ function planMinutosUtiles(turno) {
 /* ════════ Guardias / grilla virtual ════════ */
 const PLAN_TURNO_DEFAULT = { aire: 'manana', mecanico: 'noche' };
 
+/* Dotación fija de la guardia (composición nominal, sin francos). */
 function planTecnicosGuardia(gid, gremio) {
   if (typeof GUARDIAS === 'undefined') return 3;
   const g = GUARDIAS.find(x => x.id === gid);
@@ -109,9 +113,82 @@ function planTecnicosGuardia(gid, gremio) {
     return gremio === 'aire' ? r.startsWith('TERMO') : r.startsWith('MEC');
   }).length;
 }
-/* Cupo total (minutos-persona) de una guardia en un turno para un gremio. */
-function planCupoGuardia(gid, turno, gremio) {
-  return planMinutosUtiles(turno) * planTecnicosGuardia(gid, gremio);
+/* Técnicos que REALMENTE trabajan ese día/turno/gremio. Usa la dotación
+   de la Grilla Inteligente (presentes, ya descontados francos y
+   vacaciones) si está cargada para esa fecha; si no, cae en la
+   composición nominal de la guardia. */
+function planPresentes(fecha, turno, gremio) {
+  const g = planState.grilla && planState.grilla[fecha] && planState.grilla[fecha][turno];
+  if (g && g[gremio] != null) return g[gremio];
+  return planTecnicosGuardia(planGuardiaDe(fecha, turno), gremio);
+}
+/* Cupo (minutos-persona) de una guardia-día-turno para un gremio. */
+function planCupoDia(fecha, turno, gremio) {
+  return planMinutosUtiles(turno) * planPresentes(fecha, turno, gremio);
+}
+
+/* ════════ Grilla Inteligente (rotación + dotación real) ════════
+   Se consulta vía el proxy /api/grilla (el navegador no puede pegarle
+   directo por CORS). monthly-summary da la rotación del mes; una llamada
+   daily por día da presentes por especialidad. */
+function planGremioDeSpecialty(s) {
+  const u = String(s || '').toUpperCase();
+  if (u.startsWith('TERMO')) return 'aire';
+  if (u.startsWith('MEC')) return 'mecanico';
+  if (u.startsWith('SUP')) return 'sup';
+  return null;
+}
+async function planTraerGrilla(mes) {
+  mes = mes || planState.mes;
+  const m = String(mes).match(/(\d{4})-(\d{2})/);
+  if (!m) { planToast('Elegí un mes primero.', 'error'); return; }
+  const year = +m[1], month = +m[2];
+  planGrillaCargando = true;
+  renderPlanRotacion();
+  try {
+    const resp = await fetch(`/api/grilla?year=${year}&month=${month}`);
+    const j = await resp.json();
+    if (!j || !j.success || !j.data || !Array.isArray(j.data.days)) {
+      throw new Error((j && j.error) || 'respuesta inesperada');
+    }
+    j.data.days.forEach(d => {
+      if (d.day && d.day.guardNumber) (planState.rotacion[d.date] = planState.rotacion[d.date] || {}).manana = d.day.guardNumber;
+      if (d.night && d.night.guardNumber) (planState.rotacion[d.date] = planState.rotacion[d.date] || {}).noche = d.night.guardNumber;
+    });
+    /* Dotación real por día (presentes por especialidad). En paralelo. */
+    const dias = j.data.days.map(d => d.date);
+    const daily = await Promise.all(dias.map(fecha =>
+      fetch(`/api/grilla?date=${fecha}`).then(r => r.json()).then(x => ({ fecha, x })).catch(() => ({ fecha, x: null }))
+    ));
+    daily.forEach(({ fecha, x }) => {
+      if (!x || !x.success || !x.data || !Array.isArray(x.data.guards)) return;
+      const slot = { manana: null, noche: null };
+      x.data.guards.forEach(gd => {
+        if (!gd.worksToday) return;
+        const turno = String(gd.shiftType || '').toUpperCase() === 'NOCHE' ? 'noche' : 'manana';
+        const cnt = { g: gd.guardNumber, aire: 0, mecanico: 0, sup: 0, ausentes: 0 };
+        (gd.members || []).forEach(mm => {
+          const gr = planGremioDeSpecialty(mm.specialty);
+          const trabaja = String(mm.status || '').toUpperCase() === 'TRABAJO';
+          if (!trabaja) { cnt.ausentes++; return; }
+          if (gr === 'aire') cnt.aire++;
+          else if (gr === 'mecanico') cnt.mecanico++;
+          else if (gr === 'sup') cnt.sup++;
+        });
+        slot[turno] = cnt;
+      });
+      planState.grilla[fecha] = slot;
+    });
+    planGrillaCargando = false;
+    planDistribuir();
+    planSave();
+    renderPlanificador();
+    planToast(`✓ Rotación y dotación traídas de la Grilla Inteligente (${dias.length} días).`, 'success');
+  } catch (err) {
+    planGrillaCargando = false;
+    renderPlanRotacion();
+    planToast('❌ No se pudo traer la grilla: ' + err.message, 'error');
+  }
 }
 
 /* ════════ Rotación del mes ════════ */
@@ -429,7 +506,7 @@ function planDistribuir() {
   function laneState(fecha, guardia, turno, gremio) {
     const key = `${fecha}|${guardia}|${gremio}`;
     if (!laneCache[key]) {
-      const n = Math.max(1, planTecnicosGuardia(guardia, gremio));
+      const n = Math.max(1, planPresentes(fecha, turno, gremio));
       const libres = planTramosLibres(turno);
       laneCache[key] = {
         turno,
@@ -693,8 +770,8 @@ function renderPlanStats() {
   const altura = ots.filter(o => o.esAltura).length;
   const cards = [
     { label: 'OTs totales', value: ots.length, icon: '🗂️', color: '#1a56a4' },
-    { label: '☀️ Turno mañana', value: manana, icon: '☀️', color: '#d97706' },
-    { label: '🌆 Turno tarde', value: noche, icon: '🌆', color: '#4338ca' },
+    { label: '☀️ Turno Día', value: manana, icon: '☀️', color: '#d97706' },
+    { label: '🌙 Turno Noche', value: noche, icon: '🌙', color: '#4338ca' },
     { label: '⛰️ Pagan altura', value: altura, icon: '⛰️', color: '#92400e' },
     { label: '📌 Sin ubicar', value: sinUbic, icon: '📌', color: sinUbic ? '#dc2626' : '#10b981' },
   ];
@@ -713,7 +790,7 @@ function renderPlanStats() {
   dias.forEach(f => {
     ['manana', 'noche'].forEach(t => {
       const g = planGuardiaDe(f, t);
-      if (g) capG[g] += planCupoGuardia(g, t, t === 'manana' ? 'aire' : 'mecanico') + planCupoGuardia(g, t, t === 'manana' ? 'mecanico' : 'aire');
+      if (g) capG[g] += planCupoDia(f, t, 'aire') + planCupoDia(f, t, 'mecanico');
     });
   });
   eq.innerHTML = `<div class="plan-equidad-title">Equidad entre guardias (mes)</div><div class="plan-equidad-grid">` +
@@ -781,26 +858,39 @@ function renderPlanRotacion() {
   const opts = sel => `<option value="">—</option>` + [1, 2, 3, 4].map(n => `<option value="${n}" ${n === sel ? 'selected' : ''}>G${n}</option>`).join('');
   const anclaDefault = dias[0] || (planState.mes ? planState.mes + '-01' : '');
 
+  const conGrilla = Object.keys(planState.grilla || {}).length;
   body.innerHTML = `
     <div class="plan-rot-patron">
+      <button class="prog-btn prog-btn-primary" id="plan-rot-grilla" ${planGrillaCargando ? 'disabled' : ''}>
+        ${planGrillaCargando ? '⏳ Trayendo…' : '🔄 Traer rotación y dotación de la Grilla Inteligente'}
+      </button>
+      ${conGrilla ? `<span class="prog-mangas-hint">✓ ${conGrilla} días con dotación real de la grilla</span>` : `<span class="prog-mangas-hint">— o armá el patrón a mano abajo</span>`}
+    </div>
+    <details class="plan-rot-manual"><summary>Patrón manual / ajustes por día</summary>
+    <div class="plan-rot-patron" style="margin-top:8px">
       <label>Desde <input type="date" id="plan-rot-ancla" value="${anclaDefault}"></label>
-      <label>☀️ Mañana <select id="plan-rot-gm">${opts(1)}</select></label>
-      <label>🌆 Tarde <select id="plan-rot-gn">${opts(3)}</select></label>
+      <label>☀️ Día <select id="plan-rot-gm">${opts(1)}</select></label>
+      <label>🌙 Noche <select id="plan-rot-gn">${opts(3)}</select></label>
       <label>Ciclo (días) <input type="number" id="plan-rot-ciclo" value="2" min="1" style="width:60px"></label>
-      <button class="prog-btn prog-btn-primary" id="plan-rot-apply">Aplicar patrón</button>
+      <button class="prog-btn" id="plan-rot-apply">Aplicar patrón</button>
     </div>
     <div class="plan-rot-grid">
       ${dias.map(f => {
     const r = planState.rotacion[f] || {};
+    const gr = planState.grilla && planState.grilla[f];
+    const dotTxt = t => { const c = gr && gr[t]; return c ? ` title="${c.aire} aire · ${c.mecanico} mec${c.ausentes ? ' · ' + c.ausentes + ' aus.' : ''}"` : ''; };
     return `<div class="plan-rot-cell">
           <span class="plan-rot-day">${planDiaLegible(f)}</span>
-          <span class="plan-rot-sel">☀️<select data-f="${f}" data-t="manana">${opts(r.manana || null)}</select></span>
-          <span class="plan-rot-sel">🌆<select data-f="${f}" data-t="noche">${opts(r.noche || null)}</select></span>
+          <span class="plan-rot-sel"${dotTxt('manana')}>☀️<select data-f="${f}" data-t="manana">${opts(r.manana || null)}</select></span>
+          <span class="plan-rot-sel"${dotTxt('noche')}>🌙<select data-f="${f}" data-t="noche">${opts(r.noche || null)}</select></span>
         </div>`;
   }).join('')}
-    </div>`;
+    </div>
+    </details>`;
 
-  body.querySelector('#plan-rot-apply').addEventListener('click', () => {
+  body.querySelector('#plan-rot-grilla').addEventListener('click', () => planTraerGrilla());
+  const applyBtn = body.querySelector('#plan-rot-apply');
+  if (applyBtn) applyBtn.addEventListener('click', () => {
     const ancla = body.querySelector('#plan-rot-ancla').value;
     const gm = +body.querySelector('#plan-rot-gm').value || 1;
     const gn = +body.querySelector('#plan-rot-gn').value || 3;
@@ -841,7 +931,7 @@ function renderPlanCalendario() {
     const sinRot = !gm && !gn ? ' plan-cal-sinrot' : '';
     html += `<div class="plan-cal-cell${sel}${sinRot}" data-f="${f}">
       <div class="plan-cal-num">${new Date(f + 'T00:00:00').getDate()}</div>
-      <div class="plan-cal-guardias">${gm ? `<span class="turno-badge manana">☀️ G${gm}</span>` : ''}${gn ? `<span class="turno-badge noche">🌆 G${gn}</span>` : ''}${!gm && !gn ? '<span class="plan-cal-norot">sin rotación</span>' : ''}</div>
+      <div class="plan-cal-guardias">${gm ? `<span class="turno-badge manana">☀️ G${gm}</span>` : ''}${gn ? `<span class="turno-badge noche">🌙 G${gn}</span>` : ''}${!gm && !gn ? '<span class="plan-cal-norot">sin rotación</span>' : ''}</div>
       ${items.length ? `<div class="plan-cal-count">🗂️ ${items.length}${alt ? ` · ⛰️ ${alt}` : ''}</div>` : ''}
     </div>`;
   });
@@ -882,7 +972,8 @@ function renderPlanDia() {
     const dur = planDurTurno(cfg);
     const iniT = planHHMMtoMin(cfg.inicio);
     const items = planState.ots.filter(o => o.fecha === f && o.guardia === g).sort((a, b) => planHHMMtoMin(a.inicio) - planHHMMtoMin(b.inicio));
-    const nAire = planTecnicosGuardia(g, 'aire'), nMec = planTecnicosGuardia(g, 'mecanico');
+    const nAire = planPresentes(f, t, 'aire'), nMec = planPresentes(f, t, 'mecanico');
+    const gr = planState.grilla && planState.grilla[f] && planState.grilla[f][t];
     /* lanes para dibujar: cada OT ocupa `nPers` carriles contiguos por su
        tramo horario (first-fit por solapamiento). */
     const laneEnds = [];
@@ -915,7 +1006,7 @@ function renderPlanDia() {
       <div class="plan-guardia-head">
         <span class="prog-guardia-name">Guardia ${g}</span>
         <span class="turno-badge ${t === 'manana' ? 'manana' : 'noche'}">${PLAN_TURNO_ICON[t]} ${PLAN_TURNO_LBL[t]} ${cfg.inicio}–${cfg.fin}</span>
-        <span class="prog-guardia-count">👷 ${nAire} aire · ${nMec} mec · 🗂️ ${items.length} OTs</span>
+        <span class="prog-guardia-count">👷 ${nAire} aire · ${nMec} mec${gr && gr.ausentes ? ` · ${gr.ausentes} aus.` : ''}${gr ? ' (grilla)' : ''} · 🗂️ ${items.length} OTs</span>
       </div>
       <div class="plan-timeline" style="height:${nLanes * rowH + 22}px" data-init="${iniT}" data-dur="${dur}">
         <div class="plan-tl-ticks">${ticks.map(m => `<span style="left:${m / dur * 100}%">${planMinToHHMM(iniT + m)}</span>`).join('')}</div>
@@ -1018,7 +1109,7 @@ function planExport() {
 function planReset() {
   if (!planState.ots.length && !Object.keys(planState.rotacion).length) return;
   if (!window.confirm('¿Vaciar el planificador? Se borran las OTs cargadas y la rotación (no afecta los archivos originales).')) return;
-  planState = { mes: document.getElementById('plan-mes-input').value || '', rotacion: {}, cfg: JSON.parse(JSON.stringify(PLAN_DIA_TEMPLATE)), hidrolavado: false, ots: [] };
+  planState = { mes: document.getElementById('plan-mes-input').value || '', rotacion: {}, grilla: {}, cfg: JSON.parse(JSON.stringify(PLAN_DIA_TEMPLATE)), hidrolavado: false, ots: [] };
   planDiaSel = null;
   planSave();
   renderPlanificador();
@@ -1034,7 +1125,9 @@ function planReset() {
   planState.mes = mesInput.value;
   mesInput.addEventListener('change', function () {
     planState.mes = this.value; planDiaSel = null;
+    planState.grilla = {};
     planDistribuir(); planSave(); renderPlanificador();
+    planTraerGrilla();          // rotación + dotación del mes nuevo
   });
 
   const wire = (btnId, inputId, handler) => {
@@ -1065,5 +1158,7 @@ function planReset() {
 
   renderPlanificador();
   planCargarHistorial();
+  /* Primera vez (sin rotación cargada): traé todo de la Grilla Inteligente. */
+  if (!Object.keys(planState.rotacion).length && planState.mes) planTraerGrilla();
 })();
 

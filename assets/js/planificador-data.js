@@ -14,8 +14,10 @@ const PLAN_STORAGE_KEY = 'planificador_ots_v2';   // v2: turnos de 12 h (06–18
    del tiempo disponible de cada guardia.
    La clave interna del turno Tarde sigue siendo `noche` (es el turno en
    el que se hacen los trabajos "solo de noche": MEQ, Sala VIP, etc.). */
-const PLAN_TURNO_LBL  = { manana: 'Mañana', noche: 'Tarde' };
-const PLAN_TURNO_ICON = { manana: '☀️', noche: '🌆' };
+/* La clave interna sigue siendo manana / noche; los labels visibles
+   siguen a la Grilla Inteligente: turno "Día" 06–18 y turno "Noche" 18–06. */
+const PLAN_TURNO_LBL  = { manana: 'Día', noche: 'Noche' };
+const PLAN_TURNO_ICON = { manana: '☀️', noche: '🌙' };
 const PLAN_DIA_TEMPLATE = {
   manana: {
     inicio: '06:00', fin: '18:00',
