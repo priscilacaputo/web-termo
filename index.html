@@ -95,6 +95,14 @@
         <span class="nav-icon">🔥</span>
         <span class="nav-label">Incendios (ECAs)</span>
       </li>
+      <li class="nav-item" data-page="valvulas">
+        <span class="nav-icon">🔧</span>
+        <span class="nav-label">Válvulas</span>
+      </li>
+      <li class="nav-item" data-page="campanas">
+        <span class="nav-icon">🍳</span>
+        <span class="nav-label">Campanas de Extracción</span>
+      </li>
       <li class="nav-item" data-page="otros">
         <span class="nav-icon">⚙️</span>
         <span class="nav-label">Otros Equipos</span>
@@ -1445,6 +1453,87 @@
 
     </div>
 
+    <!-- ─── PÁGINA: VÁLVULAS ─── -->
+    <div class="page hidden" id="page-valvulas">
+
+      <div class="stats-grid" id="valvulas-stats" style="margin-bottom:16px"></div>
+
+      <!-- Toolbar: búsqueda y filtro -->
+      <div class="toolbar" style="margin-bottom:16px">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="valvulas-search" class="search-input" placeholder="Buscar por código, denominación, tipo, medida, local..." />
+          <button class="clear-btn" id="valvulas-clear-search" title="Limpiar" style="display:none">✕</button>
+        </div>
+        <div class="filter-group">
+          <select id="valvulas-filter-tipo" class="filter-select">
+            <option value="">Todos los tipos</option>
+          </select>
+        </div>
+        <button class="export-btn" id="valvulas-export-btn">⬇ Excel</button>
+        <span id="valvulas-result-count" class="puertas-result-count"></span>
+      </div>
+
+      <!-- Vista: Tabla -->
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Equipo</th>
+                <th>Denominación</th>
+                <th>Tipo</th>
+                <th>Medida</th>
+                <th>Local / Sector</th>
+              </tr>
+            </thead>
+            <tbody id="valvulas-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ─── PÁGINA: CAMPANAS DE EXTRACCIÓN ─── -->
+    <div class="page hidden" id="page-campanas">
+
+      <div class="stats-grid" id="campanas-stats" style="margin-bottom:16px"></div>
+
+      <!-- Toolbar: búsqueda y filtro -->
+      <div class="toolbar" style="margin-bottom:16px">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="campanas-search" class="search-input" placeholder="Buscar por código, local, edificio, ubicación..." />
+          <button class="clear-btn" id="campanas-clear-search" title="Limpiar" style="display:none">✕</button>
+        </div>
+        <div class="filter-group">
+          <select id="campanas-filter-edificio" class="filter-select">
+            <option value="">Todos los edificios</option>
+          </select>
+        </div>
+        <button class="export-btn" id="campanas-export-btn">⬇ Excel</button>
+        <span id="campanas-result-count" class="puertas-result-count"></span>
+      </div>
+
+      <!-- Vista: Tabla -->
+      <div class="table-card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Equipo</th>
+                <th>Denominación</th>
+                <th>Edificio</th>
+                <th>Local / Sector</th>
+              </tr>
+            </thead>
+            <tbody id="campanas-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
     <!-- ─── PÁGINA: PAÑOL / REPUESTOS ─── -->
     <div class="page hidden" id="page-panol">
 
@@ -1870,6 +1959,24 @@
     </div>
   </div>
 
+  <!-- Modal válvulas -->
+  <div class="modal-overlay" id="valvulas-modal-overlay">
+    <div class="modal" id="valvulas-modal">
+      <button class="modal-close" id="valvulas-modal-close">✕</button>
+      <div class="modal-header" id="valvulas-modal-header"></div>
+      <div class="modal-body" id="valvulas-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Modal campanas de extracción -->
+  <div class="modal-overlay" id="campanas-modal-overlay">
+    <div class="modal" id="campanas-modal">
+      <button class="modal-close" id="campanas-modal-close">✕</button>
+      <div class="modal-header" id="campanas-modal-header"></div>
+      <div class="modal-body" id="campanas-modal-body"></div>
+    </div>
+  </div>
+
   <!-- Búsqueda Global -->
   <div class="gs-overlay" id="gs-overlay">
     <div class="gs-box">
@@ -1958,10 +2065,10 @@
   <script src="assets/js/patio-data.js?v=5"></script>
   <script src="assets/js/panol-data.js?v=1"></script>
   <script src="assets/js/panol-repuestos-data.js?v=1"></script>
-  <script src="assets/js/equipos-sap-data.js?v=2"></script>
+  <script src="assets/js/equipos-sap-data.js?v=4"></script>
   <script src="assets/js/estrategias-sap-data.js?v=1"></script>
-  <script src="assets/js/planes-sap-data.js?v=7"></script>
-  <script src="assets/js/ots-sap-data.js?v=5"></script>
+  <script src="assets/js/planes-sap-data.js?v=9"></script>
+  <script src="assets/js/ots-sap-data.js?v=6"></script>
   <script src="assets/js/ops-sap-data.js?v=2"></script>
   <script src="assets/js/mm60-data.js?v=1"></script>
   <script src="assets/js/mb51-data.js?v=1"></script>
@@ -1987,11 +2094,15 @@
   <script src="assets/js/aac-app.js?v=11"></script>
   <script src="assets/js/otros-data.js?v=1"></script>
   <script src="assets/js/otros-app.js?v=3"></script>
+  <script src="assets/js/valvulas-data.js?v=1"></script>
+  <script src="assets/js/valvulas-app.js?v=1"></script>
+  <script src="assets/js/campanas-data.js?v=1"></script>
+  <script src="assets/js/campanas-app.js?v=1"></script>
   <script src="assets/js/ecas-data.js?v=1"></script>
   <script src="assets/js/ecas-analytics.js?v=1"></script>
   <script src="assets/js/ecas-app.js?v=2"></script>
   <script src="assets/js/analytics-app.js?v=1"></script>
-  <script src="assets/js/auditoria-app.js?v=18"></script>
+  <script src="assets/js/auditoria-app.js?v=21"></script>
   <script src="assets/js/maint-planes-app.js?v=2"></script>
   <script src="assets/js/global-search.js?v=1"></script>
   <script src="assets/js/export-utils.js?v=2"></script>

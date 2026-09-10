@@ -189,6 +189,36 @@ const EXPORT_CONFIGS = [
     ]
   },
   {
+    btnId: 'valvulas-export-btn',
+    filename: 'AEP_Valvulas_Sistema_Incendio',
+    getData: () => VALVULAS_DATA,
+    columns: [
+      { key: 'equipo',       header: 'Equipo' },
+      { key: 'denominacion', header: 'Denominación' },
+      { key: 'tipo',         header: 'Tipo' },
+      { key: 'medida',       header: 'Medida / Diámetro' },
+      { key: 'material',     header: 'Material / Modelo' },
+      { key: 'fabricante',   header: 'Fabricante' },
+      { key: 'fecha',        header: 'Puesta en servicio' },
+      { key: 'status',       header: 'Status SAP' },
+      { key: 'ubicacion',    header: 'Ubicación SAP' },
+      { key: 'local',        header: 'Local / Sector' },
+    ]
+  },
+  {
+    btnId: 'campanas-export-btn',
+    filename: 'AEP_Campanas_de_Extraccion',
+    getData: () => CAMPANAS_DATA,
+    columns: [
+      { key: 'equipo',       header: 'Equipo' },
+      { key: 'denominacion', header: 'Denominación' },
+      { key: 'edificio',     header: 'Edificio' },
+      { key: 'status',       header: 'Status SAP' },
+      { key: 'ubicacion',    header: 'Ubicación SAP' },
+      { key: 'local',        header: 'Local / Sector' },
+    ]
+  },
+  {
     // Headers = export SAP de almacén (para que el mismo archivo sirva al "Subir Excel")
     btnId: 'panol-export-btn',
     filename: 'AEP_Panol_Stock',

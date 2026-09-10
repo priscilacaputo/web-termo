@@ -32,6 +32,8 @@ const ESTADO_CATEGORIAS = [
   { id: 'bombas',      label: 'Bombas',               icon: '💧', get: () => (typeof BOMBAS_DATA !== 'undefined' ? BOMBAS_DATA : []) },
   { id: 'puertas',     label: 'Puertas Automáticas',  icon: '🚪', get: () => (typeof PUERTAS_DATA !== 'undefined' ? PUERTAS_DATA : []) },
   { id: 'ecas',        label: 'Incendios (ECAs)',     icon: '🔥', get: () => (typeof ECAS_DATA !== 'undefined' ? ECAS_DATA : []) },
+  { id: 'valvulas',    label: 'Válvulas',             icon: '🔧', get: () => (typeof VALVULAS_DATA !== 'undefined' ? VALVULAS_DATA : []) },
+  { id: 'campanas',    label: 'Campanas de Extracción', icon: '🍳', get: () => (typeof CAMPANAS_DATA !== 'undefined' ? CAMPANAS_DATA : []) },
   { id: 'otros',       label: 'Otros Equipos',        icon: '⚙️', get: () => (typeof OTROS_DATA !== 'undefined' ? OTROS_DATA : []) },
   { id: 'flota',       label: 'Flota Vehicular',      icon: '🚐', get: () => (typeof FLOTA_DATA !== 'undefined' ? FLOTA_DATA : []) },
 ];

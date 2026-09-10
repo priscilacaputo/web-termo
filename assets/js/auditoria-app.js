@@ -29,6 +29,8 @@
     { id: 'bombas',      get: () => (typeof BOMBAS_DATA      !== 'undefined' ? arr(BOMBAS_DATA)      : []) },
     { id: 'puertas',     get: () => (typeof PUERTAS_DATA     !== 'undefined' ? arr(PUERTAS_DATA)     : []) },
     { id: 'ecas',        get: () => (typeof ECAS_DATA        !== 'undefined' ? arr(ECAS_DATA)        : []) },
+    { id: 'valvulas',    get: () => (typeof VALVULAS_DATA    !== 'undefined' ? arr(VALVULAS_DATA)    : []) },
+    { id: 'campanas',    get: () => (typeof CAMPANAS_DATA    !== 'undefined' ? arr(CAMPANAS_DATA)    : []) },
     { id: 'otros',       get: () => (typeof OTROS_DATA       !== 'undefined' ? arr(OTROS_DATA)       : []) },
     { id: 'flota',       get: () => (typeof FLOTA_DATA       !== 'undefined' ? arr(FLOTA_DATA)       : []) },
   ];
@@ -62,7 +64,7 @@
     { dim: 'Ubicación técnica', estado: 'ok',
       nota: 'Marcada como correcta (decisión 2026-09-08). No se audita el campo.' },
     { dim: 'Planes y asignación a equipo', estado: 'curso',
-      nota: 'IP24 MOD (solo Aeroparque, sin El Palomar / San Fernando) cruzado contra el maestro: 1.050 posiciones, 969 equipos. 39 con preventivo pero sin el equipo dado de alta (persianas MCD, tanques TNQ…). 58 equipos del maestro sin plan.' },
+      nota: 'IP24 MOD (solo Aeroparque, sin El Palomar / San Fernando) cruzado contra el maestro: 1.050 posiciones, 969 equipos. 39 con preventivo pero sin el equipo dado de alta (persianas MCD, tanques TNQ…). 99 equipos del maestro sin plan (incluye 25 válvulas VAL de hidrantes/retención y 16 campanas CPN recién incorporadas).' },
     { dim: 'Periodicidad de los planes', estado: 'curso',
       nota: 'Periodicidad real (mediana entre tomas de IP24) validada contra los paquetes de la estrategia (IP11): 1.049 de 1.050 coinciden. Solo 2-3 planes corren a otra frecuencia que la de su nombre/estrategia.' },
     { dim: 'Materiales de OT y stock', estado: 'curso',
@@ -84,7 +86,9 @@
     'Incendios: la web usa códigos ECA1–ECA27 (propios); SAP los tiene como ECC054–ECC101 y ECC556–ECC561. Hay que mapear ECA ↔ ECC.',
     'Persianas de gatera: las fichas MCD100–MCD135 no aparecen en este export de SAP. Confirmar si están de alta con otro código o si faltan crear.',
     'HER0778 / HER0875 / HER0906 / HER0926 / HER0956: dadas de alta como "equipo" en SAP pero son cajas de herramientas asignadas a personas. Revisar si corresponde que sean objetos técnicos.',
-    'Familias sin sección propia en la web (viven solo en el maestro): campanas CPN, válvulas VAL, tanques TNQ/ATQ, medidores GAS/CAU, autoelevador AUT.',
+    'Familias sin sección propia en la web (viven solo en el maestro): tanques TNQ/ATQ, medidores GAS/CAU, autoelevador AUT.',
+    'Válvulas VAL: sección propia con las 37 válvulas del sistema de incendio (export IH08 val.xlsx), las 37 ya incorporadas al maestro TER/MEC (2026-09-10). 12 tienen plan preventivo en IP24; las otras 25 (retención VAL261-262 + mariposas de hidrantes VAL269–290/VAL387) figuran en "equipos del maestro sin plan".',
+    'Campanas de extracción CPN: sección propia con las 18 campanas (export IH08 cpn.xlsx), las 18 ya incorporadas al maestro TER/MEC (2026-09-10). Solo CPN15 y CPN16 tienen plan "MP 1M Campanas y sistema de extracción" en IP24; las otras 16 figuran en "equipos del maestro sin plan" (probable: falta asignarles el mismo plan mensual).',
   ];
 
   /* ── Estado ── */

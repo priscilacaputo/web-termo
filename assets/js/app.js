@@ -15,6 +15,8 @@ const PAGE_TITLES = {
   puertas:     ["Puertas Automáticas", "AEP — Puertas automáticas corredizas · Manusa · Audoor"],
   aac:         ["Equipos de Aire",     "AEP — Aire acondicionado · Splits · VRF · Roof Tops · UTAs · Chillers"],
   ecas:        ["Incendios (ECAs)",    "AEP — Equipos de detección y extinción de incendios · Sprinklers · Hidrantes"],
+  valvulas:    ["Válvulas",            "AEP — Válvulas del sistema de incendio · Esclusa · Retención · Alivio · Mariposa (VAL)"],
+  campanas:    ["Campanas de Extracción", "AEP — Campanas de extracción de cocinas de locales gastronómicos y salas VIP (CPN)"],
   otros:       ["Otros Equipos",       "AEP — Arcos de lectura · Cisternas · Compresores"],
   auditoria:   ["Auditoría SAP", "AEP — Barrido de datos maestros · Inventario de equipos (export IH08)"],
   analytics:   ["Distribución de Equipos", "AEP — Análisis de distribución por edificio y piso · Todos los equipos"],

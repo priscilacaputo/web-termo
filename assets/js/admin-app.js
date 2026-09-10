@@ -14,6 +14,8 @@ const SECTION_META = {
   aac:         { btnId: 'aac-export-btn',          dataVar: 'AAC_DATA',         key: 'equipo' },
   ecas:        { btnId: 'ecas-export-btn',         dataVar: 'ECAS_DATA',        key: 'equipo' },
   otros:       { btnId: 'otros-export-btn',        dataVar: 'OTROS_DATA',       key: 'equipo' },
+  valvulas:    { btnId: 'valvulas-export-btn',     dataVar: 'VALVULAS_DATA',    key: 'equipo' },
+  campanas:    { btnId: 'campanas-export-btn',     dataVar: 'CAMPANAS_DATA',    key: 'equipo' },
   panol:       { btnId: 'panol-export-btn',        dataVar: 'PANOL_DATA',       key: 'cod' },
 };
 

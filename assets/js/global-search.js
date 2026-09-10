@@ -11,6 +11,8 @@ const GS_SOURCES = [
   { key:'cortinas',    label:'Cortinas de Aire',     icon:'🌬️', color:'#0f766e', page:'cortinas',    getData:()=>CORTINAS_DATA },
   { key:'bombas',      label:'Bombas',               icon:'💧',  color:'#1d4ed8', page:'bombas',      getData:()=>BOMBAS_DATA },
   { key:'patio',       label:'Patio de Valijas',     icon:'🧳',  color:'#7c3aed', page:'patio',       getData:()=>PATIO_DATA },
+  { key:'valvulas',    label:'Válvulas',             icon:'🔧',  color:'#7c3aed', page:'valvulas',    getData:()=>VALVULAS_DATA },
+  { key:'campanas',    label:'Campanas de Extracción', icon:'🍳', color:'#d97706', page:'campanas',   getData:()=>CAMPANAS_DATA },
   { key:'otros',       label:'Otros Equipos',        icon:'⚙️',  color:'#374151', page:'otros',       getData:()=>OTROS_DATA },
 ];
 
