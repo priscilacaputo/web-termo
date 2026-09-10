@@ -1,18 +1,18 @@
 /* ─── OPS_SAP_RESUMEN — lista de operaciones de OT (IW49, TER+MEC) ───
-   Fuente: lista de operaciones.xlsx. 4604 operaciones de 2161 OTs.
+   Fuente: lista de operaciones.xlsx. 4574 operaciones de 2159 OTs.
    NO trae componentes/materiales ni ejecución real (todas PEND / ABIE).
    Aporta: texto de cada paso del plan y HH planificadas por puesto de trabajo.
    Regenerar con scratchpad/gen_ops.py. */
 
 const OPS_SAP_RESUMEN = {
  "fuente": "lista de operaciones.xlsx (operaciones de OT, IW49 · TER + MEC)",
- "operaciones": 4604,
- "ordenes": 2161,
+ "operaciones": 4574,
+ "ordenes": 2159,
  "sinComponentes": true,
  "sinEjecucionReal": true,
- "hhPlanificadasTotal": 5274,
+ "hhPlanificadasTotal": 5266,
  "hhOverhead": 4,
- "nOverhead": 159,
+ "nOverhead": 155,
  "porPuestoHH": [
   {
    "k": "AUX_TER",
@@ -20,7 +20,7 @@ const OPS_SAP_RESUMEN = {
   },
   {
    "k": "AUX_MEC",
-   "h": 1918
+   "h": 1910
   },
   {
    "k": "MOEX",
@@ -46,7 +46,7 @@ const OPS_SAP_RESUMEN = {
   },
   {
    "k": "AUX_MEC",
-   "n": 1573
+   "n": 1543
   },
   {
    "k": "AUX_TER",
@@ -67,7 +67,7 @@ const OPS_SAP_RESUMEN = {
  ],
  "opsPorOrden": {
   "una": 1984,
-  "variasOps": 177,
+  "variasOps": 175,
   "max": 53
  },
  "topTextosOperacion": [

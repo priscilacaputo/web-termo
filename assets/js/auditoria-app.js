@@ -62,13 +62,13 @@
     { dim: 'Ubicación técnica', estado: 'ok',
       nota: 'Marcada como correcta (decisión 2026-09-08). No se audita el campo.' },
     { dim: 'Planes y asignación a equipo', estado: 'curso',
-      nota: 'IP24 MOD cruzado contra el maestro. Los "planes sin equipo en el maestro" son 100 de otros aeropuertos (EPA/SFD que también gestiona TER/MEC) + 39 de AEP con preventivo pero sin el equipo dado de alta (persianas MCD, tanques TNQ…).' },
+      nota: 'IP24 MOD (solo Aeroparque, sin El Palomar / San Fernando) cruzado contra el maestro: 1.050 posiciones, 969 equipos. 39 con preventivo pero sin el equipo dado de alta (persianas MCD, tanques TNQ…). 58 equipos del maestro sin plan.' },
     { dim: 'Periodicidad de los planes', estado: 'curso',
       nota: 'Periodicidad real calculada de las fechas de IP24 (mediana entre tomas). Se marcan los planes que corren a otra frecuencia que la de su nombre.' },
     { dim: 'Materiales de OT y stock', estado: 'curso',
       nota: 'Stock (MB52), maestro (MM60) y consumo 2 años (MB51) cargados: cobertura, faltantes e inmovilizado abajo. Falta solo el link material↔equipo (componentes por plan/OT: IA08 / COOIS / IW3D).' },
     { dim: 'Ejecución de OTs', estado: 'curso',
-      nota: 'IW38 2 años: 18.731 OTs preventivas, 1.022 equipos. 90% se cierran (OTCE), pero solo ~18% de las cerradas lleva notificación de horas/fecha. Backlog abierto 1.826 (191 > 6 meses). 100 equipos con plan sin ninguna OT.' },
+      nota: 'IW38 2 años (solo Aeroparque): 18.731 OTs preventivas, 1.022 equipos. 90% se cierran (OTCE), pero solo ~18% de las cerradas lleva notificación de horas/fecha. Backlog abierto 1.826 (191 > 6 meses).' },
   ];
   const EST_META = {
     ok:        { label: 'OK',          cls: 'ok' },
@@ -453,23 +453,20 @@
     const maxFam = Math.max(1, ...fam.map((x) => x.n));
     const sinEq = P.planesSinEquipo || [];
     const noMaestro = P.equiposConPlanNoEnMaestro || [];
-    const noMaestroC = P.noEnMaestroPorCentro || {};
-    const noMaestroAEP = noMaestroC.AEP || [];
-    const otrosAero = [].concat(noMaestroC.EPA || [], noMaestroC.SFD || [], noMaestroC.otro || []);
     const baja = P.equiposConPlanDadosDeBaja || [];
     const sinPlan = P.equiposMaestroSinPlan || { total: 0, porPrefijo: {}, lista: [] };
     const desaj = [].concat(P.desajusteMenosSeguido || [], P.desajusteNoCoincide || []);
 
     return `<div class="table-card" style="margin-bottom:20px">
       <div style="padding:14px 16px;font-weight:800;font-size:13px;border-bottom:1px solid var(--color-border)">
-        Planes de mantenimiento · IP24 (TER + MEC)
+        Planes de mantenimiento · IP24 (TER + MEC · solo Aeroparque)
         <span style="font-weight:500;color:var(--color-muted)"> — con objeto técnico · periodicidad real = mediana de días entre tomas</span>
       </div>
       <div style="padding:14px 16px">
         <div class="stats-grid" style="margin-bottom:14px">
           ${card('Posiciones de plan', P.posiciones.toLocaleString('es-AR'), '#0096d6', `${(P.equiposConPlan || 0).toLocaleString('es-AR')} equipos con plan`)}
           ${card('Equipos sin plan', sinPlan.total, '#f59e0b', 'Del maestro, familias TER/MEC — sin preventivo')}
-          ${card('Plan sin equipo en el maestro AEP', noMaestroAEP.length, '#dc2626', `+ ${otrosAero.length} de otros aeropuertos (EPA/SFD)`)}
+          ${card('Plan sin equipo en el maestro', noMaestro.length, '#dc2626', 'Preventivo activo pero el equipo no está de alta en SAP')}
           ${card('Plan sobre equipo de baja', baja.length, '#dc2626', 'Equipo NOAC/PTBO con plan activo')}
         </div>
 
@@ -478,13 +475,9 @@
         <details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:var(--color-primary)">ver los ${sinPlan.total} equipos</summary>
           <div style="margin-top:6px">${codes(sinPlan.lista)}</div></details>
 
-        ${noMaestroAEP.length ? heading('AEP — plan activo pero el equipo no está dado de alta en SAP · ' + noMaestroAEP.length) +
+        ${noMaestro.length ? heading('Plan activo pero el equipo no está dado de alta en SAP · ' + noMaestro.length) +
           `<div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">Se les hace preventivo pero nunca se creó el equipo (objeto técnico sí, equipo no): persianas MCD, tanques TNQ, etc. Crear el equipo o reasignar el plan.</div>
-           <div>${codes(noMaestroAEP)}</div>` : ''}
-
-        ${otrosAero.length ? heading('Otros aeropuertos que gestiona TER/MEC — fuera del portal AEP · ' + otrosAero.length) +
-          `<div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">El grupo de planificación TER/MEC también cubre El Palomar (EPA ${(noMaestroC.EPA || []).length}) y San Fernando (SFD ${(noMaestroC.SFD || []).length}). Este portal es solo Aeroparque.</div>
-           <details><summary style="cursor:pointer;font-size:12px;color:var(--color-primary)">ver los ${otrosAero.length}</summary><div style="margin-top:6px">${codes(otrosAero)}</div></details>` : ''}
+           <div>${codes(noMaestro)}</div>` : ''}
 
         ${baja.length ? heading('Planes activos sobre equipos dados de baja · ' + baja.length) +
           `<div>${codes(baja)}</div>
