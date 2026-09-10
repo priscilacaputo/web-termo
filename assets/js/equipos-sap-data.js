@@ -1,12 +1,15 @@
 /* ─── EQUIPOS_SAP — Maestro de equipos SAP, alcance TER + MEC ───
    Fuente: EXPORT_20260908191621.xlsx (IH08, centro AEP) filtrado a los equipos
    que pertenecen a Termomecánica / Mecánica: tienen plan TER/MEC (IP24),
-   OT TER/MEC (IW38) o ficha en la web. 1081 equipos.
+   OT TER/MEC (IW38) o ficha en la web. 1082 equipos.
    2026-09-10: +51 del export "MAS EQUIPOS.xlsx" (IH08) confirmados de alta en SAP
    por la usuaria — 30 persianas de gatera MCD100-135, 9 AAC "MONT NOAC PTBO",
    7 MEQ (cinta+scanners gatera), 2 ARC (arcos de lectura), 2 AAC MONT, MAS588.
    2026-09-10: +1 del export "avooooo.xlsx" (flota) — AVO876 "MONT NOAC PTBO"
    (Sprinter AG 607 LD, mismo vehículo que AVO1000; código viejo a dar de baja).
+   2026-09-10: +1 EMO1575 (extractor cocina Sala VIP PB) confirmado de alta en SAP
+   por la usuaria — datos tomados de la ficha web; fab/serie/fecha a completar
+   con el próximo IH08.
    Regenerar con scratchpad/gen_equipos_termec.py. Es la fuente de verdad del
    INVENTARIO TER/MEC. Campos: equipo, denom, ubic, dim, fab, nParte, nSerie,
    equipoSup, status (MONT = montado/operativo), tipoDenom, serv. */
@@ -501,6 +504,7 @@ const EQUIPOS_SAP = [
   {"equipo": "EMO1569", "denom": "Extractor - Sala Técnica Set Norte Trafo", "ubic": "AEP-LAA-UBI241-UBITEC008", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2024-04-09"},
   {"equipo": "EMO1570", "denom": "Extractor - Sala Técnica Set Norte Trafo", "ubic": "AEP-LAA-UBI241-UBITEC008", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2024-04-09"},
   {"equipo": "EMO1573", "denom": "Extractor de aire cocina VIP", "ubic": "AEP-ED5-NIVEL0-UBITEC234", "dim": "", "fab": "Ciarrapico", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": ""},
+  {"equipo": "EMO1575", "denom": "Extractor cocina Sala VIP PB", "ubic": "AEP-ED5-NIVEL0-UBITEC234", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": ""},
   {"equipo": "MAN005", "denom": "Manga de Embarque POS N°3", "ubic": "AEP-LAA-UBI017-UBITEC001", "dim": "", "fab": "THYSSEN", "nParte": "", "nSerie": "05232TC2421666", "equipoSup": "POS485", "status": "AEQS", "tipoDenom": "TC 24.5/16.25-2", "serv": "2023-09-27"},
   {"equipo": "MAN008", "denom": "Manga de Embarque POS N°6", "ubic": "AEP-LAA-UBI017-UBITEC001", "dim": "66 KVA / 95 A 400V", "fab": "ADELTE", "nParte": "", "nSerie": "", "equipoSup": "POS488", "status": "AEQS", "tipoDenom": "PBB-145/240-3CG", "serv": "2023-09-27"},
   {"equipo": "MAN009", "denom": "Manga de Embarque POS N°7", "ubic": "AEP-LAA-UBI017-UBITEC001", "dim": "70KW/85A 400V 50HZ", "fab": "TEAM", "nParte": "", "nSerie": "090102", "equipoSup": "POS489", "status": "AEQS", "tipoDenom": "PT-145-230 2C", "serv": "2023-09-27"},
