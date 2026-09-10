@@ -64,7 +64,7 @@
     { dim: 'Planes y asignación a equipo', estado: 'curso',
       nota: 'IP24 MOD (solo Aeroparque, sin El Palomar / San Fernando) cruzado contra el maestro: 1.050 posiciones, 969 equipos. 39 con preventivo pero sin el equipo dado de alta (persianas MCD, tanques TNQ…). 58 equipos del maestro sin plan.' },
     { dim: 'Periodicidad de los planes', estado: 'curso',
-      nota: 'Periodicidad real calculada de las fechas de IP24 (mediana entre tomas). Se marcan los planes que corren a otra frecuencia que la de su nombre.' },
+      nota: 'Periodicidad real (mediana entre tomas de IP24) validada contra los paquetes de la estrategia (IP11): 1.049 de 1.050 coinciden. Solo 2-3 planes corren a otra frecuencia que la de su nombre/estrategia.' },
     { dim: 'Materiales de OT y stock', estado: 'curso',
       nota: 'Stock (MB52), maestro (MM60) y consumo 2 años (MB51) cargados: cobertura, faltantes e inmovilizado abajo. Falta solo el link material↔equipo (componentes por plan/OT: IA08 / COOIS / IW3D).' },
     { dim: 'Ejecución de OTs', estado: 'curso',
@@ -498,6 +498,15 @@
             <strong> ${esc(d.desc)}</strong><br>
             <span style="color:var(--color-muted)">nombre dice <strong>${esc(d.declara || '—')}</strong> · se ejecuta cada <strong>~${d.realDias}d</strong> (${esc(d.realBucket)})</span>
           </div>`).join('') : ''}
+
+        ${(P.estrategias || []).length ? heading('Estrategias de mantenimiento (IP11)') +
+          `<div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">
+            La periodicidad real coincide con un paquete de la estrategia en <strong>${P.posiciones - (P.fueraDePaquete || []).length} de ${P.posiciones}</strong> posiciones. Solo ${(P.fueraDePaquete || []).length} corre a una frecuencia que no es paquete válido.
+           </div>` +
+          (P.estrategias || []).map((e) => `<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--color-surface)">
+            <strong>${esc(e.k)}</strong> — ${esc(e.denom)} · <span style="color:var(--color-muted)">${e.planes} planes · paquetes: ${esc((e.paquetes || []).join(' '))}</span>
+          </div>`).join('') +
+          ((P.fueraDePaquete || []).length ? `<div style="margin-top:6px">` + (P.fueraDePaquete || []).map((d) => `<div style="font-size:12px;padding:2px 0"><span class="equipo-tag" style="background:#dc2626">${esc(d.pos)}</span> ${esc(d.desc)} · ${esc(d.estr)} · real ~${d.realDias}d (no es paquete)</div>`).join('') + `</div>` : '') : ''}
 
         <div style="margin-top:14px;padding:10px 12px;background:var(--color-surface);border-radius:8px;font-size:12px">
           Cumplimiento: de ${(cmp.tomasVencidas || 0).toLocaleString('es-AR')} tomas vencidas solo ${cmp.sinOrden || 0} quedaron sin OT.

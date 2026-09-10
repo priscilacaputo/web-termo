@@ -297,5 +297,87 @@ const PLANES_SAP_RESUMEN = {
    "sinEquipo": true
   }
  ],
- "desajusteNoCoincide": []
+ "desajusteNoCoincide": [],
+ "estrategias": [
+  {
+   "k": "AASDF",
+   "denom": "Estrategia AA2000 día fijo",
+   "paquetes": [
+    "1M",
+    "2M",
+    "3M",
+    "4M",
+    "6M",
+    "1A",
+    "2A",
+    "3A",
+    "4A",
+    "5A",
+    "6A",
+    "7A",
+    "8A"
+   ],
+   "minDias": 30,
+   "planes": 999
+  },
+  {
+   "k": "AASCT",
+   "denom": "Estrategia AA2000",
+   "paquetes": [
+    "7",
+    "15",
+    "1M",
+    "2M",
+    "3M",
+    "4M",
+    "6M",
+    "1A",
+    "2A",
+    "3A",
+    "4A"
+   ],
+   "minDias": 7,
+   "planes": 46
+  },
+  {
+   "k": "AAEST",
+   "denom": "Estrategia AA2000 SEM y QUIN",
+   "paquetes": [
+    "7",
+    "14"
+   ],
+   "minDias": 7,
+   "planes": 4
+  },
+  {
+   "k": "AAESD",
+   "denom": "Estrategia AA2000 DIA SEM QUIN",
+   "paquetes": [
+    "1",
+    "7",
+    "14"
+   ],
+   "minDias": 1,
+   "planes": 1
+  }
+ ],
+ "fueraDePaquete": [
+  {
+   "pos": "52103",
+   "plan": "11015",
+   "equipo": "TNQ022",
+   "desc": "Preventivo semestral tanque de agua",
+   "estr": "AASCT",
+   "grupoPlan": "TER",
+   "realDias": 246,
+   "realBucket": "otro (~246d)",
+   "declara": "6M",
+   "proxima": "2026-09-16",
+   "vencidasSinOrden": 1,
+   "desajuste": null,
+   "equipoNoEnSap": true,
+   "equipoBaja": false,
+   "sinEquipo": false
+  }
+ ]
 };
