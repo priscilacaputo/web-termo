@@ -85,11 +85,6 @@ const FLOTA_DATA = [
     motor: "", chasis: ""
   },
   {
-    equipo: "AVO876", dominio: "AG 607 LD", denominacion: "Camioneta Sprinter Operaciones",
-    anio: 2024, fabricante: "MERCEDES", tipo: "SPRINTER / MICROOMNIBUS",
-    motor: "654920W0163061", chasis: "8AC907843RE242332"
-  },
-  {
     equipo: "AVO977", dominio: "AF 663 QC", denominacion: "Camioneta Operaciones",
     anio: 2022, fabricante: "NISSAN", tipo: "FRONTIER",
     motor: "YS23B266C057142", chasis: "8ANBD33B0NL108178"
@@ -142,7 +137,6 @@ const FLOTA_DATA = [
     anio: "", fabricante: "TOYOTA", tipo: "",
     motor: "2GD-D558453", chasis: "8AJDB3CD7T6602440"
   }
-  /* AVO018 (NHB 055) está en SAP como "MONT NOAC PTBO" → no se lista acá; queda solo en EQUIPOS_SAP. */
 ];
 
 const FAB_COLORS = {

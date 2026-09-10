@@ -951,13 +951,6 @@ const PANOL_REPUESTOS = [
     { cod: "20206498", nota: "Bomba de agua 2.4 D-4D (2GD)" },
     { cod: "20206496", nota: "Disco de freno delantero — el catálogo sólo tiene la variante 2016-2020, confirmar si aplica a unidades 2023/2025" },
   ] },
-  { equipo: "AVO876", materiales: [
-    { cod: "20201557", nota: "Tapón tapa block roscado" },
-    { cod: "20201558", nota: "Filtro de aceite (Mahle)" },
-    { cod: "20201559", nota: "Filtro de combustible (Mahle)" },
-    { cod: "20201560", nota: "Filtro de cabina (Unifil)" },
-    { cod: "20201561", nota: "Filtro de cabina (Proilter)" },
-  ] },
   { equipo: "AVO977", materiales: [
     { cod: "20201419", nota: "Filtro de aceite" },
     { cod: "20201422", nota: "Filtro de aire (Wega)" },

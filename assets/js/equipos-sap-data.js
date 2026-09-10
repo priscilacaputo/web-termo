@@ -1,12 +1,13 @@
 /* ─── EQUIPOS_SAP — Maestro de equipos SAP, alcance TER + MEC ───
    Fuente: EXPORT_20260908191621.xlsx (IH08, centro AEP) filtrado a los equipos
    que pertenecen a Termomecánica / Mecánica: tienen plan TER/MEC (IP24),
-   OT TER/MEC (IW38) o ficha en la web. 1082 equipos.
+   OT TER/MEC (IW38) o ficha en la web. 1070 equipos.
    2026-09-10: +51 del export "MAS EQUIPOS.xlsx" (IH08) confirmados de alta en SAP
    por la usuaria — 30 persianas de gatera MCD100-135, 9 AAC "MONT NOAC PTBO",
    7 MEQ (cinta+scanners gatera), 2 ARC (arcos de lectura), 2 AAC MONT, MAS588.
-   2026-09-10: +1 del export "avooooo.xlsx" (flota) — AVO876 "MONT NOAC PTBO"
-   (Sprinter AG 607 LD, mismo vehículo que AVO1000; código viejo a dar de baja).
+   2026-09-10: se ELIMINAN los 12 equipos "MONT NOAC PTBO" (ya no existen, decisión
+   usuaria): AAC193/250/1272/2112/2721-2725/2732, AVO018, AVO876. Solo queda
+   "MONT PTBO" AVO219 pendiente de revisar.
    2026-09-10: +1 EMO1575 (extractor cocina Sala VIP PB) confirmado de alta en SAP
    por la usuaria — datos tomados de la ficha web; fab/serie/fecha a completar
    con el próximo IH08.
@@ -75,7 +76,6 @@ const EQUIPOS_SAP = [
   {"equipo": "AAC2097", "denom": "VRF Unidad Interior Cassette UE 16.1", "ubic": "AEP-ED5-NIVEL0-UBITEC233", "dim": "", "fab": "Trane", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "4TVC018B", "serv": "2023-08-14"},
   {"equipo": "AAC2098", "denom": "VRF Unidad Interior Cassette UE 17.1", "ubic": "AEP-ED5-NIVEL0-UBITEC233", "dim": "", "fab": "Trane", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "4TVC01BB", "serv": "2023-08-14"},
   {"equipo": "AAC2099", "denom": "VRF Unidad Exterior UC 01", "ubic": "AEP-ED5-NIVEL0-UBITEC233", "dim": "", "fab": "Trane", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "4TVR01558", "serv": "2023-08-14"},
-  {"equipo": "AAC2112", "denom": "Roof Top - F/C por Bomba", "ubic": "AEP-LAA-UBI225", "dim": "16 TR F/C", "fab": "McQuay", "nParte": "", "nSerie": "200553510-00043", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "M4RT 200 AR-FXDC-R", "serv": "2023-08-14"},
   {"equipo": "AAC2113", "denom": "Split - Sala Técnica Servidor Mtto", "ubic": "AEP-LAA-UBI225", "dim": "3000 KCAL/H", "fab": "Westric", "nParte": "", "nSerie": "85597", "equipoSup": "", "status": "MONT", "tipoDenom": "CX-300 FSH1ADC", "serv": "2023-08-14"},
   {"equipo": "AAC2114", "denom": "Split Manga de Embarque POS N°3", "ubic": "AEP-LAA-UBI017-UBITEC001", "dim": "8000 KCAL/H", "fab": "Carrier", "nParte": "", "nSerie": "", "equipoSup": "MAN005", "status": "AEQS", "tipoDenom": "42NEQ30091", "serv": "2023-09-27"},
   {"equipo": "AAC2115", "denom": "Split Manga de Embarque POS N°3", "ubic": "AEP-LAA-UBI017-UBITEC001", "dim": "6400 W", "fab": "Electra", "nParte": "2810250DU11331910474", "nSerie": "", "equipoSup": "MAN005", "status": "AEQS", "tipoDenom": "ETI64CF", "serv": "2023-09-27"},
@@ -435,7 +435,6 @@ const EQUIPOS_SAP = [
   {"equipo": "ACO471", "denom": "Cortina aire forzado con calefacción 4", "ubic": "AEP-ED7-NIVEL0-UBITEC065", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": ""},
   {"equipo": "AUT474", "denom": "Autoelevador Caterpillar CAT - Pañol", "ubic": "AEP-LAA-UBI209", "dim": "", "fab": "CATERPILLAR", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": ""},
   {"equipo": "AVO017", "denom": "Camioneta [LRL 110]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "2.5 TDI / 140CV", "fab": "TOYOTA", "nParte": "MOTOR: 2KD-5764831", "nSerie": "CHASIS: 8AJFR22G0C4560909", "equipoSup": "", "status": "MONT", "tipoDenom": "HILUX L/12 DC DX 4X4", "serv": "2023-08-14"},
-  {"equipo": "AVO018", "denom": "Camioneta [NHB 055]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "2.5 TDI / 140CV", "fab": "TOYOTA", "nParte": "MOTOR: 2KD-A221998", "nSerie": "CHASIS: 8AJDR22G4D4018947", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "HILUX 4X4 S/C DX", "serv": "2023-08-14"},
   {"equipo": "AVO019", "denom": "Camioneta [OYY 546]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "2.5 TDI / 140CV", "fab": "TOYOTA", "nParte": "MOTOR: 2KD-A801862", "nSerie": "CHASIS: 8AJFR22G2F4580342", "equipoSup": "", "status": "MONT", "tipoDenom": "HILUX L/12 DC DX 4X4", "serv": "2023-08-14"},
   {"equipo": "AVO020", "denom": "Camioneta [OYY 547]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "2.5 TDI / 140CV", "fab": "TOYOTA", "nParte": "MOTOR: 2KD-A800187", "nSerie": "CHASIS: 8AJFR22GXF4580296", "equipoSup": "", "status": "MONT", "tipoDenom": "HILUX L/12 DC DX 4X4", "serv": "2023-08-14"},
   {"equipo": "AVO021", "denom": "Camioneta Hilux [OYY 548]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "2.5 TDI / 140CV", "fab": "TOYOTA", "nParte": "MOTOR: 2KD-A800148", "nSerie": "CHASIS: 8AJFR22G8F4580295", "equipoSup": "", "status": "MONT", "tipoDenom": "HILUX L/12 DC DX 4X4", "serv": "2023-08-14"},
@@ -458,7 +457,6 @@ const EQUIPOS_SAP = [
   {"equipo": "AVO474", "denom": "Camioneta [AG 423 BC]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "", "fab": "TOYOTA", "nParte": "MOTOR: 2GDG453989", "nSerie": "CHASIS: 8AJDB3CD1P1352115", "equipoSup": "", "status": "MONT", "tipoDenom": "HILUX 4X4D/C DX 6M/T", "serv": "2024-06-10"},
   {"equipo": "AVO475", "denom": "Camioneta [AG 423 BE]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2024-06-10"},
   {"equipo": "AVO479", "denom": "Camioneta [AH 941 KM]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "", "fab": "TOYOTA", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "HILUX L/12 DC DX 4X4", "serv": ""},
-  {"equipo": "AVO876", "denom": "Furgón [AG 607 LD]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "", "fab": "MERCEDES BENZ", "nParte": "MOTOR: 654920W0163061", "nSerie": "CHASIS: 8AC907843RE242332", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "SPRINTER 414 CDI 366", "serv": ""},
   {"equipo": "AVO977", "denom": "Camioneta Operaciones [AF663QC]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "", "fab": "Nissan", "nParte": "MOTOR YS23B266C057142", "nSerie": "CHASIS 8ANBD33B0NL108178", "equipoSup": "", "status": "MONT", "tipoDenom": "Frontier", "serv": ""},
   {"equipo": "AVO978", "denom": "Camioneta Mantenimiento [AG064GQ]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "", "fab": "RENAULT", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "KANGOO", "serv": ""},
   {"equipo": "AVO979", "denom": "Camioneta Seguridad [AG064GP]", "ubic": "AEP-LAA-UBI225-UBITEC001", "dim": "", "fab": "RENAULT", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "KANGOO", "serv": ""},
@@ -1047,15 +1045,6 @@ const EQUIPOS_SAP = [
   {"equipo": "VAL290", "denom": "Válv Marip N°22 -Hidrantes Sist Incendio", "ubic": "AEP-ED1-NIVEL6", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-08-17"},
   {"equipo": "VAL387", "denom": "Válv Marip N°1 -Hidrantes Sist Incendio", "ubic": "AEP-ESR-UBITE7-UBITEC001", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": ""},
 
-  {"equipo": "AAC1272", "denom": "Split - Baja Silueta 5", "ubic": "AEP-TER-AIREAC-AIREAC200", "dim": "", "fab": "BGH", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "", "serv": "2019-08-09"},
-  {"equipo": "AAC193", "denom": "Split X Tr Cabina de Peaje", "ubic": "AEP-ED1-NIVEL0-UBITEC007", "dim": "", "fab": "Samsung", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "AQ09VGDA", "serv": "2023-08-14"},
-  {"equipo": "AAC250", "denom": "Split", "ubic": "AEP-LAA-UBI070", "dim": "3000 FRIG", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "", "serv": "2023-08-14"},
-  {"equipo": "AAC2721", "denom": "Split F/C", "ubic": "AEP-LAA-UBI209", "dim": "2250 FRIG", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "", "serv": "2023-08-30"},
-  {"equipo": "AAC2722", "denom": "Split F/C", "ubic": "AEP-LAA-UBI209", "dim": "3000 FRIG", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "", "serv": "2023-08-30"},
-  {"equipo": "AAC2723", "denom": "Split F/C", "ubic": "AEP-LAA-UBI209", "dim": "4500 FRIG", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "", "serv": "2023-08-30"},
-  {"equipo": "AAC2724", "denom": "Split F/C", "ubic": "AEP-LAA-UBI209", "dim": "6000 FRIG", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "", "serv": "2023-08-30"},
-  {"equipo": "AAC2725", "denom": "Split F/C", "ubic": "AEP-LAA-UBI209", "dim": "9000 FRIG", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "", "serv": "2023-08-30"},
-  {"equipo": "AAC2732", "denom": "Split - Sala Técnica Caseta Central", "ubic": "AEP-TER-AIREAC-AIREAC181", "dim": "4500 FRIG.", "fab": "Cool Time", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT NOAC PTBO", "tipoDenom": "CTSC45CQ", "serv": "2021-02-03"},
   {"equipo": "AAC344", "denom": "Split N°3 - Sala Técnica 1 UPS Ed.II", "ubic": "AEP-ED2-NIVEL0-UBITEC011", "dim": "3000 FRIG", "fab": "Surrey", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "538TFH1304", "serv": ""},
   {"equipo": "AAC4119", "denom": "U.E Sist. 1 Multi Split F/C Ofi Jfe. ele", "ubic": "AEP-LAA-UBI225", "dim": "", "fab": "LG", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "A5UW30GFA4", "serv": ""},
   {"equipo": "ARC001", "denom": "Arco Lectura Equipajes", "ubic": "AEP-ED6-NIVEL0-UBITEC497", "dim": "", "fab": "VanderLande", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "2023-12-13"},

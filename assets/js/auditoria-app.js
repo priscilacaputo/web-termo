@@ -82,7 +82,7 @@
   /* ── Observaciones de calidad de datos (revisar con SAP) ── */
   const OBSERVACIONES = [
     'Status "AEQS": son sub-equipos montados sobre un equipo superior (splits de manga, UTAs de núcleo, bombas de grupo…). Es correcto que sigan en sus secciones — no son un hallazgo.',
-    'Status "MONT NOAC PTBO": marcados para baja. Ya se sacaron de las secciones de Equipos e Instalaciones; quedan solo en este maestro. Los "MONT PTBO" (AVO219, MBR001) quedan pendientes de revisar.',
+    'Status "MONT NOAC PTBO": equipos que ya no existen. Se eliminaron por completo del portal (maestro y secciones) el 2026-09-10. Solo queda "MONT PTBO" (AVO219) pendiente de revisar.',
     'Incendios: la web usa códigos ECA1–ECA27 (propios); SAP los tiene como ECC054–ECC101 y ECC556–ECC561. Hay que mapear ECA ↔ ECC.',
     'Persianas de gatera: las fichas MCD100–MCD135 no aparecen en este export de SAP. Confirmar si están de alta con otro código o si faltan crear.',
     'HER0778 / HER0875 / HER0906 / HER0926 / HER0956: dadas de alta como "equipo" en SAP pero son cajas de herramientas asignadas a personas. Revisar si corresponde que sean objetos técnicos.',
