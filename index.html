@@ -41,6 +41,10 @@
         <span class="nav-icon">🗓️</span>
         <span class="nav-label">Programación de OTs</span>
       </li>
+      <li class="nav-item" data-page="planificador">
+        <span class="nav-icon">🗂️</span>
+        <span class="nav-label">Planificador</span>
+      </li>
       <li class="nav-item" data-page="estado">
         <span class="nav-icon">🚦</span>
         <span class="nav-label">Estado de Equipos</span>
@@ -1784,6 +1788,76 @@
 
     </div>
 
+    <!-- ─── PÁGINA: Planificador real de OTs ─── -->
+    <div class="page hidden" id="page-planificador">
+
+      <div class="prog-upload-bar">
+        <div class="prog-mes-select">
+          <label for="plan-mes-input">Mes a planificar</label>
+          <input type="month" id="plan-mes-input" />
+        </div>
+        <div class="prog-upload-actions">
+          <button class="prog-btn prog-btn-primary" id="plan-upload-btn">⬆ Cargar Excel de OTs del mes</button>
+          <input type="file" id="plan-file-input" accept=".xlsx,.xls" style="display:none" />
+          <button class="prog-btn" id="plan-patio-btn">🧳 Importar plan del patio (BHS)</button>
+          <input type="file" id="plan-patio-input" accept=".xlsx,.xls,.csv" style="display:none" />
+          <button class="export-btn" id="plan-export-btn">⬇ Exportar plan</button>
+          <button class="prog-btn prog-btn-danger" id="plan-reset-btn">🗑 Vaciar</button>
+        </div>
+      </div>
+
+      <div class="prog-reglas-info">
+        <span class="prog-regla-chip libre">🕐 Mañana 06–18 · Tarde 18–06</span>
+        <span class="prog-regla-chip noche">🌆 MEQ → Turno Tarde</span>
+        <span class="prog-regla-chip noche">🌆 Sala VIP → Turno Tarde</span>
+        <span class="prog-regla-chip manana">☀️ Roof Top → Turno Mañana</span>
+        <span class="prog-regla-chip manana">☀️ AVO → Turno Mañana</span>
+        <span class="prog-regla-chip libre">🧳 Patio de valijas: ventanas de <a href="https://patio-de-valijas-aep.vercel.app" target="_blank" rel="noopener">Plan Maestro BHS</a></span>
+      </div>
+
+      <div id="plan-empty-state" class="prog-empty-state hidden">
+        <span class="prog-empty-icon">🗂️</span>
+        <h3>Todavía no cargaste datos para planificar</h3>
+        <p>1) Definí la <strong>rotación de guardias</strong> del mes · 2) Cargá el <strong>Excel de OTs</strong> (mismo formato que Programación) · 3) Opcional: importá el <strong>plan del patio</strong> exportado desde la app Plan Maestro BHS. El planificador reparte todo por día, guardia y hora.</p>
+      </div>
+
+      <div id="plan-toolbar">
+        <div class="stats-grid" id="plan-stats" style="margin-bottom:16px"></div>
+        <div class="plan-equidad" id="plan-equidad" style="margin-bottom:16px"></div>
+
+        <details class="plan-panel" id="plan-cfg" style="margin-bottom:12px">
+          <summary>⚙️ Configuración de día tipo (recorridas, almuerzo, descanso)</summary>
+          <div class="plan-cfg-body" id="plan-cfg-body"></div>
+        </details>
+
+        <details class="plan-panel" id="plan-rotacion" open style="margin-bottom:12px">
+          <summary>🔁 Rotación de guardias del mes</summary>
+          <div class="plan-rotacion-body" id="plan-rotacion-body"></div>
+        </details>
+
+        <details class="plan-panel" id="plan-adhoc-panel" style="margin-bottom:16px">
+          <summary>➕ Sumar preventivo (planificado o del momento)</summary>
+          <div class="plan-adhoc-body">
+            <input type="text" id="plan-adhoc-equipo" placeholder="Equipo (ej. AAC2116)" />
+            <input type="text" id="plan-adhoc-denom" placeholder="Descripción / tarea" />
+            <input type="number" id="plan-adhoc-dur" placeholder="min" value="60" min="5" step="5" style="width:80px" />
+            <select id="plan-adhoc-turno">
+              <option value="">Turno automático</option>
+              <option value="manana">☀️ Mañana</option>
+              <option value="noche">🌆 Tarde</option>
+            </select>
+            <label class="plan-adhoc-alt"><input type="checkbox" id="plan-adhoc-altura" /> ⛰️ Altura</label>
+            <button class="prog-btn prog-btn-primary" id="plan-adhoc-btn">Agregar</button>
+          </div>
+        </details>
+
+        <div class="plan-cal" id="plan-cal"></div>
+        <div class="plan-dia" id="plan-dia"></div>
+        <div class="plan-sin-ubicar" id="plan-sin-ubicar"></div>
+      </div>
+
+    </div>
+
     <!-- ─── PÁGINA: Estado de Equipos (SCADA) ─── -->
     <div class="page hidden" id="page-estado">
 
@@ -2161,5 +2235,9 @@
   <script src="assets/js/estado-equipos-data.js?v=1"></script>
   <script src="assets/js/tareas-data.js?v=1"></script>
   <script src="assets/js/estado-app.js?v=1"></script>
+  <script src="assets/js/hdr-data.js?v=2"></script>
+  <script src="assets/js/hdr-audit.js?v=3"></script>
+  <script src="assets/js/planificador-data.js?v=3"></script>
+  <script src="assets/js/planificador-app.js?v=3"></script>
 </body>
 </html>

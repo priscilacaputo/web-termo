@@ -183,6 +183,7 @@
       ${mm60HTML()}
       ${mb51HTML()}
       ${observacionesHTML()}
+      ${(typeof hdrAuditCardHTML === 'function') ? hdrAuditCardHTML() : ''}
 
       <div class="table-card" style="margin-top:24px" id="aud-tabla">
         <div style="padding:16px 16px 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center">

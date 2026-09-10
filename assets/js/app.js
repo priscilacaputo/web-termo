@@ -11,6 +11,7 @@ const PAGE_TITLES = {
   patio:       ["Patio de Valijas",  "AEP — Sistema BHS · Cintas, curvas, desviadores y scanner · Edificio VI"],
   personal:    ["Personal Mantenimiento Termomecánica - AEP",          "AEP — Composición de guardias · Termomecánica"],
   programacion: ["Programación de OTs", "AEP — Distribución mensual de preventivos entre guardias"],
+  planificador: ["Planificador", "AEP — Calendario mensual de OTs por guardia, día y hora"],
   estado:      ["Estado de Equipos", "AEP — Panorama general · Estado en vivo de todos los equipos"],
   puertas:     ["Puertas Automáticas", "AEP — Puertas automáticas corredizas · Manusa · Audoor"],
   aac:         ["Equipos de Aire",     "AEP — Aire acondicionado · Splits · VRF · Roof Tops · UTAs · Chillers"],

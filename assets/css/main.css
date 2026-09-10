@@ -4622,3 +4622,128 @@ tr:hover .admin-edit-btn { opacity: 1; }
 }
 .aud-sp-pill:hover { border-color: #f59e0b; }
 .aud-sp-pill.aud-sp-on { background: #f59e0b; border-color: #f59e0b; color: #fff; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Planificador real de OTs
+   ═══════════════════════════════════════════════════════════════════ */
+.prog-regla-chip a { color: inherit; text-decoration: underline; }
+
+/* Equidad entre guardias */
+.plan-equidad {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.plan-equidad-title { font-size: 12px; font-weight: 700; color: var(--color-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
+.plan-equidad-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.plan-equidad-cell { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; }
+.plan-eq-g { font-weight: 700; color: var(--color-navy); font-size: 13px; }
+.plan-eq-row { font-size: 11.5px; color: var(--color-muted); }
+.plan-eq-bar { display: block; height: 6px; border-radius: 4px; background: var(--color-border); overflow: hidden; margin: 2px 0; }
+.plan-eq-bar > span { display: block; height: 100%; }
+
+/* Paneles plegables */
+.plan-panel {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 4px 14px;
+}
+.plan-panel > summary { cursor: pointer; font-weight: 600; font-size: 13.5px; color: var(--color-navy); padding: 8px 0; list-style: none; }
+.plan-panel > summary::-webkit-details-marker { display: none; }
+.plan-panel > summary::before { content: "\25B8  "; color: var(--color-muted); }
+.plan-panel[open] > summary::before { content: "\25BE  "; }
+
+.plan-cfg-body { display: flex; flex-wrap: wrap; gap: 18px; padding: 10px 0 14px; align-items: flex-end; }
+.plan-cfg-col { display: flex; flex-direction: column; gap: 6px; min-width: 220px; }
+.plan-cfg-h { font-size: 12px; font-weight: 700; color: var(--color-navy); margin-bottom: 2px; }
+.plan-cfg-field { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-muted); }
+.plan-cfg-field input { border: 1.5px solid var(--color-border); border-radius: 6px; padding: 4px 6px; font-size: 12.5px; }
+
+/* Rotacion */
+.plan-rot-patron { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; padding: 10px 0; font-size: 12px; color: var(--color-muted); }
+.plan-rot-patron label { display: inline-flex; flex-direction: column; gap: 3px; }
+.plan-rot-patron input, .plan-rot-patron select { border: 1.5px solid var(--color-border); border-radius: 6px; padding: 4px 6px; font-size: 12.5px; }
+.plan-rot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding: 6px 0 14px; }
+.plan-rot-cell { border: 1px solid var(--color-border); border-radius: 8px; padding: 6px 8px; background: var(--color-surface); display: flex; flex-direction: column; gap: 4px; }
+.plan-rot-day { font-size: 11.5px; font-weight: 700; color: var(--color-navy); }
+.plan-rot-sel { font-size: 11px; display: flex; align-items: center; gap: 4px; }
+.plan-rot-sel select { flex: 1; border: 1.5px solid var(--color-border); border-radius: 5px; padding: 2px 4px; font-size: 12px; }
+
+/* Alta de preventivo */
+.plan-adhoc-body { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px 0 14px; }
+.plan-adhoc-body input[type=text], .plan-adhoc-body input[type=number], .plan-adhoc-body select { border: 1.5px solid var(--color-border); border-radius: 6px; padding: 6px 8px; font-size: 13px; }
+.plan-adhoc-body input#plan-adhoc-equipo { width: 170px; }
+.plan-adhoc-body input#plan-adhoc-denom { flex: 1; min-width: 200px; }
+.plan-adhoc-alt { font-size: 12px; color: var(--color-muted); display: inline-flex; align-items: center; gap: 4px; }
+
+/* Calendario mensual */
+.plan-cal { margin: 6px 0 20px; }
+.plan-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.plan-cal-dow { font-size: 11px; font-weight: 700; color: var(--color-muted); text-align: center; text-transform: uppercase; letter-spacing: .04em; padding-bottom: 2px; }
+.plan-cal-blank { background: transparent; }
+.plan-cal-cell {
+  min-height: 74px; border: 1px solid var(--color-border); border-radius: 8px;
+  background: var(--color-card); padding: 5px 6px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 3px; transition: box-shadow .12s, border-color .12s;
+}
+.plan-cal-cell:hover { border-color: var(--color-sky); }
+.plan-cal-cell.sel { border-color: var(--color-sky); box-shadow: 0 0 0 2px var(--color-primary-light); }
+.plan-cal-cell.plan-cal-sinrot { background: repeating-linear-gradient(45deg, #fff, #fff 6px, #f4f6f9 6px, #f4f6f9 12px); }
+.plan-cal-cell.plan-drop { border-color: var(--color-accent); box-shadow: 0 0 0 2px #fde68a; }
+.plan-cal-num { font-size: 12px; font-weight: 700; color: var(--color-navy); }
+.plan-cal-guardias { display: flex; flex-wrap: wrap; gap: 3px; }
+.plan-cal-guardias .turno-badge { font-size: 10px; padding: 1px 5px; }
+.plan-cal-norot { font-size: 10px; color: var(--color-muted); font-style: italic; }
+.plan-cal-count { font-size: 10.5px; color: var(--color-muted); margin-top: auto; }
+
+/* Panel del dia - linea de tiempo */
+.plan-dia { background: var(--color-card); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 18px; }
+.plan-dia-head { font-size: 14px; font-weight: 700; color: var(--color-navy); margin-bottom: 12px; }
+.plan-guardia-block { margin-bottom: 18px; }
+.plan-guardia-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 6px; }
+.plan-guardia-head .prog-guardia-name { white-space: nowrap; flex: 0 0 auto; min-width: max-content; }
+.plan-timeline {
+  position: relative; border: 1px solid var(--color-border); border-radius: 8px;
+  background: var(--color-surface); overflow: hidden;
+}
+.plan-timeline.plan-drop { border-color: var(--color-accent); box-shadow: inset 0 0 0 2px #fde68a; }
+.plan-tl-ticks { position: absolute; inset: 0 0 auto 0; height: 22px; border-bottom: 1px dashed var(--color-border); }
+.plan-tl-ticks span { position: absolute; top: 4px; transform: translateX(-50%); font-size: 10px; color: var(--color-muted); }
+.plan-tl-busy { position: absolute; display: flex; align-items: center; justify-content: center; z-index: 3; opacity: .82; pointer-events: none; }
+.plan-tl-busy.rec { background: repeating-linear-gradient(45deg, #eef2ff, #eef2ff 7px, #e0e7ff 7px, #e0e7ff 14px); }
+.plan-tl-busy.brk { background: repeating-linear-gradient(45deg, #fef9c3, #fef9c3 7px, #fef08a 7px, #fef08a 14px); }
+.plan-tl-busy span { font-size: 10px; font-weight: 700; color: rgba(15,32,51,.55); text-transform: uppercase; letter-spacing: .03em; }
+.plan-ot-card {
+  position: absolute; box-sizing: border-box; border-radius: 6px; padding: 3px 6px;
+  background: var(--color-sky); color: #fff; font-size: 11px; cursor: grab;
+  border: 1px solid rgba(0,0,0,.12); overflow: hidden; display: flex; flex-direction: column; gap: 1px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.18); z-index: 2;
+}
+.plan-ot-card:active { cursor: grabbing; }
+.plan-ot-card.altura { background: #92400e; }
+.plan-ot-card.patio { background: #4338ca; }
+.plan-ot-card.adhoc { background: #b45309; }
+.plan-ot-eq { font-weight: 700; white-space: nowrap; }
+.plan-ot-meta { font-size: 10px; opacity: .9; white-space: nowrap; }
+
+/* Bandeja sin ubicar */
+.plan-sin-ubicar { background: var(--color-card); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 12px 14px; }
+.plan-sinub-head { font-size: 13px; font-weight: 700; color: var(--color-navy); margin-bottom: 8px; }
+.plan-sinub-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.plan-ot-card.sinub, .plan-ot-card.sinub.altura, .plan-ot-card.sinub.patio {
+  position: static; background: var(--color-card); color: var(--color-text);
+  border: 1px solid var(--color-border); box-shadow: none; padding: 7px 9px;
+}
+.plan-ot-card.sinub .plan-ot-eq { color: var(--color-navy); }
+.plan-ot-card.sinub .plan-ot-meta { color: var(--color-muted); }
+.plan-ot-card.sinub.altura { border-left: 3px solid #92400e; }
+.plan-ot-card.sinub.patio { border-left: 3px solid #4338ca; }
+.plan-ot-motivo { font-size: 10px; color: #b91c1c; margin-top: 2px; }
+
+@media (max-width: 900px) {
+  .plan-equidad-grid { grid-template-columns: repeat(2, 1fr); }
+  .plan-cal-grid { gap: 3px; }
+  .plan-cal-cell { min-height: 62px; }
+}
