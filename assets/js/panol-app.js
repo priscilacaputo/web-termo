@@ -862,10 +862,13 @@ function panolRepuestosBlockHTML(equipo) {
       <td>${panolCoberturaBadge(st, qty)}</td>
     </tr>`;
   }).join('');
+  const n = entry.materiales.length;
   return `<div class="panol-modal-block">
-    <div class="panol-modal-block-title">🔩 Repuestos de pañol (BOM)</div>
+    <div class="panol-modal-block-title">🔩 Repuestos de pañol (BOM)
+      <span class="panol-modal-block-count">${n} ${n === 1 ? 'código' : 'códigos'}</span>
+    </div>
     <div class="table-wrap"><table class="panol-rep-table">
-      <thead><tr><th>Código SAP</th><th>Descripción</th><th>Cant.</th><th>Stock</th><th>Cobertura</th></tr></thead>
+      <thead><tr><th>Código SAP</th><th>Descripción</th><th class="panol-rep-qty">Cant.</th><th>Stock</th><th>Cobertura</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
   </div>`;

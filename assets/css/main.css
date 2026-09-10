@@ -4476,18 +4476,48 @@ tr:hover .admin-edit-btn { opacity: 1; }
 
 /* Bloque inyectado en la ficha de cada equipo */
 .panol-modal-block {
+  grid-column: 1 / -1;            /* ocupar todo el ancho del modal, no media columna */
+  align-self: start;             /* el grid no debe estirarlo ni comprimirlo */
   margin-top: 18px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  overflow: hidden;
+  /* sin overflow:hidden — anula el tamaño mínimo del item de grid y el bloque se
+     solapaba con la sección siguiente. Los bordes se redondean pieza por pieza. */
 }
 .panol-modal-block-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 16px;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
+  border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
   font-weight: 700;
   font-size: 13px;
 }
+.panol-modal-block .table-wrap { border-radius: 0 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px); }
+.panol-modal-block-count {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--color-muted);
+  background: #eef2f7;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.panol-modal-block .table-wrap { overflow-x: auto; }
+.panol-modal-block .panol-rep-table { min-width: 520px; }
+.panol-modal-block .panol-rep-table th,
+.panol-modal-block .panol-rep-table td {
+  padding: 8px 12px;
+  vertical-align: top;
+}
+.panol-modal-block .panol-rep-table tbody tr:hover { background: var(--color-surface); }
+.panol-modal-block .panol-rep-table td:first-child { white-space: nowrap; }
+.panol-modal-block .panol-rep-table th:nth-child(4),
+.panol-modal-block .panol-rep-table td:nth-child(4),
+.panol-modal-block .panol-rep-table th:nth-child(5),
+.panol-modal-block .panol-rep-table td:nth-child(5) { white-space: nowrap; }
 
 /* Chips "equipos que lo usan" en el modal de material */
 .panol-usa-list { display: flex; flex-wrap: wrap; gap: 8px; }
