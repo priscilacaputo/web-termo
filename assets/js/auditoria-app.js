@@ -173,6 +173,7 @@
 
     host.innerHTML = `
       ${checklistHTML()}
+      ${diagnosticoHTML()}
       ${planesHTML()}
       ${otsHTML()}
       ${mm60HTML()}
@@ -429,6 +430,116 @@
         <span style="flex:0 0 110px">${esc(x.k)}</span>
         <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round((x.h / maxH) * 100)}%;background:#6366f1"></span></span>
         <span style="flex:0 0 64px;text-align:right;font-weight:700">${x.h.toLocaleString('es-AR')} h</span></div>`).join('');
+  }
+
+  /* ── Diagnóstico: ¿está bien lo programado? ── */
+  function diagnosticoHTML() {
+    const P = (typeof PLANES_SAP_RESUMEN !== 'undefined') ? PLANES_SAP_RESUMEN : null;
+    const PL = (typeof PLANES_SAP !== 'undefined') ? PLANES_SAP : [];
+    if (!P || !PL.length) return '';
+    const heading = (t) => `<div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">${t}</div>`;
+    const sem = (estado) => ({ ok: '🟢', rev: '🟡', mal: '🔴' }[estado] || '⚪');
+    const codes = (list) => (list || []).map((c) => `<span class="equipo-tag" style="margin:2px 3px 2px 0;display:inline-block">${esc(c)}</span>`).join('');
+
+    // equipo -> tipo (aire acondicionado, la sección con tipificación limpia)
+    const eqTipo = {};
+    if (typeof AAC_DATA !== 'undefined') AAC_DATA.forEach((e) => { if (e && e.equipo) eqTipo[e.equipo] = e.tipo || ''; });
+
+    const planTipo = (d) => {
+      const s = (d || '').toLowerCase();
+      if (/roof ?top/.test(s)) return 'Roof Top';
+      if (/chiller/.test(s)) return 'Chiller';
+      if (/\bvr[vf]\b/.test(s)) return 'VRF';
+      if (/\buta\b/.test(s) && !/split/.test(s)) return 'UTA';
+      if (/cortina/.test(s)) return 'Cortina';
+      if (/split|cassette|casete|baja silueta/.test(s)) return 'Split';
+      return null;
+    };
+
+    // 1. Coherencia plan ↔ tipo de equipo (aire)
+    const mismatch = [];
+    PL.forEach((p) => {
+      const te = eqTipo[p.equipo];
+      if (!te) return;
+      const tp = planTipo(p.desc);
+      if (tp && te && tp !== te && !(tp === 'Split' && (te === 'VRF' || te === 'Otro' || te === 'Autocontenida'))) {
+        mismatch.push({ equipo: p.equipo, teq: te, tplan: tp, desc: p.desc });
+      }
+    });
+
+    // 2. Consistencia de periodicidad dentro de cada tipo (aire)
+    const porTipo = {};
+    PL.forEach((p) => {
+      const te = eqTipo[p.equipo];
+      if (!te || !p.realBucket || /s\/fechas/.test(p.realBucket)) return;
+      (porTipo[te] || (porTipo[te] = [])).push({ equipo: p.equipo, b: p.realBucket, d: p.realDias });
+    });
+    const consist = Object.entries(porTipo).map(([te, lst]) => {
+      const c = {};
+      lst.forEach((x) => { c[x.b] = (c[x.b] || 0) + 1; });
+      const orden = Object.entries(c).sort((a, b) => b[1] - a[1]);
+      const norma = orden[0][0];
+      const outliers = lst.filter((x) => x.b !== norma);
+      return { te, n: lst.length, norma, dist: orden, outliers };
+    }).sort((a, b) => b.n - a.n);
+    const totalOutliers = consist.reduce((s, x) => s + x.outliers.length, 0);
+
+    // 3. Cobertura (del resumen)
+    const sinPlan = (P.equiposMaestroSinPlan || {}).total || 0;
+    const sinEqAlta = (P.equiposConPlanNoEnMaestro || []).length;
+    const sobreBaja = (P.equiposConPlanDadosDeBaja || []).length;
+    const posSinEq = (P.planesSinEquipo || []).length;
+    // 4. Periodicidad vs estrategia
+    const fueraPaq = (P.fueraDePaquete || []).length;
+    // 5. Ejecución
+    const O = (typeof OTS_SAP_RESUMEN !== 'undefined') ? OTS_SAP_RESUMEN : {};
+
+    const filaCheck = (est, titulo, detalle) => `<div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--color-surface)">
+      <span style="font-size:16px;line-height:1">${sem(est)}</span>
+      <div><div style="font-weight:700;font-size:13px">${titulo}</div>
+        <div style="font-size:12px;color:var(--color-muted)">${detalle}</div></div>
+    </div>`;
+
+    return `<div class="table-card" style="margin-bottom:20px">
+      <div style="padding:14px 16px;font-weight:800;font-size:13px;border-bottom:1px solid var(--color-border)">
+        Diagnóstico — ¿está bien lo que está programado?
+      </div>
+      <div style="padding:6px 16px 14px">
+        ${filaCheck(
+          (sinPlan + sinEqAlta + sobreBaja + posSinEq) === 0 ? 'ok' : 'rev',
+          'Cobertura equipo ↔ plan',
+          `${sinPlan} equipos operativos sin plan · ${sinEqAlta} planes sin equipo de alta · ${sobreBaja} planes sobre equipo de baja · ${posSinEq} posiciones sin equipo.`)}
+        ${filaCheck(
+          mismatch.length === 0 ? 'ok' : (mismatch.length > 15 ? 'mal' : 'rev'),
+          'El plan corresponde al tipo de equipo (aire)',
+          mismatch.length ? `${mismatch.length} planes nombran un tipo distinto al del equipo. Ej.: ${mismatch.slice(0, 4).map((m) => `${m.equipo} es ${m.teq} y el plan dice ${m.tplan}`).join('; ')}.` : 'Todos los planes de aire coinciden con el tipo de equipo.')}
+        ${filaCheck(
+          totalOutliers === 0 ? 'ok' : (totalOutliers > 20 ? 'mal' : 'rev'),
+          'Misma periodicidad para equipos del mismo tipo (aire)',
+          totalOutliers ? `${totalOutliers} equipos se apartan de la periodicidad típica de su tipo (ver abajo).` : 'Cada tipo de equipo corre a una sola periodicidad.')}
+        ${filaCheck(
+          fueraPaq === 0 ? 'ok' : 'rev',
+          'La periodicidad es un ciclo válido de la estrategia (IP11)',
+          `${P.posiciones - fueraPaq} de ${P.posiciones} posiciones coinciden con un paquete de su estrategia.`)}
+        ${filaCheck(
+          (O.pctNotificadas || 0) >= 70 ? 'ok' : 'rev',
+          'Se ejecuta y se registra lo programado (IW38)',
+          `${O.pctCerradas || 0}% de las OT se cierran, pero solo ${O.pctNotificadas || 0}% de las cerradas lleva notificación de horas/fecha. Backlog abierto: ${(O.abiertas || 0).toLocaleString('es-AR')}.`)}
+
+        ${mismatch.length ? heading('Planes de aire con tipo que no coincide · ' + mismatch.length) +
+          mismatch.map((m) => `<div style="font-size:12px;padding:2px 0"><span class="equipo-tag" style="background:#dc2626">${esc(m.equipo)}</span> equipo <strong>${esc(m.teq)}</strong> · plan <strong>${esc(m.tplan)}</strong> — <span style="color:var(--color-muted)">${esc(m.desc)}</span></div>`).join('') : ''}
+
+        ${heading('Periodicidad real por tipo de equipo de aire')}
+        ${consist.map((c) => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--color-surface)">
+          <strong>${esc(c.te)}</strong> (${c.n}) — típico <strong>${esc(c.norma)}</strong>: ${c.dist.map(([k, n]) => `${esc(k)} ${n}`).join(' · ')}
+          ${c.outliers.length && c.outliers.length <= 20 ? `<br><span style="color:var(--color-muted)">se apartan: ${c.outliers.map((o) => o.equipo + ' (' + o.b + ')').join(', ')}</span>` : ''}
+        </div>`).join('')}
+
+        <div style="margin-top:12px;padding:10px 12px;background:var(--color-surface);border-radius:8px;font-size:11.5px;color:var(--color-muted)">
+          El diagnóstico de coherencia/consistencia se hace hoy sobre <strong>Equipos de Aire</strong> (la sección con tipificación completa). Para el resto de las familias hace falta cargar el tipo de equipo en sus fichas.
+        </div>
+      </div>
+    </div>`;
   }
 
   function planesHTML() {
