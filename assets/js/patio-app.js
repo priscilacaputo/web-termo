@@ -226,6 +226,14 @@ function openPatioModal(equipo) {
     ${modalField('Unión banda', ex['Union banda'])}
     ${modalField('Carga', ex['Carga kg/m'] ? `${ex['Carga kg/m']} kg/m` : '', false, true)}
 
+    ${(ex['Desarrollo circuito m'] || ex['Eslabones cadena'] || ex['Placas carrusel']) ? modalSection('Cadena de arrastre / circuito') : ''}
+    ${modalField('Desarrollo del circuito', ex['Desarrollo circuito m'] ? `${ex['Desarrollo circuito m']} m` : '', false, true)}
+    ${modalField('Cantidad de eslabones', ex['Eslabones cadena'], false, true)}
+    ${modalField('Cantidad de placas', ex['Placas carrusel'], false, true)}
+    ${modalField('Paso por eslabón', ex['Paso eslabon mm'], true)}
+    ${modalField('Velocidad de traslación', ex['Veloc traslacion m/s'] ? `${ex['Veloc traslacion m/s']} m/s` : '', false, true)}
+    ${modalField('Bajadas de inyección', ex['Bajadas inyeccion'], false, true)}
+
     ${modalSection('Motor / Accionamiento')}
     ${modalField('Motoreductor', ex['Motoreductor'] || ex['Motor'] || '', false, true)}
     ${modalField('Motor', ex['Motor'], false, true)}
