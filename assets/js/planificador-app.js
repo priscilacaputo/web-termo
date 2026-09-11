@@ -563,9 +563,13 @@ function planDistribuir() {
     return planMinToHHMM(planHHMMtoMin(planState.cfg[turno].inicio) + rel);
   }
 
-  /* Contadores de equidad entre las 4 guardias (acumulado del mes). */
-  const alturaG = { 1: 0, 2: 0, 3: 0, 4: 0 };
-  const cargaG = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  /* Contadores de equidad entre las 4 guardias (acumulado del mes),
+     SEPARADOS por gremio: el técnico de Aire de una guardia no compensa
+     la altura del técnico Mecánico de otra (son personas distintas), así
+     que mezclar ambos gremios en un solo contador escondería una
+     inequidad real dentro de cada especialidad. */
+  const alturaG = { aire: { 1: 0, 2: 0, 3: 0, 4: 0 }, mecanico: { 1: 0, 2: 0, 3: 0, 4: 0 } };
+  const cargaG = { aire: { 1: 0, 2: 0, 3: 0, 4: 0 }, mecanico: { 1: 0, 2: 0, 3: 0, 4: 0 } };
 
   /* 1) OTs fijadas a mano (pin): reservan su lugar primero. */
   planState.ots.filter(o => o.pin && o.fecha && o.guardia).forEach(o => {
@@ -575,8 +579,8 @@ function planDistribuir() {
     const rel = planRelDesdeInicio(planHHMMtoMin(o.inicio || planState.cfg[turno].inicio), planHHMMtoMin(planState.cfg[turno].inicio));
     reservar(ls, rel, dur, o.nPers);
     registrarCercania(ls, o);
-    alturaG[o.guardia] += o.esAltura ? 1 : 0;
-    cargaG[o.guardia] += 1;
+    alturaG[o.gremio][o.guardia] += o.esAltura ? 1 : 0;
+    cargaG[o.gremio][o.guardia] += 1;
     o.motivoSinUbicar = null;
   });
 
@@ -594,8 +598,8 @@ function planDistribuir() {
     const relP = o.inicio ? planRelDesdeInicio(planHHMMtoMin(o.inicio), planHHMMtoMin(planState.cfg.noche.inicio)) : 0;
     reservar(ls, relP, durP, o.nPers);
     registrarCercania(ls, o);
-    alturaG[g] += o.esAltura ? 1 : 0;
-    cargaG[g] += 1;
+    alturaG.mecanico[g] += o.esAltura ? 1 : 0;
+    cargaG.mecanico[g] += 1;
   });
 
   /* 3) Resto de OTs (mensual / adhoc no fijadas). */
@@ -609,11 +613,16 @@ function planDistribuir() {
 
   ['aire', 'mecanico'].forEach(gremio => {
     const items = libres.filter(o => o.gremio === gremio);
-    /* Prioridad: correctivos primero, luego los que llevan más días
-       abiertos, luego agrupados por zona / ubicación / secuencia de
-       cinta para que salgan juntos. */
+    /* Prioridad: correctivos primero (urgencia) · dentro de cada nivel,
+       las de altura antes que el resto — se ubican mientras todas las
+       guardias todavía tienen huecos libres, así el balance por altura
+       (criterio #1 del desempate de días, más abajo) queda más parejo en
+       vez de heredar lo que haya sobrado después de ubicar todo lo demás
+       · luego los que llevan más días abiertos · luego agrupados por
+       zona / ubicación / secuencia de cinta para que salgan juntos. */
     items.sort((a, b) => {
       if ((a.tipo === 'correctivo') !== (b.tipo === 'correctivo')) return a.tipo === 'correctivo' ? -1 : 1;
+      if (a.esAltura !== b.esAltura) return a.esAltura ? -1 : 1;
       const aa = a.antiguedadDias || 0, ba = b.antiguedadDias || 0;
       if (aa !== ba) return ba - aa;
       if (a.zona !== b.zona) return a.zona.localeCompare(b.zona);
@@ -639,9 +648,9 @@ function planDistribuir() {
            4. día menos cargado (reparte a lo largo del mes)
            5. antes en el mes */
       cand.sort((x, y) => {
-        const ax = alturaG[x.g] + (o.esAltura ? 1 : 0), ay = alturaG[y.g] + (o.esAltura ? 1 : 0);
+        const ax = alturaG[gremio][x.g] + (o.esAltura ? 1 : 0), ay = alturaG[gremio][y.g] + (o.esAltura ? 1 : 0);
         if (ax !== ay) return ax - ay;
-        if (cargaG[x.g] !== cargaG[y.g]) return cargaG[x.g] - cargaG[y.g];
+        if (cargaG[gremio][x.g] !== cargaG[gremio][y.g]) return cargaG[gremio][x.g] - cargaG[gremio][y.g];
         const lx = laneCache[`${x.f}|${x.g}|${gremio}`], ly = laneCache[`${y.f}|${y.g}|${gremio}`];
         const cx = lx ? ((lx.zonas[o.zona] || 0) + 0.5 * (lx.ubic[o.ubicacionTecnica] || 0)) : 0;
         const cy = ly ? ((ly.zonas[o.zona] || 0) + 0.5 * (ly.ubic[o.ubicacionTecnica] || 0)) : 0;
@@ -659,8 +668,8 @@ function planDistribuir() {
         o.inicio = minAbs(turno, slot.ini);
         o.fin = minAbs(turno, slot.fin);
         registrarCercania(ls, o);
-        alturaG[g] += o.esAltura ? 1 : 0;
-        cargaG[g] += 1;
+        alturaG[gremio][g] += o.esAltura ? 1 : 0;
+        cargaG[gremio][g] += 1;
         minDiaG[`${f}|${g}|${gremio}`] = (minDiaG[`${f}|${g}|${gremio}`] || 0) + dur * slot.nPers;
         return;
       }
@@ -784,8 +793,17 @@ function renderPlanStats() {
 
   const eq = document.getElementById('plan-equidad');
   if (!eq) return;
-  const alturaG = { 1: 0, 2: 0, 3: 0, 4: 0 }, cargaG = { 1: 0, 2: 0, 3: 0, 4: 0 }, minG = { 1: 0, 2: 0, 3: 0, 4: 0 }, capG = { 1: 0, 2: 0, 3: 0, 4: 0 };
-  ubic.forEach(o => { alturaG[o.guardia] += o.esAltura ? 1 : 0; cargaG[o.guardia] += 1; minG[o.guardia] += (o.duracionMin || 0) * (o.nPersUsadas || o.nPers || 1); });
+  /* Altura y carga se muestran separadas por gremio: son técnicos
+     distintos, así que un aire cargado no "compensa" a un mecánico libre. */
+  const alturaG = { aire: { 1: 0, 2: 0, 3: 0, 4: 0 }, mecanico: { 1: 0, 2: 0, 3: 0, 4: 0 } };
+  const cargaG = { aire: { 1: 0, 2: 0, 3: 0, 4: 0 }, mecanico: { 1: 0, 2: 0, 3: 0, 4: 0 } };
+  const minG = { 1: 0, 2: 0, 3: 0, 4: 0 }, capG = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  ubic.forEach(o => {
+    const gr = o.gremio === 'mecanico' ? 'mecanico' : 'aire';
+    alturaG[gr][o.guardia] += o.esAltura ? 1 : 0;
+    cargaG[gr][o.guardia] += 1;
+    minG[o.guardia] += (o.duracionMin || 0) * (o.nPersUsadas || o.nPers || 1);
+  });
   const dias = planDiasDelMes(planState.mes);
   dias.forEach(f => {
     ['manana', 'noche'].forEach(t => {
@@ -798,8 +816,8 @@ function renderPlanStats() {
       const pct = capG[g] ? Math.round(minG[g] / capG[g] * 100) : 0;
       return `<div class="plan-equidad-cell">
         <span class="plan-eq-g">Guardia ${g}</span>
-        <span class="plan-eq-row">⛰️ ${alturaG[g]} altura</span>
-        <span class="plan-eq-row">🗂️ ${cargaG[g]} OTs</span>
+        <span class="plan-eq-row">⛰️ ${alturaG.aire[g]} altura aire · ${alturaG.mecanico[g]} mec</span>
+        <span class="plan-eq-row">🗂️ ${cargaG.aire[g] + cargaG.mecanico[g]} OTs</span>
         <span class="plan-eq-bar"><span style="width:${Math.min(100, pct)}%;background:${pct > 100 ? '#dc2626' : pct > 85 ? '#d97706' : '#10b981'}"></span></span>
         <span class="plan-eq-row">⏱️ ${pct}% de cupo</span>
       </div>`;
