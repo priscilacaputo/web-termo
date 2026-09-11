@@ -279,13 +279,21 @@ function planNormalizarItem(raw, origen) {
   /* Duración y Nº de personas reales desde la Hoja de Ruta de SAP
      (hdr-data.js): equipo → PLANES_SAP → hoja de ruta → duración por
      frecuencia. Si no hay match, se estima por regla. La duración cargada
-     a mano (raw.duracionMin: alta manual, o import del patio) manda. */
+     a mano (raw.duracionMin: alta manual, o import del patio) manda.
+     La estimación por regla (PLAN_DUR_POR_TEXTO/FAMILIA) está calibrada
+     para 1 persona: si la OT necesita 2 o más (de la hoja de ruta o
+     cargado a mano), el tiempo de trabajo se reparte entre esas personas
+     y el equipo queda listo en la mitad de tiempo (o 1/N con N personas). */
   const hd = (typeof hdrParaEquipo === 'function') ? hdrParaEquipo(equipo, texto) : null;
+  const nPers = raw.nPers != null ? Math.max(1, +raw.nPers) : (hd ? Math.max(1, hd.nPers) : 1);
   let duracionMin, durFuente;
   if (raw.duracionMin != null) { duracionMin = +raw.duracionMin; durFuente = origen === 'patio' ? 'patio' : 'manual'; }
   else if (hd && hd.durMin != null) { duracionMin = hd.durMin; durFuente = 'sap'; }
-  else { duracionMin = planDuracionEstimada(texto, equipo); durFuente = 'estim'; }
-  const nPers = raw.nPers != null ? Math.max(1, +raw.nPers) : (hd ? Math.max(1, hd.nPers) : 1);
+  else {
+    const base = planDuracionEstimada(texto, equipo);
+    duracionMin = nPers > 1 ? Math.max(15, Math.round(base / nPers)) : base;
+    durFuente = 'estim';
+  }
 
   return {
     id: raw.id || (equipo + '#' + otNum + '#' + Math.random().toString(36).slice(2, 8)),
