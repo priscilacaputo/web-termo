@@ -592,7 +592,7 @@
     const PL = (typeof PLANES_SAP !== 'undefined') ? PLANES_SAP : [];
     const planesByEquipo = {};
     PL.forEach((p) => { (planesByEquipo[p.equipo] = planesByEquipo[p.equipo] || []).push(p); });
-    const planTxt = (eq) => (planesByEquipo[eq] || []).map((p) => `${p.desc} (${p.realBucket})`).join(' + ');
+    const planTxt = (eq) => (planesByEquipo[eq] || []).map((p) => `${p.desc} (${p.realBucket}) · plan ${p.plan}`).join(' + ');
     const planSig = (eq) => (planesByEquipo[eq] || []).map((p) => p.desc).sort().join('+');
     const numOf = (s) => {
       const m = String(s || '').match(/-(\d+)(?:\D|$)/);
