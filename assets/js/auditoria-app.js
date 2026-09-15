@@ -576,6 +576,65 @@
     </div>`;
   }
 
+  /* ── Plan recomendado para TODOS los equipos sin plan: por analogía con
+     equipos de la misma ficha temática y mismo `tipo`/`clase` que sí tienen
+     preventivo en IP24. Tres resultados posibles:
+     - 'recomendado': todos los "hermanos" del mismo tipo usan el mismo plan
+       (o, en Patio, el vecino de numeración de código más cercana) → se
+       sugiere ese plan.
+     - 'ambiguo': hay más de un plan distinto en uso para ese tipo (ej. AAC
+       Split tiene 8 variantes) → no se puede elegir por analogía, hay que
+       mirarlo a mano.
+     - 'gap': ningún equipo de ese tipo tiene preventivo en SAP → no es
+       "falta asignar", es que el plan no existe todavía en IP24.
+     No viene de SAP, es una sugerencia para evaluar y dar de alta. */
+  function analizarSinPlan(lista) {
+    const PL = (typeof PLANES_SAP !== 'undefined') ? PLANES_SAP : [];
+    const planesByEquipo = {};
+    PL.forEach((p) => { (planesByEquipo[p.equipo] = planesByEquipo[p.equipo] || []).push(p); });
+    const planTxt = (eq) => (planesByEquipo[eq] || []).map((p) => `${p.desc} (${p.realBucket})`).join(' + ');
+    const planSig = (eq) => (planesByEquipo[eq] || []).map((p) => p.desc).sort().join('+');
+    const numOf = (s) => {
+      const m = String(s || '').match(/-(\d+)(?:\D|$)/);
+      return m ? parseInt(m[1], 10) : null;
+    };
+    const FUENTES = [
+      { rx: /^MBO/, get: () => (typeof BOMBAS_DATA !== 'undefined' ? BOMBAS_DATA : []), tipoKey: 'tipo' },
+      { rx: /^VAL/, get: () => (typeof VALVULAS_DATA !== 'undefined' ? VALVULAS_DATA : []), tipoKey: 'tipo' },
+      { rx: /^CPN/, get: () => (typeof CAMPANAS_DATA !== 'undefined' ? CAMPANAS_DATA : []), tipoKey: null },
+      { rx: /^PPA/, get: () => (typeof PUERTAS_DATA !== 'undefined' ? PUERTAS_DATA : []), tipoKey: 'tipo' },
+      { rx: /^MEQ/, get: () => (typeof PATIO_DATA !== 'undefined' ? PATIO_DATA : []), tipoKey: 'clase', numeric: true },
+      { rx: /^AVO/, get: () => (typeof FLOTA_DATA !== 'undefined' ? FLOTA_DATA : []), tipoKey: 'tipo' },
+      { rx: /^AAC/, get: () => (typeof AAC_DATA !== 'undefined' ? AAC_DATA : []), tipoKey: 'tipo' },
+      { rx: /^(CTA|ARC|AUT|CMA)/, get: () => (typeof OTROS_DATA !== 'undefined' ? OTROS_DATA : []), tipoKey: 'tipo' },
+    ];
+
+    return (lista || []).map((eq) => {
+      const fuente = FUENTES.find((f) => f.rx.test(eq));
+      const arr = fuente ? fuente.get() : [];
+      const rec = arr.find((d) => d.equipo === eq);
+      if (!fuente || !rec) return { equipo: eq, estado: 'sin-ficha' };
+      const tipoVal = fuente.tipoKey ? rec[fuente.tipoKey] : '';
+      const siblings = arr.filter((d) => d.equipo !== eq && (fuente.tipoKey ? d[fuente.tipoKey] === tipoVal : true) && planesByEquipo[d.equipo]);
+      const denom = rec.denominacion || rec.denom || '';
+      const base = { equipo: eq, denom, tipo: tipoVal };
+      if (!siblings.length) return { ...base, estado: 'gap' };
+      if (fuente.numeric) {
+        const n = numOf(denom);
+        const withNum = siblings.map((s) => ({ s, n: numOf(s.denominacion) })).filter((x) => x.n !== null);
+        const best = (withNum.length && n !== null)
+          ? withNum.reduce((a, b) => (Math.abs(b.n - n) < Math.abs(a.n - n) ? b : a)).s
+          : siblings[0];
+        return { ...base, estado: 'recomendado', sugerido: planTxt(best.equipo), refEquipo: best.equipo };
+      }
+      const sigs = new Set(siblings.map((s) => planSig(s.equipo)));
+      if (sigs.size === 1) {
+        return { ...base, estado: 'recomendado', sugerido: planTxt(siblings[0].equipo), refEquipo: siblings[0].equipo };
+      }
+      return { ...base, estado: 'ambiguo', nOpciones: sigs.size };
+    });
+  }
+
   function planesHTML() {
     const P = (typeof PLANES_SAP_RESUMEN !== 'undefined') ? PLANES_SAP_RESUMEN : null;
     if (!P) return '';
@@ -632,6 +691,47 @@
               <div id="aud-sp-count" style="margin-top:6px;font-size:11px;color:var(--color-muted)"></div>
             </details>
           </div>`;
+        })()}
+
+        ${(() => {
+          const analisis = analizarSinPlan(sinPlan.lista);
+          const conFicha = analisis.filter((r) => r.estado !== 'sin-ficha');
+          if (!conFicha.length) return '';
+          const rec = analisis.filter((r) => r.estado === 'recomendado');
+          const amb = analisis.filter((r) => r.estado === 'ambiguo');
+          const gap = analisis.filter((r) => r.estado === 'gap');
+          const pfxOf2 = (c) => (String(c).match(/^[A-Za-z]+/) || [''])[0];
+          const groupBy = (list, keyFn) => {
+            const m = new Map();
+            list.forEach((r) => {
+              const k = keyFn(r);
+              if (!m.has(k)) m.set(k, []);
+              m.get(k).push(r);
+            });
+            return [...m.values()];
+          };
+          const tagsOf = (list) => list.map((r) => `<span class="equipo-tag" style="margin:2px 3px 2px 0;display:inline-block">${esc(r.equipo)}</span>`).join('');
+          const recGroups = groupBy(rec, (r) => r.tipo + '|' + r.sugerido + '|' + r.refEquipo).sort((a, b) => b.length - a.length);
+          const ambGroups = groupBy(amb, (r) => famLabel(pfxOf2(r.equipo)) + '|' + r.tipo).sort((a, b) => b.length - a.length);
+          const gapGroups = groupBy(gap, (r) => famLabel(pfxOf2(r.equipo)) + '|' + r.tipo).sort((a, b) => b.length - a.length);
+          return heading(`Sugerencia de plan · ${conFicha.length} equipos sin preventivo`) +
+            `<div style="font-size:11.5px;color:var(--color-muted);margin-bottom:8px">Por analogía con equipos de la misma ficha y mismo tipo que sí tienen preventivo en IP24 (en Patio de valijas, además, el vecino de numeración de código más cercana). No viene de SAP — es para evaluar y dar de alta.</div>` +
+            (recGroups.length ? `<div style="font-weight:700;font-size:12px;color:#16a34a;margin:10px 0 4px">✓ Recomendado · ${rec.length}</div>` +
+              recGroups.map((g) => `<div style="font-size:12px;padding:5px 0;border-bottom:1px solid var(--color-surface)">
+                <strong>${esc(g[0].sugerido)}</strong> <span style="color:var(--color-muted)">— ${esc(famLabel(pfxOf2(g[0].equipo)))}${g[0].tipo ? ' · ' + esc(g[0].tipo) : ''} · igual que ${esc(g[0].refEquipo)} · ${g.length} equipo${g.length > 1 ? 's' : ''}</span>
+                <div style="margin-top:2px">${tagsOf(g)}</div>
+              </div>`).join('') : '') +
+            (ambGroups.length ? `<div style="font-weight:700;font-size:12px;color:#f59e0b;margin:12px 0 4px">? Más de un plan posible para ese tipo — revisar a mano · ${amb.length}</div>` +
+              ambGroups.map((g) => `<div style="font-size:12px;padding:5px 0;border-bottom:1px solid var(--color-surface)">
+                <span style="color:var(--color-muted)">${esc(famLabel(pfxOf2(g[0].equipo)))} · ${esc(g[0].tipo)} — ${g[0].nOpciones} planes distintos en uso para ese tipo, no se puede elegir por analogía</span>
+                <div style="margin-top:2px">${tagsOf(g)}</div>
+              </div>`).join('') : '') +
+            (gapGroups.length ? `<div style="font-weight:700;font-size:12px;color:#dc2626;margin:12px 0 4px">✕ Sin plan de referencia en SAP para ese tipo · ${gap.length}</div>` +
+              `<div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">Ningún equipo de ese tipo tiene preventivo en IP24 todavía — no es "falta asignar", es que el plan no existe.</div>` +
+              gapGroups.map((g) => `<div style="font-size:12px;padding:5px 0;border-bottom:1px solid var(--color-surface)">
+                <span style="color:var(--color-muted)">${esc(famLabel(pfxOf2(g[0].equipo)))} · ${esc(g[0].tipo || '—')} · ${g.length} equipo${g.length > 1 ? 's' : ''}</span>
+                <div style="margin-top:2px">${tagsOf(g)}</div>
+              </div>`).join('') : '');
         })()}
 
         ${noMaestro.length ? heading('Plan activo pero el equipo no está dado de alta en SAP · ' + noMaestro.length) +
