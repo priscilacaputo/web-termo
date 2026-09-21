@@ -26,6 +26,7 @@ let planState = {
   grilla: {},            // "YYYY-MM-DD" → { manana:{g,aire,mec,sup,ausentes}, noche:{...} } (Grilla Inteligente)
   cfg: JSON.parse(JSON.stringify(PLAN_DIA_TEMPLATE)),
   hidrolavado: false,
+  agrupar: true,         // juntar condensadora + interiores del mismo sistema en una sola OT
   ots: [],               // ver planNormalizarItem()
 };
 let planDiaSel = null;    // "YYYY-MM-DD" mostrado en el panel del día
@@ -323,6 +324,72 @@ function planNormalizarItem(raw, origen) {
   };
 }
 
+/* ════════ Sistemas de aire: condensadora + interiores en una sola OT ════════
+   SAP genera una OT por equipo, así que la unidad exterior y sus unidades interiores salen en
+   OTs distintas. AAC_SISTEMAS (aac-sistemas-data.js) dice qué equipos son del mismo sistema:
+   sus preventivos del mes se juntan en UNA tarea del calendario (mismo día, guardia y hora). La
+   tarea guarda las OTs originales en `miembros` (para exportarlas y para desagrupar). */
+let _planSistIdx = null;
+function planSistemaDe(equipo) {
+  if (typeof AAC_SISTEMAS === 'undefined') return null;
+  if (!_planSistIdx) {
+    _planSistIdx = new Map();
+    AAC_SISTEMAS.forEach(sis => { _planSistIdx.set(sis.cabeza, sis); sis.miembros.forEach(m => _planSistIdx.set(m, sis)); });
+  }
+  return _planSistIdx.get(String(equipo || '').trim().toUpperCase()) || null;
+}
+function planFusionarSistema(sis, its) {
+  const orden = its.slice().sort((a, b) =>
+    ((b.equipo === sis.cabeza) - (a.equipo === sis.cabeza)) || String(a.equipo).localeCompare(String(b.equipo), 'es', { numeric: true }));
+  const base = orden[0];
+  const conCab = orden.some(o => o.equipo === sis.cabeza);
+  const nPers = Math.max(...orden.map(o => o.nPers || 1));
+  /* Trabajo total (min-persona) repartido entre el máximo de técnicos que pide alguna de las OTs. */
+  const trabajo = orden.reduce((t, o) => t + (o.duracionMin || 0) * (o.nPers || 1), 0);
+  const duracionMin = Math.max(15, Math.ceil(trabajo / nPers / 5) * 5);
+  const fuentes = new Set(orden.map(o => o.durFuente));
+  const fijada = orden.find(o => o.pin && o.fecha && o.guardia);
+  const ants = orden.map(o => o.antiguedadDias).filter(v => v != null);
+  const g = Object.assign({}, base, {
+    id: 'SIS#' + sis.id + '#' + (base.ot_num || Math.random().toString(36).slice(2, 8)),
+    ot_num: orden.map(o => o.ot_num).filter(Boolean).join(' + '),
+    denom: `${sis.nombre} — ${conCab ? 'condensadora + ' + (orden.length - 1) + ' interior' + (orden.length - 1 > 1 ? 'es' : '') : orden.length + ' interiores'} (mismo sistema)`,
+    esAltura: orden.some(o => o.esAltura),
+    duracionMin, nPers,
+    durFuente: fuentes.size === 1 ? base.durFuente : 'estim',
+    antiguedadDias: ants.length ? Math.max(...ants) : null,
+    miembros: orden, sistemaId: sis.id,
+    fecha: null, guardia: null, inicio: null, fin: null, pin: false,
+  });
+  if (fijada) Object.assign(g, { fecha: fijada.fecha, guardia: fijada.guardia, inicio: fijada.inicio, fin: fijada.fin, pin: true });
+  return g;
+}
+function planAgruparSistemas(items) {
+  const grupos = new Map();
+  const salida = [];
+  items.forEach(it => {
+    const sis = (it.tipo === 'preventivo' && it.origen === 'mensual') ? planSistemaDe(it.equipo) : null;
+    if (!sis) { salida.push(it); return; }
+    if (!grupos.has(sis.id)) grupos.set(sis.id, { sis, its: [] });
+    grupos.get(sis.id).its.push(it);
+  });
+  grupos.forEach(({ sis, its }) => salida.push(its.length < 2 ? its[0] : planFusionarSistema(sis, its)));
+  return salida;
+}
+function planDesagrupar(ots) { return ots.flatMap(o => (o.miembros ? o.miembros : [o])); }
+function planToggleAgrupar(on) {
+  planState.agrupar = !!on;
+  const sueltas = planDesagrupar(planState.ots);
+  const mens = sueltas.filter(o => o.origen === 'mensual');
+  const otras = sueltas.filter(o => o.origen !== 'mensual');
+  /* al agrupar/desagrupar se vuelve a repartir (las fijadas con 📌 se respetan) */
+  mens.forEach(o => { if (!o.pin) { o.fecha = null; o.guardia = null; o.inicio = null; o.fin = null; } });
+  planState.ots = [...(planState.agrupar ? planAgruparSistemas(mens) : mens), ...otras];
+  planDistribuir(); planSave(); renderPlanificador();
+  const n = planState.ots.filter(o => o.miembros).length;
+  planToast(planState.agrupar ? `🔗 ${n} sistema${n === 1 ? '' : 's'} agrupado${n === 1 ? '' : 's'} (condensadora + interiores en una sola OT).` : 'OTs desagrupadas: una por equipo.', 'success');
+}
+
 /* ════════ Carga del Excel mensual de OTs ════════ */
 const PLAN_ALIASES_MES = {
   'equipo': 'equipo', 'código de equipo': 'equipo', 'codigo de equipo': 'equipo',
@@ -376,12 +443,14 @@ function planHandleFileMensual(file) {
         if (prev) Object.assign(it, { fecha: prev.fecha, guardia: prev.guardia, inicio: prev.inicio, fin: prev.fin, pin: true, duracionMin: prev.duracionMin });
         return it;
       });
-      planState.ots = [...nuevas, ...patio];
+      const nAgrup = planState.agrupar !== false ? planAgruparSistemas(nuevas) : nuevas;
+      planState.ots = [...nAgrup, ...patio];
       if (!planState.mes) planState.mes = document.getElementById('plan-mes-input').value || new Date().toISOString().slice(0, 7);
       planDistribuir();
       planSave();
       renderPlanificador();
-      planToast(`✓ ${nuevas.length} OTs del mes cargadas y distribuidas.`, 'success');
+      const nSis = planState.ots.filter(o => o.miembros).length;
+      planToast(`✓ ${nuevas.length} OTs del mes cargadas y distribuidas.` + (nSis ? `\n🔗 ${nSis} sistema${nSis === 1 ? '' : 's'} de aire: condensadora + interiores juntos en una sola tarea.` : ''), 'success');
     } catch (err) {
       planToast('❌ Error al leer el archivo: ' + err.message, 'error');
     }
@@ -1041,11 +1110,12 @@ function renderPlanDia() {
       const s = o._s, w = o._w;
       const np = o.nPersUsadas || o.nPers || 1;
       const fu = o.durFuente === 'sap' ? '⚙️' : o.durFuente === 'estim' ? '~' : '';
+      const miem = o.miembros ? ' · OTs juntas: ' + o.miembros.map(m => m.equipo + (m.ot_num ? ' (' + m.ot_num + ')' : '')).join(', ') : '';
       const fuTxt = o.durFuente === 'sap' ? 'según SAP' + (o.hdrRuta ? ' (' + o.hdrRuta + ')' : '') : o.durFuente === 'estim' ? 'estimada' : 'cargada a mano';
       return `<div class="plan-ot-card${o.esAltura ? ' altura' : ''}${o.origen === 'patio' ? ' patio' : ''}${o.origen === 'adhoc' ? ' adhoc' : ''}" draggable="true" data-id="${o.id}"
           style="left:${s / dur * 100}%;width:${w / dur * 100}%;top:${22 + o._lane * rowH}px;height:${o._k * rowH - 6}px"
-          title="${o.equipo} · ${o.denom} · ${o.inicio}–${o.fin} · ${planFmtDur(o.duracionMin)} · ${np} persona${np > 1 ? 's' : ''} · ${fuTxt}${o.antiguedadDias != null ? ' · lleva ' + o.antiguedadDias + ' d' : ''}">
-          <span class="plan-ot-eq">${o.equipo}${o.pin ? ' 📌' : ''}${np > 1 ? ` 👥${np}` : ''}</span>
+          title="${o.equipo} · ${o.denom} · ${o.inicio}–${o.fin} · ${planFmtDur(o.duracionMin)} · ${np} persona${np > 1 ? 's' : ''} · ${fuTxt}${o.antiguedadDias != null ? ' · lleva ' + o.antiguedadDias + ' d' : ''}${miem}">
+          <span class="plan-ot-eq">${o.equipo}${o.miembros ? ' 🔗' + o.miembros.length : ''}${o.pin ? ' 📌' : ''}${np > 1 ? ` 👥${np}` : ''}</span>
           <span class="plan-ot-meta">${o.inicio} · ${planFmtDur(o.duracionMin)} ${fu}${o.linea ? ' · ' + o.linea : ''}</span>
         </div>`;
     }).join('')}
@@ -1102,10 +1172,19 @@ function renderPlanSinUbicar() {
 }
 
 /* ─── Export ─── */
+/* Una fila por OT original: las de un sistema comparten día, guardia y hora. */
+function planExpandirGrupos(ots) {
+  return ots.flatMap(o => o.miembros
+    ? o.miembros.map(m => Object.assign({}, m, {
+        fecha: o.fecha, guardia: o.guardia, turno: o.turno, inicio: o.inicio, fin: o.fin, zona: o.zona,
+        nPersUsadas: o.nPersUsadas, motivoSinUbicar: o.motivoSinUbicar, grupoDe: o.equipo + ' (' + o.miembros.length + ' equipos)',
+      }))
+    : [o]);
+}
 function planExport() {
   if (typeof XLSX === 'undefined') { planToast('❌ Falta la librería para exportar.', 'error'); return; }
   if (!planState.ots.length) { planToast('No hay OTs para exportar.', 'error'); return; }
-  const rows = [...planState.ots].sort((a, b) =>
+  const rows = planExpandirGrupos([...planState.ots]).sort((a, b) =>
     (a.fecha || '9999').localeCompare(b.fecha || '9999') || (a.guardia || 9) - (b.guardia || 9) || planHHMMtoMin(a.inicio) - planHHMMtoMin(b.inicio)
   ).map(o => ({
     'Fecha': o.fecha || '', 'Día': o.fecha ? planDiaLegible(o.fecha) : '',
@@ -1113,6 +1192,7 @@ function planExport() {
     'Turno': PLAN_TURNO_LBL[o.turno] || '',
     'Inicio': o.inicio || '', 'Fin': o.fin || '',
     'OT': o.ot_num || '', 'Equipo': o.equipo, 'Denominación': o.denom || '',
+    'Sistema (OTs juntas)': o.grupoDe || '',
     'Zona': o.zona, 'Línea': o.linea || '',
     'Altura': o.esAltura ? 'Sí' : 'No',
     'Duración (min)': o.duracionMin || '',
@@ -1167,6 +1247,11 @@ function planReset() {
   wire('plan-patio-btn', 'plan-patio-input', planHandleFilePatio);
 
   document.getElementById('plan-export-btn').addEventListener('click', planExport);
+  const chkAgr = document.getElementById('plan-agrupar-chk');
+  if (chkAgr) {
+    chkAgr.checked = planState.agrupar !== false;
+    chkAgr.addEventListener('change', () => planToggleAgrupar(chkAgr.checked));
+  }
   document.getElementById('plan-reset-btn').addEventListener('click', planReset);
 
   const addBtn = document.getElementById('plan-adhoc-btn');
