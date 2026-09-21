@@ -181,9 +181,7 @@ const AAC_SISTEMAS = [
   "miembros": [
    "AAC4113",
    "AAC4114",
-   "AAC4115",
-   "AAC4116",
-   "AAC4117"
+   "AAC4115"
   ]
  },
  {
@@ -213,8 +211,7 @@ const AAC_SISTEMAS = [
    "AAC4128",
    "AAC4129",
    "AAC4130",
-   "AAC4131",
-   "AAC4132"
+   "AAC4131"
   ]
  },
  {
@@ -261,4 +258,4 @@ const AAC_SISTEMAS = [
 ];
 
 /* Unidades interiores sin unidad exterior identificable (piso-techo aisladas) */
-const AAC_SIN_EXTERIOR = [{"equipo": "AAC4107", "denom": "Unidad Piso Techo 1 Comedor Aeroparque"}, {"equipo": "AAC4108", "denom": "Unidad Piso Techo 2 Comedor Aeroparque"}, {"equipo": "AAC4109", "denom": "Unidad Piso Techo 3 Comedor Aeroparque"}, {"equipo": "AAC4110", "denom": "Unidad Piso Techo Taller Termomecanica"}, {"equipo": "AAC4111", "denom": "Unidad Piso Techo Taller Infraestructura"}];
+const AAC_SIN_EXTERIOR = [{"equipo": "AAC4107", "denom": "Unidad Piso Techo 1 Comedor Aeroparque"}, {"equipo": "AAC4108", "denom": "Unidad Piso Techo 2 Comedor Aeroparque"}, {"equipo": "AAC4109", "denom": "Unidad Piso Techo 3 Comedor Aeroparque"}, {"equipo": "AAC4110", "denom": "Unidad Piso Techo Taller Termomecanica"}, {"equipo": "AAC4111", "denom": "Unidad Piso Techo Taller Infraestructura"}, {"equipo": "AAC4116", "denom": "Unidad Piso Techo Comedor Mantenimiento"}, {"equipo": "AAC4117", "denom": "Unidad Piso Techo Comedor Mantenimiento"}, {"equipo": "AAC4132", "denom": "Unidad Piso Techo 4 Comedor Aeroparque"}];

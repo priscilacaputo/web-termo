@@ -377,15 +377,30 @@ function planAgruparSistemas(items) {
   return salida;
 }
 function planDesagrupar(ots) { return ots.flatMap(o => (o.miembros ? o.miembros : [o])); }
-function planToggleAgrupar(on) {
-  planState.agrupar = !!on;
+/* Si la lista de sistemas cambió (se corrigió un vínculo condensadora↔interior), las OTs agrupadas que
+   quedaron guardadas ya no valen: se vuelven a armar con la lista nueva. */
+function planRevalidarGrupos() {
+  const vieja = planState.ots.some(o => o.miembros && o.miembros.some(m => {
+    const sis = planSistemaDe(m.equipo);
+    return !sis || sis.id !== o.sistemaId;
+  }));
+  if (!vieja) return false;
+  planReagrupar();
+  planSave();
+  return true;
+}
+function planReagrupar() {
   const sueltas = planDesagrupar(planState.ots);
   const mens = sueltas.filter(o => o.origen === 'mensual');
   const otras = sueltas.filter(o => o.origen !== 'mensual');
   /* al agrupar/desagrupar se vuelve a repartir (las fijadas con 📌 se respetan) */
   mens.forEach(o => { if (!o.pin) { o.fecha = null; o.guardia = null; o.inicio = null; o.fin = null; } });
   planState.ots = [...(planState.agrupar ? planAgruparSistemas(mens) : mens), ...otras];
-  planDistribuir(); planSave(); renderPlanificador();
+  planDistribuir();
+}
+function planToggleAgrupar(on) {
+  planState.agrupar = !!on;
+  planReagrupar(); planSave(); renderPlanificador();
   const n = planState.ots.filter(o => o.miembros).length;
   planToast(planState.agrupar ? `🔗 ${n} sistema${n === 1 ? '' : 's'} agrupado${n === 1 ? '' : 's'} (condensadora + interiores en una sola OT).` : 'OTs desagrupadas: una por equipo.', 'success');
 }
@@ -1229,6 +1244,7 @@ function planReset() {
   const mesInput = document.getElementById('plan-mes-input');
   mesInput.value = planState.mes || new Date().toISOString().slice(0, 7);
   planState.mes = mesInput.value;
+  planRevalidarGrupos();   // si cambió la lista de sistemas, rearma las OTs agrupadas guardadas
   mesInput.addEventListener('change', function () {
     planState.mes = this.value; planDiaSel = null;
     planState.grilla = {};
