@@ -707,7 +707,7 @@
     const vinc = (sis) => (sis.conf === 'alta' ? 'Seguro (misma ubicación técnica)' : 'Revisar (deducido por secuencia de códigos)');
     const filaEq = (sis, eq, rol) => ({
       'Sistema': sis.cabeza, 'Nombre del sistema': sis.nombre, 'Rol': rol, 'Equipo': eq,
-      'Denominación': (maestro[eq] || {}).denom || '', 'Ubicación técnica': (maestro[eq] || {}).ubic || '',
+      'Denominación': (maestro[eq] || {}).denom || '', 'Sector': ubicAire(eq).sector, 'Ubicación técnica': ubicAire(eq).ubic,
       'Plan': planTxt(eq), 'Frecuencia real': frecTxt(eq), 'Vínculo': vinc(sis),
       'Correcto? (completar)': '', 'Condensadora correcta (completar)': '',
     });
@@ -716,7 +716,8 @@
       const bI = new Set(sis.miembros.flatMap((m) => (porEq[m] || []).map((p) => p.realBucket)));
       const distinta = [...bC].some((b) => !bI.has(b)) || [...bI].some((b) => !bC.has(b));
       return {
-        'Sistema': sis.cabeza, 'Nombre': sis.nombre, 'Ubicación técnica condensadora': sis.ubic,
+        'Sistema': sis.cabeza, 'Nombre': sis.nombre, 'Sector de la condensadora': ubicAire(sis.cabeza).sector, 'Ubicación técnica condensadora': ubicAire(sis.cabeza).ubic,
+        'Ubicaciones de los interiores': [...new Set(sis.miembros.map((m) => (ubicAire(m).sector ? ubicAire(m).sector + ' · ' : '') + ubicAire(m).corta))].join(' | '),
         'Cantidad de interiores': sis.miembros.length, 'Vínculo': vinc(sis),
         'Plan de la condensadora': planTxt(sis.cabeza), 'Frecuencia condensadora': frecTxt(sis.cabeza),
         'Frecuencia de los interiores': [...bI].join(' + '),
@@ -730,7 +731,7 @@
       sis.miembros.forEach((m) => equipos.push(filaEq(sis, m, 'Interior')));
     });
     const sinExt = ((typeof AAC_SIN_EXTERIOR !== 'undefined') ? AAC_SIN_EXTERIOR : []).map((x) => ({
-      'Equipo': x.equipo, 'Denominación': x.denom, 'Ubicación técnica': (maestro[x.equipo] || {}).ubic || '',
+      'Equipo': x.equipo, 'Denominación': x.denom, 'Sector': ubicAire(x.equipo).sector, 'Ubicación técnica': ubicAire(x.equipo).ubic,
       'Plan': planTxt(x.equipo), 'Frecuencia real': frecTxt(x.equipo),
     }));
     const wb = XLSX.utils.book_new();
@@ -739,13 +740,21 @@
       if (cols) ws['!cols'] = cols.map((w) => ({ wch: w }));
       XLSX.utils.book_append_sheet(wb, ws, name);
     };
-    add(sistemas, 'Sistemas', [10, 44, 26, 12, 34, 46, 18, 26, 12, 70]);
-    add(equipos, 'Equipos por sistema', [10, 40, 22, 10, 44, 28, 60, 16, 34, 16, 24]);
-    if (sinExt.length) add(sinExt, 'Interiores sin condensadora', [10, 44, 28, 60, 16]);
+    add(sistemas, 'Sistemas', [10, 44, 28, 26, 50, 12, 34, 46, 18, 26, 12, 70]);
+    add(equipos, 'Equipos por sistema', [10, 40, 22, 10, 44, 28, 28, 60, 16, 34, 16, 24]);
+    if (sinExt.length) add(sinExt, 'Interiores sin condensadora', [10, 44, 28, 28, 60, 16]);
     XLSX.writeFile(wb, 'Sistemas_de_aire_condensadora_interiores.xlsx');
   };
 
   /* Sistemas de aire (condensadora + interiores): base del agrupado de OTs del Planificador. */
+  /* Dónde está un equipo de aire: sector (ficha de la web) + ubicación técnica (SAP). */
+  function ubicAire(eq) {
+    const m = getMaestro().find((e) => e.equipo === eq) || {};
+    const f = (typeof AAC_DATA !== 'undefined' ? AAC_DATA : []).find((a) => a.equipo === eq) || {};
+    const ubic = m.ubic || f.ubicacion || '';
+    return { sector: f.sector || '', ubic, corta: ubic.replace(/^AEP-/, '') };
+  }
+
   window.audSisFiltro = function (btn, k) {
     const box = btn.closest('.aud-sis-box');
     box.querySelectorAll('.aud-sis-filtro').forEach((x) => x.classList.toggle('active', x === btn));
@@ -777,7 +786,7 @@
       return filas.join('') || '<span style="color:#dc2626;font-weight:600">sin plan</span>';
     };
     const bucketsDe = (eqs) => new Set(eqs.flatMap((e) => (porEq[e] || []).map((p) => p.realBucket)));
-    const tag = (e, fondo) => `<span class="equipo-tag" style="background:${fondo};font-size:10.5px" title="${esc((maestro[e] || {}).denom || '')}">${esc(e)}</span>`;
+    const tag = (e, fondo) => `<span class="equipo-tag" style="background:${fondo};font-size:10.5px" title="${esc(((maestro[e] || {}).denom || '') + ' — ' + (ubicAire(e).sector ? ubicAire(e).sector + ' · ' : '') + ubicAire(e).corta)}">${esc(e)}</span>`;
 
     const sis = AAC_SISTEMAS.map((x) => {
       const bC = bucketsDe([x.cabeza]), bI = bucketsDe(x.miembros);
@@ -795,13 +804,20 @@
         </div>
         <span class="aud-pill aud-${x.conf === 'alta' ? 'ok' : 'curso'}" title="${x.conf === 'alta' ? 'Misma ubicación técnica que sus interiores' : 'Deducido por la secuencia de códigos: conviene confirmarlo'}">${x.conf === 'alta' ? '✓ Seguro' : 'Revisar'}</span>
       </div>
-      <div style="font-size:11px;color:var(--color-muted);margin:2px 0 8px">${esc(x.ubic)}</div>
+      <div style="font-size:12px;margin:3px 0 8px">📍 <b>${esc(ubicAire(x.cabeza).sector || 'Sin sector en la ficha')}</b> <span style="color:var(--color-muted)">· ${esc(ubicAire(x.cabeza).corta)}</span></div>
       <div style="display:grid;grid-template-columns:96px 1fr;gap:4px 10px;font-size:12px">
         <div style="color:var(--color-muted)">Condensadora</div><div>${planesDe([x.cabeza])}</div>
         <div style="color:var(--color-muted)">${x.miembros.length} interior${x.miembros.length > 1 ? 'es' : ''}</div><div>${planesDe(x.miembros)}</div>
       </div>
       ${distinta ? `<div style="margin-top:6px;font-size:11.5px;color:#b45309;font-weight:700">⚠ La frecuencia de los interiores no coincide con la de la condensadora</div>` : ''}
-      <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">${x.miembros.map((m) => tag(m, '#64748b')).join('')}</div>
+      <div style="margin-top:8px;font-size:11.5px;color:var(--color-muted)">${(() => {
+        const g = {};
+        x.miembros.forEach((m) => { const u = ubicAire(m); const k = u.corta || 'sin ubicación'; (g[k] = g[k] || { sector: u.sector, n: 0 }).n++; });
+        const ent = Object.entries(g).sort((a, b) => b[1].n - a[1].n);
+        if (ent.length <= 3) return ent.map(([k, v]) => `📍 Interiores${ent.length > 1 || v.n < x.miembros.length ? ' (' + v.n + ')' : ''}: ${esc(v.sector ? v.sector + ' · ' : '')}${esc(k)}`).join('<br>');
+        return `📍 Interiores repartidos en <b>${ent.length} ubicaciones</b> (pasá el mouse por cada equipo para ver dónde está)`;
+      })()}</div>
+      <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">${x.miembros.map((m) => tag(m, '#64748b')).join('')}</div>
     </div>`).join('');
 
     const sinExt = (typeof AAC_SIN_EXTERIOR !== 'undefined') ? AAC_SIN_EXTERIOR : [];
