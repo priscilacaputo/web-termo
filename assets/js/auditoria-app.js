@@ -57,49 +57,12 @@
   };
   const familiaOf = (code) => FAMILIA[prefixOf(code)] || prefixOf(code);
 
-  /* ── Checklist de dimensiones de la auditoría ── */
-  const DIMENSIONES = [
-    { dim: 'Inventario de equipos', estado: 'curso',
-      nota: 'Solo alcance TER + MEC: 988 equipos del IH08 que tienen plan TER/MEC, OT TER/MEC o ficha en la web (se descartaron 121 de otros grupos). Cruce contra las fichas de la web abajo.' },
-    { dim: 'Ubicación técnica', estado: 'ok',
-      nota: 'Marcada como correcta (decisión 2026-09-08). No se audita el campo.' },
-    { dim: 'Planes y asignación a equipo', estado: 'curso',
-      nota: (() => {
-        const R = (typeof PLANES_SAP_RESUMEN !== 'undefined') ? PLANES_SAP_RESUMEN : null;
-        if (!R) return 'Falta cargar IP24.';
-        const f = n => n.toLocaleString('es-AR');
-        return 'IP24 (solo Aeroparque) cruzado contra el maestro: ' + f(R.posiciones) + ' posiciones, ' + f(R.equiposConPlan) + ' equipos. ' +
-          R.equiposConPlanNoEnMaestro.length + ' con preventivo pero sin el equipo dado de alta (' + R.equiposConPlanNoEnMaestro.join(', ') + '). ' +
-          R.equiposMaestroSinPlan.total + ' equipos del maestro sin plan.';
-      })() },
-    { dim: 'Periodicidad de los planes', estado: 'curso',
-      nota: (() => {
-        const R = (typeof PLANES_SAP_RESUMEN !== 'undefined') ? PLANES_SAP_RESUMEN : null;
-        if (!R) return 'Falta cargar IP24.';
-        return 'Periodicidad real (mediana entre tomas de IP24) validada contra los paquetes de la estrategia (IP11): ' + (R.posiciones - R.fueraDePaquete.length).toLocaleString('es-AR') + ' de ' + R.posiciones.toLocaleString('es-AR') + ' coinciden. ' + R.desajusteMenosSeguido.length + ' planes corren menos seguido y ' + R.desajusteNoCoincide.length + ' más seguido que su nombre.';
-      })() },
-    { dim: 'Materiales de OT y stock', estado: 'curso',
-      nota: 'Stock (MB52), maestro (MM60) y consumo 2 años (MB51) cargados: cobertura, faltantes e inmovilizado abajo. Falta solo el link material↔equipo (componentes por plan/OT: IA08 / COOIS / IW3D).' },
-    { dim: 'Ejecución de OTs', estado: 'curso',
-      nota: 'IW38 2 años (solo Aeroparque): 18.731 OTs preventivas, 1.022 equipos. 90% se cierran (OTCE), pero solo ~18% de las cerradas lleva notificación de horas/fecha. Backlog abierto 1.826 (191 > 6 meses).' },
-  ];
-  const EST_META = {
-    ok:        { label: 'OK',          cls: 'ok' },
-    curso:     { label: 'En curso',    cls: 'curso' },
-    parcial:   { label: 'Parcial',     cls: 'parcial' },
-    pendiente: { label: 'Pendiente',   cls: 'pend' },
-  };
-
   /* ── Observaciones de calidad de datos (revisar con SAP) ── */
   const OBSERVACIONES = [
-    'Status "AEQS": son sub-equipos montados sobre un equipo superior (splits de manga, UTAs de núcleo, bombas de grupo…). Es correcto que sigan en sus secciones — no son un hallazgo.',
-    'Status "MONT NOAC PTBO": equipos que ya no existen. Se eliminaron por completo del portal (maestro y secciones) el 2026-09-10. Solo queda "MONT PTBO" (AVO219) pendiente de revisar.',
     'Incendios: la web usa códigos ECA1–ECA27 (propios); SAP los tiene como ECC054–ECC101 y ECC556–ECC561. Hay que mapear ECA ↔ ECC.',
-    'Persianas de gatera: las fichas MCD100–MCD135 no aparecen en este export de SAP. Confirmar si están de alta con otro código o si faltan crear.',
     'HER0778 / HER0875 / HER0906 / HER0926 / HER0956: dadas de alta como "equipo" en SAP pero son cajas de herramientas asignadas a personas. Revisar si corresponde que sean objetos técnicos.',
-    'Familias sin sección propia en la web (viven solo en el maestro): tanques TNQ/ATQ, medidores GAS/CAU, autoelevador AUT.',
-    'Válvulas VAL: sección propia con las 37 válvulas del sistema de incendio (export IH08 val.xlsx), las 37 ya incorporadas al maestro TER/MEC (2026-09-10). 35 tienen plan preventivo en IP24 (IP24 de 2026-09-21); solo las 2 de retención VAL261-262 figuran en "equipos del maestro sin plan".',
-    'Campanas de extracción CPN: sección propia con las 18 campanas (export IH08 cpn.xlsx), las 18 ya incorporadas al maestro TER/MEC (2026-09-10). Solo CPN15 y CPN16 tienen plan "MP 1M Campanas y sistema de extracción" en IP24; las otras 16 figuran en "equipos del maestro sin plan" (probable: falta asignarles el mismo plan mensual).',
+    'AVO219 (status "MONT PTBO") sigue pendiente de revisar.',
+    'Campanas CPN: solo CPN15 y CPN16 tienen plan "MP 1M Campanas y sistema de extracción" en IP24; las otras 16 no tienen ninguno (probable: falta asignarles el mismo plan mensual).',
   ];
 
   /* ── Estado ── */
@@ -162,6 +125,19 @@
   }
 
   /* ── Render ── */
+  /* ── Pestañas de la auditoría ── */
+  const AUD_TABS = [['resumen', 'Resumen'], ['equipos', 'Equipos'], ['planes', 'Planes'], ['hdr', 'Hojas de ruta'], ['ots', 'Órdenes de trabajo'], ['mat', 'Materiales']];
+  let audTab = 'resumen';
+  window.audGoTab = function (k) {
+    audTab = k;
+    document.querySelectorAll('#auditoria-content .aud-pane').forEach((sec) => { sec.hidden = sec.dataset.pane !== k; });
+    document.querySelectorAll('#auditoria-content .aud-tabs .mant-tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === k));
+    const st = $('auditoria-stats');
+    if (st) st.style.display = k === 'equipos' ? '' : 'none';
+    const tabs = document.querySelector('#auditoria-content .aud-tabs');
+    if (tabs) tabs.scrollIntoView({ block: 'nearest' });
+  };
+
   function render() {
     const host = $('auditoria-content');
     if (!host) return;
@@ -187,14 +163,16 @@
     ].join('');
 
     host.innerHTML = `
-      ${checklistHTML()}
-      ${diagnosticoHTML()}
-      ${planesHTML()}
-      ${otsHTML()}
-      ${mm60HTML()}
-      ${mb51HTML()}
+      <div class="mant-tabs aud-tabs" style="margin-bottom:16px">
+        ${AUD_TABS.map(([k, t]) => `<button class="mant-tab" data-tab="${k}" onclick="audGoTab('${k}')">${t}</button>`).join('')}
+      </div>
+      <section class="aud-pane" data-pane="resumen">${diagnosticoHTML()}</section>
+      <section class="aud-pane" data-pane="planes">${planesHTML()}</section>
+      <section class="aud-pane" data-pane="hdr">${(typeof hdrAuditCardHTML === 'function') ? hdrAuditCardHTML() : ''}</section>
+      <section class="aud-pane" data-pane="ots">${otsHTML()}</section>
+      <section class="aud-pane" data-pane="mat">${mm60HTML()}${mb51HTML()}</section>
+      <section class="aud-pane" data-pane="equipos">
       ${observacionesHTML()}
-      ${(typeof hdrAuditCardHTML === 'function') ? hdrAuditCardHTML() : ''}
 
       <div class="table-card" style="margin-top:24px" id="aud-tabla">
         <div style="padding:16px 16px 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
@@ -220,10 +198,12 @@
         </div>
         <div class="table-footer" id="aud-count"></div>
       </div>
+      </section>
     `;
 
     wire();
     renderRows();
+    audGoTab(audTab);
   }
 
   function card(label, value, color, sub, cardKey) {
@@ -234,26 +214,6 @@
       <span class="stat-label">${label}</span>
       <span class="stat-value">${value}</span>
       <span style="font-size:11px;color:var(--color-muted)">${sub}</span>
-    </div>`;
-  }
-
-  function checklistHTML() {
-    return `<div class="table-card" style="margin-bottom:20px">
-      <div style="padding:14px 16px;font-weight:800;font-size:13px;border-bottom:1px solid var(--color-border)">
-        Estado de la auditoría · barrido de SAP
-      </div>
-      <div style="padding:6px 0">
-      ${DIMENSIONES.map((d) => {
-        const m = EST_META[d.estado];
-        return `<div style="display:flex;gap:12px;align-items:flex-start;padding:11px 16px;border-bottom:1px solid var(--color-surface)">
-          <span class="aud-pill aud-${m.cls}">${m.label}</span>
-          <div>
-            <div style="font-weight:700;font-size:13px">${d.dim}</div>
-            <div style="font-size:12px;color:var(--color-muted)">${d.nota}</div>
-          </div>
-        </div>`;
-      }).join('')}
-      </div>
     </div>`;
   }
 
@@ -281,7 +241,6 @@
     const list = (arr, fmt) => (arr || []).map(fmt).join('');
     const c261 = B.consumo261 || {};
     const inm = B.inmovilizado || { total: 0, top: [] };
-    const maxTop = Math.max(1, ...(B.topConsumo || []).map((x) => x.u));
 
     return `<div class="table-card" style="margin-bottom:20px">
       <div style="padding:14px 16px;font-weight:800;font-size:13px;border-bottom:1px solid var(--color-border)">
@@ -295,12 +254,6 @@
           ${card('Cobertura < 1 mes', B.bajaCoberturaTotal != null ? B.bajaCoberturaTotal : (B.bajaCobertura || []).length, '#f59e0b', 'Stock alcanza para menos de un mes')}
           ${card('Inmovilizado', inm.total, '#f59e0b', `Stock > 0 y sin consumo en ${B.aniosPeriodo} años`)}
         </div>
-
-        ${heading('Materiales con más consumo (261)')}
-        ${list(B.topConsumo.slice(0, 12), (x) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
-          <span class="equipo-tag" style="flex:0 0 82px;background:#6366f1">${esc(x.m)}</span>
-          <span style="flex:1;min-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(x.txt)}">${esc(x.txt)}</span>
-          <span style="flex:0 0 90px;text-align:right;font-weight:700">${x.anual.toLocaleString('es-AR')}/año</span></div>`)}
 
         ${heading('Faltantes — consumo alto, stock 0 · ' + (B.faltantesTotal != null ? B.faltantesTotal : (B.faltantes || []).length))}
         ${list((B.faltantes || []).slice(0, 15), (x) => `<div style="font-size:12px;padding:2px 0">
@@ -327,7 +280,6 @@
     const codes = (list) => (list || []).map((c) => `<span class="equipo-tag" style="margin:2px 3px 2px 0;display:inline-block;background:#6366f1">${esc(c)}</span>`).join('');
     const heading = (t) => `<div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">${t}</div>`;
     const pctSinABC = M.materiales ? Math.round((M.sinABC / M.materiales) * 100) : 0;
-    const abcMax = Math.max(1, ...(M.porABC || []).map((x) => x.n));
 
     return `<div class="table-card" style="margin-bottom:20px">
       <div style="padding:14px 16px;font-weight:800;font-size:13px;border-bottom:1px solid var(--color-border)">
@@ -344,12 +296,6 @@
         <div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">
           El catálogo de pañol (stock MB52) tiene <strong>${(M.panolEnMaestro || 0).toLocaleString('es-AR')}</strong> materiales y <strong>todos</strong> figuran en el maestro. El BOM equipo↔repuesto tiene ${M.bomTotal}: ${M.bomEnMaestro} con código real.
         </div>
-
-        ${heading('Materiales por indicador ABC')}
-        ${(M.porABC || []).map((x) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
-          <span style="flex:0 0 90px">${esc(x.k)}</span>
-          <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round((x.n / abcMax) * 100)}%;background:${/sin ABC/.test(x.k) ? '#f59e0b' : '#0096d6'}"></span></span>
-          <span style="flex:0 0 64px;text-align:right;font-weight:700">${x.n.toLocaleString('es-AR')}</span></div>`).join('')}
 
         ${(M.bomSinCodigoReal || []).length ? heading('Repuestos del BOM cargados como texto (sin código SAP) · ' + M.bomSinCodigoReal.length) +
           `<div>${(M.bomSinCodigoReal || []).map((c) => `<div style="font-size:12px;padding:2px 0">• ${esc(c)}</div>`).join('')}</div>` : ''}
@@ -374,12 +320,8 @@
     const planSinOT = O.equiposConPlanSinOT || [];
     const planSinOTpfx = {};
     planSinOT.forEach((e) => { const p = (e.match(/^[A-Za-z]+/) || ['?'])[0]; planSinOTpfx[p] = (planSinOTpfx[p] || 0) + 1; });
-    const top = O.topEquiposPorOT || [];
-    const maxTop = Math.max(1, ...top.map((x) => x.n));
     const bl = O.backlogPorEdad || [];
     const maxBl = Math.max(1, ...bl.map((x) => x.n));
-    const tri = O.creadasPorTrimestre || [];
-    const maxTri = Math.max(1, ...tri.map((x) => x.n));
 
     return `<div class="table-card" style="margin-bottom:20px">
       <div style="padding:14px 16px;font-weight:800;font-size:13px;border-bottom:1px solid var(--color-border)">
@@ -403,18 +345,6 @@
             <span style="flex:0 0 110px">${esc(x.k)}</span>
             <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round((x.n / maxBl) * 100)}%;background:${/año|6–12/.test(x.k) ? '#dc2626' : '#f59e0b'}"></span></span>
             <span style="flex:0 0 48px;text-align:right;font-weight:700">${x.n}</span></div>`).join('') : ''}
-
-        ${tri.length ? heading('OTs preventivas creadas por trimestre') +
-          tri.slice(-8).map((x) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
-            <span style="flex:0 0 70px">${esc(x.t)}</span>
-            <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round((x.n / maxTri) * 100)}%;background:#0096d6"></span></span>
-            <span style="flex:0 0 48px;text-align:right;font-weight:700">${x.n.toLocaleString('es-AR')}</span></div>`).join('') : ''}
-
-        ${heading('Equipos con más OTs (demanda de trabajo)')}
-        ${top.slice(0, 12).map((x) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
-          <span class="equipo-tag" style="flex:0 0 90px">${esc(x.equipo)}</span>
-          <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round((x.n / maxTop) * 100)}%;background:#6366f1"></span></span>
-          <span style="flex:0 0 40px;text-align:right;font-weight:700">${x.n}</span></div>`).join('')}
 
         ${heading('Equipos con plan pero SIN ninguna OT en 2 años · ' + planSinOT.length)}
         ${Object.entries(planSinOTpfx).sort((a, b) => b[1] - a[1]).map(([p, n]) => `<div style="font-size:12px;padding:2px 0">${esc(famLabel(p))} (${p}): <strong>${n}</strong></div>`).join('')}
@@ -442,10 +372,15 @@
     const maxH = Math.max(1, ...(S.porPuestoHH || []).map((x) => x.h));
     return heading('Carga de trabajo planificada · lista de operaciones (2 años)') +
       `<div style="font-size:12px;margin-bottom:6px">${S.operaciones.toLocaleString('es-AR')} operaciones · <strong>${S.hhPlanificadasTotal.toLocaleString('es-AR')} HH planificadas</strong> · sin ejecución real cargada</div>` +
-      (S.porPuestoHH || []).map((x) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
-        <span style="flex:0 0 110px">${esc(x.k)}</span>
-        <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round((x.h / maxH) * 100)}%;background:#6366f1"></span></span>
-        <span style="flex:0 0 64px;text-align:right;font-weight:700">${x.h.toLocaleString('es-AR')} h</span></div>`).join('') +
+      `<div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">Tocá un puesto para ver qué hojas de ruta hay que modificar. Solo deberían quedar AUX_TER, AUX_MEC y MOEX.</div>` +
+      (S.porPuestoHH || []).map((x) => {
+        const ok = ['AUX_TER', 'AUX_MEC', 'MOEX'].includes(x.k);
+        const det = (typeof hdrPuestoDetalleHTML === 'function') ? hdrPuestoDetalleHTML(x.k) : '';
+        return `<details style="border-bottom:1px solid var(--color-surface)"><summary style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px">
+        <span style="flex:0 0 122px;font-weight:${ok ? 400 : 700};color:${ok ? 'inherit' : '#b45309'}">${ok ? '' : '⚠ '}${esc(x.k)} ▾</span>
+        <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round((x.h / maxH) * 100)}%;background:${ok ? '#6366f1' : '#f59e0b'}"></span></span>
+        <span style="flex:0 0 64px;text-align:right;font-weight:700">${x.h.toLocaleString('es-AR')} h</span></summary>${det}</details>`;
+      }).join('') +
       (() => {
         const r = (typeof hdrPuestosResumen === 'function') ? hdrPuestosResumen() : null;
         if (!r) return '';
@@ -613,10 +548,11 @@
     // 5. Ejecución
     const O = (typeof OTS_SAP_RESUMEN !== 'undefined') ? OTS_SAP_RESUMEN : {};
 
-    const filaCheck = (est, titulo, detalle) => `<div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--color-surface)">
+    const filaCheck = (est, titulo, detalle, tab) => `<div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--color-surface)">
       <span style="font-size:16px;line-height:1">${sem(est)}</span>
-      <div><div style="font-weight:700;font-size:13px">${titulo}</div>
+      <div style="flex:1"><div style="font-weight:700;font-size:13px">${titulo}</div>
         <div style="font-size:12px;color:var(--color-muted)">${detalle}</div></div>
+      ${tab ? `<button class="mant-tab" style="align-self:center;white-space:nowrap" onclick="audGoTab('${tab}')">Ver detalle →</button>` : ''}
     </div>`;
 
     return `<div class="table-card" style="margin-bottom:20px">
@@ -627,7 +563,7 @@
         ${filaCheck(
           (sinPlan + sinEqAlta + sobreBaja + posSinEq) === 0 ? 'ok' : 'rev',
           'Cobertura equipo ↔ plan',
-          `${sinPlan} equipos operativos sin plan · ${sinEqAlta} planes sin equipo de alta · ${sobreBaja} planes sobre equipo de baja · ${posSinEq} posiciones sin equipo.`)}
+          `${sinPlan} equipos operativos sin plan · ${sinEqAlta} planes sin equipo de alta · ${sobreBaja} planes sobre equipo de baja · ${posSinEq} posiciones sin equipo.`, 'planes')}
         ${filaCheck(
           mismatch.length === 0 ? 'ok' : (mismatch.length > 15 ? 'mal' : 'rev'),
           'El plan corresponde al tipo de equipo (aire)',
@@ -639,20 +575,44 @@
         ${filaCheck(
           fueraPaq === 0 ? 'ok' : 'rev',
           'La periodicidad es un ciclo válido de la estrategia (IP11)',
-          `${P.posiciones - fueraPaq} de ${P.posiciones} posiciones coinciden con un paquete de su estrategia.`)}
+          `${P.posiciones - fueraPaq} de ${P.posiciones} posiciones coinciden con un paquete de su estrategia.`, 'planes')}
         ${filaCheck(
           (O.pctNotificadas || 0) >= 70 ? 'ok' : 'rev',
           'Se ejecuta y se registra lo programado (IW38)',
-          `${O.pctCerradas || 0}% de las OT se cierran, pero solo ${O.pctNotificadas || 0}% de las cerradas lleva notificación de horas/fecha. Backlog abierto: ${(O.abiertas || 0).toLocaleString('es-AR')}.`)}
+          `${O.pctCerradas || 0}% de las OT se cierran, pero solo ${O.pctNotificadas || 0}% de las cerradas lleva notificación de horas/fecha. Backlog abierto: ${(O.abiertas || 0).toLocaleString('es-AR')}.`, 'ots')}
+
+        ${(() => {
+          const E = (typeof HDR_ESTANDAR !== 'undefined') ? HDR_ESTANDAR : null;
+          const HP = (typeof hdrPuestosResumen === 'function') ? hdrPuestosResumen() : null;
+          const B = (typeof MB51_RESUMEN !== 'undefined') ? MB51_RESUMEN : null;
+          let h = '';
+          if (E) {
+            const g = E.grupos.filter((x) => x.conDetalle);
+            const std = g.reduce((t, x) => t + x.nStd, 0), cub = g.reduce((t, x) => t + x.cub, 0);
+            const pc = std ? Math.round(cub / std * 100) : 0;
+            const bajos = g.filter((x) => x.nStd && x.cub / x.nStd < 0.6).map((x) => x.nombre);
+            h += filaCheck(pc >= 85 ? 'ok' : (pc >= 60 ? 'rev' : 'mal'), 'La gama de tareas de SAP cumple el estándar del Manual de Mtto',
+              `${pc}% de las tareas del estándar figuran en las hojas de ruta.` + (bajos.length ? ` Por debajo del 60%: ${bajos.join(', ')}.` : '') +
+              ` ${E.sinHojaDeRuta.length} tipos del estándar no tienen hoja de ruta.`, 'hdr');
+          }
+          if (HP) {
+            h += filaCheck(HP.planes === 0 ? 'ok' : 'rev', 'Los puestos de trabajo son solo AUX_TER / AUX_MEC / MOEX',
+              HP.planes ? `${HP.planes} posiciones de plan (${HP.equipos} equipos) usan ${HP.puestos.join(', ')}.` : 'Ningún plan usa otros puestos.', 'ots');
+          }
+          if (B) {
+            const fal = B.faltantesTotal != null ? B.faltantesTotal : (B.faltantes || []).length;
+            const inm = (B.inmovilizado || {}).total || 0;
+            h += filaCheck(fal === 0 ? 'ok' : 'rev', 'Hay stock de lo que se consume (MB52 / MB51)',
+              `${fal} materiales con consumo alto y stock 0 · ${B.bajaCoberturaTotal != null ? B.bajaCoberturaTotal : (B.bajaCobertura || []).length} con cobertura menor a 1 mes · ${inm.toLocaleString('es-AR')} inmovilizados.`, 'mat');
+          }
+          return h;
+        })()}
 
         ${mismatch.length ? heading('Planes de aire con tipo que no coincide · ' + mismatch.length) +
           mismatch.map((m) => `<div style="font-size:12px;padding:2px 0"><span class="equipo-tag" style="background:#dc2626">${esc(m.equipo)}</span> equipo <strong>${esc(m.teq)}</strong> · plan <strong>${esc(m.tplan)}</strong> — <span style="color:var(--color-muted)">${esc(m.desc)}</span></div>`).join('') : ''}
 
         ${periodicidadPorTipoHTML(consist)}
 
-        <div style="margin-top:12px;padding:10px 12px;background:var(--color-surface);border-radius:8px;font-size:11.5px;color:var(--color-muted)">
-          El check "el plan corresponde al tipo" se hace sobre Equipos de Aire (donde se dan los cruces Split↔Roof Top). El de consistencia de periodicidad cubre todas las familias con tipo cargado en la ficha.
-        </div>
       </div>
     </div>`;
   }
@@ -732,10 +692,6 @@
     const heading = (t) => `<div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">${t}</div>`;
     const codes = (list) => (list || []).map((c) => `<span class="equipo-tag" style="margin:2px 3px 2px 0;display:inline-block">${esc(c)}</span>`).join('');
     const cmp = P.cumplimiento || {};
-    const per = P.porPeriodicidadReal || [];
-    const maxPer = Math.max(1, ...per.map((x) => x.n));
-    const fam = P.porFamiliaPrefijo || [];
-    const maxFam = Math.max(1, ...fam.map((x) => x.n));
     const sinEq = P.planesSinEquipo || [];
     const noMaestro = P.equiposConPlanNoEnMaestro || [];
     const baja = P.equiposConPlanDadosDeBaja || [];
@@ -826,27 +782,12 @@
         ${sinEq.length ? heading('Posiciones de plan sin equipo asignado · ' + sinEq.length) +
           sinEq.map((d) => `<div style="font-size:12px;padding:3px 0"><span class="equipo-tag" style="background:#6366f1">${esc(d.pos)}</span> ${esc(d.desc)}${d.ubic ? ` · <span style="color:var(--color-muted)">${esc(d.ubic)}</span>` : ''}</div>`).join('') : ''}
 
-        ${heading('Periodicidad real')}
-        ${per.map((x) => bar(x.k, x.n, maxPer, /s\/fechas/.test(x.k) ? '#f59e0b' : '#0096d6')).join('')}
-
-        ${heading('Posiciones por familia')}
-        ${fam.map((x) => bar(famLabel(x.k) + ' (' + x.k + ')', x.n, maxFam, '#6366f1')).join('')}
-
         ${desaj.length ? heading('Desajuste nombre del plan ↔ ejecución real') +
           desaj.map((d) => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--color-surface)">
             <span class="equipo-tag" style="background:#6366f1">${esc(d.pos)}</span> ${esc(d.equipo)}
             <strong> ${esc(d.desc)}</strong><br>
             <span style="color:var(--color-muted)">nombre dice <strong>${esc(d.declara || '—')}</strong> · se ejecuta cada <strong>~${d.realDias}d</strong> (${esc(d.realBucket)})</span>
           </div>`).join('') : ''}
-
-        ${(P.estrategias || []).length ? heading('Estrategias de mantenimiento (IP11)') +
-          `<div style="font-size:11.5px;color:var(--color-muted);margin-bottom:4px">
-            La periodicidad real coincide con un paquete de la estrategia en <strong>${P.posiciones - (P.fueraDePaquete || []).length} de ${P.posiciones}</strong> posiciones. Solo ${(P.fueraDePaquete || []).length} corre a una frecuencia que no es paquete válido.
-           </div>` +
-          (P.estrategias || []).map((e) => `<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--color-surface)">
-            <strong>${esc(e.k)}</strong> — ${esc(e.denom)} · <span style="color:var(--color-muted)">${e.planes} planes · paquetes: ${esc((e.paquetes || []).join(' '))}</span>
-          </div>`).join('') +
-          ((P.fueraDePaquete || []).length ? `<div style="margin-top:6px">` + (P.fueraDePaquete || []).map((d) => `<div style="font-size:12px;padding:2px 0"><span class="equipo-tag" style="background:#dc2626">${esc(d.pos)}</span> ${esc(d.desc)} · ${esc(d.estr)} · real ~${d.realDias}d (no es paquete)</div>`).join('') + `</div>` : '') : ''}
 
         <div style="margin-top:14px;padding:10px 12px;background:var(--color-surface);border-radius:8px;font-size:12px">
           Cumplimiento: de ${(cmp.tomasVencidas || 0).toLocaleString('es-AR')} tomas vencidas solo ${cmp.sinOrden || 0} quedaron sin OT.
