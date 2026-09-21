@@ -96,8 +96,49 @@ function hdrDuracion(entry, bucket) {
   }
   return { durMin: null, nPers };   // duración no confiable; el caller estima
 }
+/* Vínculo EXACTO equipo → hoja de ruta/contador (hdr-plan-data.js, sale de
+   "Planes de Mantenimiento" de SAP). Devuelve [{plan, desc, ruta, cont, entry}]
+   con entry = fila de HDR_DATA (null si el contador no está en el export IA17). */
+let _HDR_POR_EQ = null, _HDR_KEY = null;
+function hdrPlanesDeEquipo(equipo) {
+  if (typeof HDR_PLAN === 'undefined' || !Array.isArray(HDR_PLAN)) return [];
+  if (!_HDR_POR_EQ) {
+    _HDR_KEY = new Map(HDR_DATA.map(e => [e.ruta + '/' + e.cont, e]));
+    _HDR_POR_EQ = new Map();
+    HDR_PLAN.forEach(r => {
+      const a = _HDR_POR_EQ.get(r[0]) || [];
+      a.push({ plan: r[1], desc: r[2], ruta: r[3], cont: r[4], entry: _HDR_KEY.get(r[3] + '/' + r[4]) || null });
+      _HDR_POR_EQ.set(r[0], a);
+    });
+  }
+  return _HDR_POR_EQ.get(String(equipo || '').trim().toUpperCase()) || [];
+}
+
 function hdrParaEquipo(equipo, textoOT) {
   const eq = String(equipo || '').trim().toUpperCase();
+
+  /* 1) Vínculo exacto (plan → hoja de ruta/contador). Con varias posiciones
+     gana la de descripción más parecida al texto de la OT. */
+  const exactos = hdrPlanesDeEquipo(eq).filter(x => x.entry);
+  if (exactos.length) {
+    const tOT = hdrTokens(textoOT);
+    let mejor = null;
+    exactos.forEach(x => {
+      const sc = tOT.size ? hdrJaccard(tOT, hdrTokens(x.desc)) : 0;
+      if (!mejor || sc > mejor.sc) mejor = { x, sc };
+    });
+    const x = mejor.x;
+    const bucket = hdrBucketDe(textoOT) || hdrBucketDe(x.desc);
+    const d = hdrDuracion(x.entry, bucket);
+    return {
+      durMin: d.durMin, nPers: d.nPers,
+      ruta: x.ruta + '/' + x.cont, desc: x.entry.desc,
+      bucket: bucket || null, score: 1, enlace: 'exacto',
+      fuente: d.durMin != null ? 'sap' : 'sap-personas',
+    };
+  }
+
+  /* 2) Sin vínculo exacto: match por texto (aproximado). */
   let planes = [];
   if (typeof PLANES_SAP !== 'undefined' && Array.isArray(PLANES_SAP)) {
     planes = PLANES_SAP.filter(p => String(p.equipo || '').toUpperCase() === eq);
@@ -123,6 +164,7 @@ function hdrParaEquipo(equipo, textoOT) {
     desc: best.entry.desc,
     bucket: best.bucket || null,
     score: Math.round(best.score * 100) / 100,
+    enlace: 'texto',
     fuente: d.durMin != null ? 'sap' : 'sap-personas',
   };
 }
