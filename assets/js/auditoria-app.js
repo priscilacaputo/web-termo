@@ -694,49 +694,136 @@
     });
   }
 
+  /* Descarga de los sistemas de aire (condensadora + interiores) en Excel. */
+  window.audSistemasExport = function () {
+    if (typeof XLSX === 'undefined' || typeof AAC_SISTEMAS === 'undefined') return;
+    const PL = (typeof PLANES_SAP !== 'undefined') ? PLANES_SAP : [];
+    const maestro = {};
+    getMaestro().forEach((e) => { maestro[e.equipo] = e; });
+    const porEq = {};
+    PL.forEach((p) => { (porEq[p.equipo] = porEq[p.equipo] || []).push(p); });
+    const planTxt = (eq) => (porEq[eq] || []).map((p) => `${p.desc} (plan ${p.plan})`).join(' + ') || 'SIN PLAN';
+    const frecTxt = (eq) => [...new Set((porEq[eq] || []).map((p) => p.realBucket))].join(' + ') || '';
+    const vinc = (sis) => (sis.conf === 'alta' ? 'Seguro (misma ubicación técnica)' : 'Revisar (deducido por secuencia de códigos)');
+    const filaEq = (sis, eq, rol) => ({
+      'Sistema': sis.cabeza, 'Nombre del sistema': sis.nombre, 'Rol': rol, 'Equipo': eq,
+      'Denominación': (maestro[eq] || {}).denom || '', 'Ubicación técnica': (maestro[eq] || {}).ubic || '',
+      'Plan': planTxt(eq), 'Frecuencia real': frecTxt(eq), 'Vínculo': vinc(sis),
+      'Correcto? (completar)': '', 'Condensadora correcta (completar)': '',
+    });
+    const sistemas = AAC_SISTEMAS.map((sis) => {
+      const bC = new Set((porEq[sis.cabeza] || []).map((p) => p.realBucket));
+      const bI = new Set(sis.miembros.flatMap((m) => (porEq[m] || []).map((p) => p.realBucket)));
+      const distinta = [...bC].some((b) => !bI.has(b)) || [...bI].some((b) => !bC.has(b));
+      return {
+        'Sistema': sis.cabeza, 'Nombre': sis.nombre, 'Ubicación técnica condensadora': sis.ubic,
+        'Cantidad de interiores': sis.miembros.length, 'Vínculo': vinc(sis),
+        'Plan de la condensadora': planTxt(sis.cabeza), 'Frecuencia condensadora': frecTxt(sis.cabeza),
+        'Frecuencia de los interiores': [...bI].join(' + '),
+        'Frecuencia distinta': distinta ? 'Sí' : '',
+        'Interiores': sis.miembros.join(', '),
+      };
+    });
+    const equipos = [];
+    AAC_SISTEMAS.forEach((sis) => {
+      equipos.push(filaEq(sis, sis.cabeza, 'Condensadora / exterior'));
+      sis.miembros.forEach((m) => equipos.push(filaEq(sis, m, 'Interior')));
+    });
+    const sinExt = ((typeof AAC_SIN_EXTERIOR !== 'undefined') ? AAC_SIN_EXTERIOR : []).map((x) => ({
+      'Equipo': x.equipo, 'Denominación': x.denom, 'Ubicación técnica': (maestro[x.equipo] || {}).ubic || '',
+      'Plan': planTxt(x.equipo), 'Frecuencia real': frecTxt(x.equipo),
+    }));
+    const wb = XLSX.utils.book_new();
+    const add = (rows, name, cols) => {
+      const ws = XLSX.utils.json_to_sheet(rows);
+      if (cols) ws['!cols'] = cols.map((w) => ({ wch: w }));
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    };
+    add(sistemas, 'Sistemas', [10, 44, 26, 12, 34, 46, 18, 26, 12, 70]);
+    add(equipos, 'Equipos por sistema', [10, 40, 22, 10, 44, 28, 60, 16, 34, 16, 24]);
+    if (sinExt.length) add(sinExt, 'Interiores sin condensadora', [10, 44, 28, 60, 16]);
+    XLSX.writeFile(wb, 'Sistemas_de_aire_condensadora_interiores.xlsx');
+  };
+
   /* Sistemas de aire (condensadora + interiores): base del agrupado de OTs del Planificador. */
+  window.audSisFiltro = function (btn, k) {
+    const box = btn.closest('.aud-sis-box');
+    box.querySelectorAll('.aud-sis-filtro').forEach((x) => x.classList.toggle('active', x === btn));
+    box.querySelectorAll('.aud-sis-card').forEach((c) => {
+      c.style.display = (k === 'todos' || (k === 'revisar' && c.dataset.conf !== 'alta') || (k === 'freq' && c.dataset.freq === '1')) ? '' : 'none';
+    });
+  };
+
   function sistemasAireHTML() {
     if (typeof AAC_SISTEMAS === 'undefined') return '';
     const heading = (t) => `<div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">${t}</div>`;
     const PL = (typeof PLANES_SAP !== 'undefined') ? PLANES_SAP : [];
+    const maestro = {};
+    getMaestro().forEach((e) => { maestro[e.equipo] = e; });
     const porEq = {};
     PL.forEach((p) => { (porEq[p.equipo] = porEq[p.equipo] || []).push(p); });
-    const resumenPlan = (eqs) => {
+    const chipF = (k) => `<span style="display:inline-block;padding:0 7px;border-radius:9px;font-size:10.5px;font-weight:700;color:#fff;background:${perColor(k)}">${esc(k)}</span>`;
+    /* Planes de un grupo de equipos: "descripción" + frecuencia real, con cuántos equipos lo usan */
+    const planesDe = (eqs) => {
       const c = {};
       eqs.forEach((e) => (porEq[e] || []).forEach((p) => {
-        const k = (p.desc || '—') + ' · ' + (p.realBucket || '—');
+        const k = (p.desc || '—') + '' + (p.realBucket || '—');
         c[k] = (c[k] || 0) + 1;
       }));
-      return Object.entries(c).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${esc(k)}${n > 1 ? ' <b>×' + n + '</b>' : ''}`).join('<br>') || '<span style="color:#dc2626">sin plan</span>';
+      const filas = Object.entries(c).sort((x, y) => y[1] - x[1]).map(([k, n]) => {
+        const [desc, b] = k.split('');
+        return `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:1px 0"><span>${esc(desc)}</span>${chipF(b)}${eqs.length > 1 ? `<span style="color:var(--color-muted);font-size:11px">${n} de ${eqs.length}</span>` : ''}</div>`;
+      });
+      return filas.join('') || '<span style="color:#dc2626;font-weight:600">sin plan</span>';
     };
     const bucketsDe = (eqs) => new Set(eqs.flatMap((e) => (porEq[e] || []).map((p) => p.realBucket)));
-    const filas = AAC_SISTEMAS.map((sis) => {
-      const bC = bucketsDe([sis.cabeza]), bI = bucketsDe(sis.miembros);
-      const distinta = [...bC].some((b) => !bI.has(b)) || [...bI].some((b) => !bC.has(b));
-      return `<tr>
-        <td><span class="equipo-tag" style="background:#6366f1">${esc(sis.cabeza)}</span><div style="font-size:11.5px">${esc(sis.nombre)}</div></td>
-        <td style="text-align:center">${sis.miembros.length}</td>
-        <td><span class="aud-pill aud-${sis.conf === 'alta' ? 'ok' : 'curso'}" title="${sis.conf === 'alta' ? 'Misma ubicación técnica' : 'Deducido por la secuencia de códigos: conviene revisarlo'}">${sis.conf === 'alta' ? 'Seguro' : 'Revisar'}</span></td>
-        <td style="font-size:11.5px">${resumenPlan([sis.cabeza])}</td>
-        <td style="font-size:11.5px">${resumenPlan(sis.miembros)}${distinta ? '<div style="color:#b45309;font-weight:700">⚠ frecuencia distinta a la de la condensadora</div>' : ''}</td>
-        <td><details><summary style="cursor:pointer;color:var(--color-blue,#0096d6);font-size:12px">ver</summary><div style="font-size:11.5px;max-width:260px">${sis.miembros.map(esc).join(', ')}</div></details></td>
-      </tr>`;
-    }).join('');
-    const sinExt = (typeof AAC_SIN_EXTERIOR !== 'undefined') ? AAC_SIN_EXTERIOR : [];
+    const tag = (e, fondo) => `<span class="equipo-tag" style="background:${fondo};font-size:10.5px" title="${esc((maestro[e] || {}).denom || '')}">${esc(e)}</span>`;
+
+    const sis = AAC_SISTEMAS.map((x) => {
+      const bC = bucketsDe([x.cabeza]), bI = bucketsDe(x.miembros);
+      return { x, distinta: [...bC].some((b) => !bI.has(b)) || [...bI].some((b) => !bC.has(b)) };
+    });
+    const nInt = AAC_SISTEMAS.reduce((t, x) => t + x.miembros.length, 0);
     const nRev = AAC_SISTEMAS.filter((x) => x.conf !== 'alta').length;
-    return `
-      ${heading('Sistemas de aire · condensadora + interiores · ' + AAC_SISTEMAS.length)}
-      <div style="font-size:12px;color:var(--color-muted);margin-bottom:8px;line-height:1.5">
+    const nDist = sis.filter((x) => x.distinta).length;
+
+    const tarjetas = sis.map(({ x, distinta }) => `<div class="aud-sis-card" data-conf="${x.conf}" data-freq="${distinta ? 1 : 0}"
+        style="border:1px solid var(--color-border);border-radius:10px;padding:12px 14px;background:var(--color-surface)">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0">
+          ${tag(x.cabeza, '#6366f1')}<b style="font-size:13px">${esc(x.nombre)}</b>
+        </div>
+        <span class="aud-pill aud-${x.conf === 'alta' ? 'ok' : 'curso'}" title="${x.conf === 'alta' ? 'Misma ubicación técnica que sus interiores' : 'Deducido por la secuencia de códigos: conviene confirmarlo'}">${x.conf === 'alta' ? '✓ Seguro' : 'Revisar'}</span>
+      </div>
+      <div style="font-size:11px;color:var(--color-muted);margin:2px 0 8px">${esc(x.ubic)}</div>
+      <div style="display:grid;grid-template-columns:96px 1fr;gap:4px 10px;font-size:12px">
+        <div style="color:var(--color-muted)">Condensadora</div><div>${planesDe([x.cabeza])}</div>
+        <div style="color:var(--color-muted)">${x.miembros.length} interior${x.miembros.length > 1 ? 'es' : ''}</div><div>${planesDe(x.miembros)}</div>
+      </div>
+      ${distinta ? `<div style="margin-top:6px;font-size:11.5px;color:#b45309;font-weight:700">⚠ La frecuencia de los interiores no coincide con la de la condensadora</div>` : ''}
+      <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">${x.miembros.map((m) => tag(m, '#64748b')).join('')}</div>
+    </div>`).join('');
+
+    const sinExt = (typeof AAC_SIN_EXTERIOR !== 'undefined') ? AAC_SIN_EXTERIOR : [];
+    const filtroBtn = (k, txt, act) => `<button class="mant-tab aud-sis-filtro${act ? ' active' : ''}" onclick="audSisFiltro(this,'${k}')">${txt}</button>`;
+    return `<div class="aud-sis-box">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        <div style="flex:1;min-width:220px">${heading('Sistemas de aire · condensadora + interiores · ' + AAC_SISTEMAS.length)}</div>
+        <button class="mant-tab" onclick="audSistemasExport()">⬇ Descargar Excel</button>
+      </div>
+      <div style="font-size:12px;color:var(--color-muted);margin-bottom:10px;line-height:1.5">
         SAP genera una OT por equipo, así que la unidad exterior y sus interiores salen por separado. El Planificador usa esta lista para juntarlos en <b>una sola tarea</b>
         (mismo día, guardia y hora). SAP no informa qué interior depende de qué exterior: se deduce de la denominación, la ubicación técnica y la secuencia de códigos.
-        <b>${nRev}</b> sistemas están marcados "Revisar" porque solo se dedujeron por secuencia de códigos.
       </div>
-      <div class="table-wrap"><table>
-        <thead><tr><th>Condensadora / exterior</th><th style="text-align:center">Interiores</th><th>Vínculo</th><th>Plan de la condensadora</th><th>Plan de los interiores</th><th>Equipos</th></tr></thead>
-        <tbody>${filas}</tbody>
-      </table></div>
-      ${sinExt.length ? `<div style="font-size:12px;margin-top:8px"><b>Unidades interiores sin condensadora identificable (${sinExt.length}):</b> ${sinExt.map((x) => esc(x.equipo)).join(', ')} — piso-techo aisladas; no se agrupan.</div>` : ''}
-    `;
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+        ${filtroBtn('todos', `Todos · ${AAC_SISTEMAS.length}`, true)}
+        ${filtroBtn('revisar', `A confirmar · ${nRev}`, false)}
+        ${filtroBtn('freq', `Frecuencia distinta · ${nDist}`, false)}
+        <span style="font-size:12px;color:var(--color-muted);margin-left:auto">${nInt} interiores en total · pasá el mouse sobre un equipo para ver su denominación</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:10px">${tarjetas}</div>
+      ${sinExt.length ? `<div style="font-size:12px;margin-top:10px"><b>Unidades interiores sin condensadora identificable (${sinExt.length}):</b> ${sinExt.map((z) => tag(z.equipo, '#94a3b8')).join(' ')} <span style="color:var(--color-muted)">— piso-techo aisladas; no se agrupan.</span></div>` : ''}
+    </div>`;
   }
 
   function planesHTML() {
