@@ -445,7 +445,15 @@
       (S.porPuestoHH || []).map((x) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px">
         <span style="flex:0 0 110px">${esc(x.k)}</span>
         <span style="flex:1;height:10px;background:var(--color-surface);border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:${Math.round((x.h / maxH) * 100)}%;background:#6366f1"></span></span>
-        <span style="flex:0 0 64px;text-align:right;font-weight:700">${x.h.toLocaleString('es-AR')} h</span></div>`).join('');
+        <span style="flex:0 0 64px;text-align:right;font-weight:700">${x.h.toLocaleString('es-AR')} h</span></div>`).join('') +
+      (() => {
+        const r = (typeof hdrPuestosResumen === 'function') ? hdrPuestosResumen() : null;
+        if (!r) return '';
+        return `<div style="margin-top:10px;padding:10px 12px;border:1px dashed var(--color-border);border-radius:8px;font-size:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+          <div style="flex:1;min-width:220px"><b>Limpieza de puestos:</b> ${r.planes} posiciones de plan (${r.equipos} equipos) tienen alguna operación o responsable con puesto distinto de AUX_TER / AUX_MEC / MOEX
+            (${r.puestos.map(esc).join(', ')}). El Excel lista cada plan con su hoja de ruta y las operaciones a corregir en SAP (IA17 / IP02).</div>
+          <button class="mant-tab" onclick="hdrPuestosExport()">⬇ Descargar planes a limpiar</button></div>`;
+      })();
   }
 
   /* ── Diagnóstico: ¿está bien lo programado? ── */
