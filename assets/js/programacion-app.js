@@ -667,6 +667,7 @@ function progHandleFile(file) {
         'denominación de objeto técnico': 'denominacion', 'denominacion de objeto tecnico': 'denominacion',
         'descripción': 'denominacion', 'descripcion': 'denominacion',
         'texto breve de objeto': 'denominacion',
+        'descripción del objeto técnico': 'denominacion', 'descripcion del objeto tecnico': 'denominacion',
         'tipo': 'tipo', 'clase de equipo': 'tipo',
         'ubicación técnica': 'ubicacion_tecnica', 'ubicacion tecnica': 'ubicacion_tecnica',
         'orden': 'ot_num', 'ot': 'ot_num', 'n° de orden': 'ot_num', 'número de orden': 'ot_num',
@@ -695,6 +696,9 @@ function progHandleFile(file) {
             if (desc) obj.denominacion = desc;
           }
         }
+        /* export de Fiori: la columna "Descripción" es un sí/no, no la denominación */
+        if (/^(true|false|verdadero|falso)$/i.test(obj.denominacion || '')) delete obj.denominacion;
+        if (!obj.denominacion && obj.objeto_tecnico && typeof extractEquipoDesc === 'function') obj.denominacion = extractEquipoDesc(obj.objeto_tecnico);
         /* export de Fiori: "Orden" viene como "Texto de la OT (número)" */
         if (!obj.texto_ot && /\(\d+\)\s*$/.test(obj.ot_num || '') && typeof extractOTName === 'function') obj.texto_ot = extractOTName(obj.ot_num);
         /* "Hoja de ruta para mantenimiento": "MP Roof Top ... (A/AACS5AEP/1)" → AACS5AEP/1 */
@@ -879,6 +883,8 @@ function renderProgramacion() {
   renderProgMangasPanel();
   renderProgGuardias();
   renderProgResumenSistemas();
+  renderProgResumenAltura();
+  renderProgResumenAdicionales();
 }
 
 /* ─── Panel: guardia fija por Manga ─────────────────────────────────
@@ -1195,6 +1201,36 @@ function progHandleOps(file) {
   reader.readAsArrayBuffer(file);
 }
 
+/* Mantenimiento básico de una OT = el paquete de MENOR frecuencia de su hoja de ruta (o del
+   texto del plan). Si la gama de la OT es mayor, esa toma agrega tareas adicionales. */
+function progBasicoDe(o) {
+  if (typeof GAMA_HR !== 'undefined' && o.hr && GAMA_HR[o.hr] && GAMA_HR[o.hr].length) return progCicloNombre(Math.min(...GAMA_HR[o.hr]));
+  const orden = PROG_FRECUENCIAS.map(([k]) => k);
+  const fs = [...new Set(progFrecuenciasDeTexto(o.textoOT))].sort((a, b) => orden.indexOf(a) - orden.indexOf(b));
+  return fs[0] || null;
+}
+/* '' si es el básico o no se sabe; si no, "Trimestral (además del Mensual)". */
+function progAdicionalDe(o) {
+  const b = progBasicoDe(o);
+  if (!o.gama || !b || o.gama === b) return '';
+  return `${o.gama} (además del ${b})`;
+}
+/* Texto corto de periodicidad para listas: "Trimestral ➕ sobre Mensual", "Mensual", "a confirmar". */
+function progPeriodicidadTxt(o) {
+  if (!o.gama) return 'periodicidad a confirmar';
+  const b = progBasicoDe(o);
+  const extra = b && o.gama !== b ? ` ➕ se agregan las tareas ${o.gama.toLowerCase()}${progPluralTareas(o.gama)} además del mantenimiento ${b.toLowerCase()}` : '';
+  return `${o.gama}${o.gamaDudosa ? ' (a confirmar)' : ''}${extra}`;
+}
+function progPeriodicidadCorta(o) {
+  return o.gama ? o.gama + (o.gamaDudosa ? ' (a confirmar)' : '') : 'periodicidad a confirmar';
+}
+function progPluralTareas(g) {
+  /* "tareas trimestrales", "tareas anuales", "tareas semestrales" … */
+  const x = String(g || '').toLowerCase();
+  return /l$/.test(x) ? 'es' : 's';
+}
+
 /* ─── Resumen de sistemas de aire por guardia (para mandar por mail) ───
    Al final de la página: qué sistemas (condensadora + interiores) le tocaron
    a cada guardia este mes. Botón para copiar el texto y otro que abre el
@@ -1208,10 +1244,11 @@ function progResumenSistemas() {
     if (!sis || o.guardia == null) return;
     const k = o.guardia + '|' + sis.id;
     if (!vistos[k]) {
-      vistos[k] = { sis, equipos: new Set() };
+      vistos[k] = { sis, equipos: new Set(), ots: [] };
       (porGuardia[o.guardia] = porGuardia[o.guardia] || []).push(vistos[k]);
     }
     vistos[k].equipos.add(o.equipo);
+    vistos[k].ots.push(o);
   });
   return progOrdenGuardias().map(g => ({
     g,
@@ -1222,9 +1259,30 @@ function progResumenSistemas() {
         cabeza: x.sis.cabeza, nombre: x.sis.nombre, sector: rec.sector || '',
         cargados: x.equipos.size, total: x.sis.miembros.length + 1,
         interiores: x.sis.miembros.filter(m => x.equipos.has(m)),
+        periodicidad: progPeriodicidadSistema(x.ots),
       };
     }).sort((a, b) => a.sector.localeCompare(b.sector) || a.cabeza.localeCompare(b.cabeza, 'es', { numeric: true })),
   }));
+}
+/* Periodicidad de un sistema: gama(s) de sus OTs y, si alguna es más que el básico, en qué
+   equipos se agregan tareas adicionales. → { txt, extras:[{gama, basico, equipos}] } */
+function progPeriodicidadSistema(ots) {
+  const porGama = {};
+  const extras = {};
+  ots.forEach(o => {
+    const g = o.gama ? o.gama + (o.gamaDudosa ? ' (a confirmar)' : '') : 'a confirmar';
+    porGama[g] = (porGama[g] || 0) + 1;
+    const b = progBasicoDe(o);
+    if (o.gama && b && o.gama !== b) {
+      const k = o.gama + '|' + b;
+      (extras[k] = extras[k] || { gama: o.gama, basico: b, equipos: [] }).equipos.push(o.equipo);
+    }
+  });
+  const partes = Object.entries(porGama).map(([g, n]) => Object.keys(porGama).length > 1 ? `${g} (${n})` : g);
+  return { txt: partes.join(' · '), extras: Object.values(extras) };
+}
+function progExtraTxt(e) {
+  return `➕ se agregan las tareas ${e.gama.toLowerCase()}${progPluralTareas(e.gama)} además del mantenimiento ${e.basico.toLowerCase()} en ${e.equipos.join(', ')}`;
 }
 function progResumenTexto() {
   const mes = progMesLegible(progState.otsMes || progState.mes);
@@ -1234,6 +1292,8 @@ function progResumenTexto() {
     if (!r.sistemas.length) lineas.push('  · Sin sistemas de aire este mes');
     r.sistemas.forEach(x => {
       lineas.push(`  · ${x.cabeza} ${x.nombre}${x.sector ? ' — ' + x.sector : ''} — ${x.cargados} equipo${x.cargados === 1 ? '' : 's'}${x.cargados < x.total ? ` (de ${x.total}; el resto no tiene OT este mes)` : ''}`);
+      lineas.push(`      Periodicidad: ${x.periodicidad.txt}`);
+      x.periodicidad.extras.forEach(e => lineas.push(`      ${progExtraTxt(e)}`));
       if (x.interiores.length) lineas.push(`      Interiores: ${x.interiores.join(', ')}`);
     });
     lineas.push('');
@@ -1248,13 +1308,7 @@ function progCopiarFallback(txt, ok) {
   try { document.execCommand('copy'); ok(); } catch (e) { progToast('No se pudo copiar: seleccioná el texto a mano.', 'error'); }
   ta.remove();
 }
-function progCopiarResumen() {
-  const txt = progResumenTexto();
-  const ok = () => progToast('📋 Resumen copiado: pegalo en el mail.', 'success');
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(txt).then(ok, () => progCopiarFallback(txt, ok));
-  } else progCopiarFallback(txt, ok);
-}
+function progCopiarResumen() { progCopiarTexto(progResumenTexto(), '📋 Resumen copiado: pegalo en el mail.'); }
 function progMailResumen() {
   const mes = progMesLegible(progState.otsMes || progState.mes);
   const asunto = encodeURIComponent(`Sistemas de aire por guardia — ${mes}`);
@@ -1295,7 +1349,152 @@ function renderProgResumenSistemas() {
               <div style="font-size:12.5px;padding:5px 0;border-top:1px solid var(--color-surface)">
                 <span class="equipo-tag" style="background:#6366f1">${esc(x.cabeza)}</span> <b>${esc(x.nombre)}</b>
                 <div style="color:var(--color-muted);font-size:11.5px;margin-top:2px">${x.sector ? '📍 ' + esc(x.sector) + ' · ' : ''}${x.cargados} equipo${x.cargados === 1 ? '' : 's'}${x.cargados < x.total ? ` de ${x.total} (el resto no tiene OT este mes)` : ''}</div>
+                <div style="font-size:11.5px;margin-top:2px">📅 <b>${esc(x.periodicidad.txt)}</b></div>
+                ${x.periodicidad.extras.map(e => `<div style="font-size:11.5px;color:#b45309;margin-top:1px">${esc(progExtraTxt(e))}</div>`).join('')}
               </div>`).join('') : '<div style="font-size:12px;color:var(--color-muted)">Sin sistemas de aire este mes.</div>'}
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ─── OTs de altura por guardia (para copiar y pegar) ─── */
+function progAlturaPorGuardia() {
+  const idx = progGetEquipoIndex();
+  return progOrdenGuardias().map(g => {
+    const ots = progState.ots.filter(o => o.guardia === g && o.esAltura)
+      .sort((a, b) => (a.grupo || '').localeCompare(b.grupo || '') || String(a.ubicacionTecnica).localeCompare(String(b.ubicacionTecnica)) || a.equipo.localeCompare(b.equipo, 'es', { numeric: true }));
+    return {
+      g, turno: PROG_GUARDIA_TURNO[g],
+      aire: ots.filter(o => o.grupo === 'aire'),
+      mec: ots.filter(o => o.grupo !== 'aire'),
+      lugar: o => (idx[o.equipo] && idx[o.equipo].sector) || o.zona || '',
+    };
+  });
+}
+function progAlturaLinea(o, lugar) {
+  return `${o.ot_num ? 'OT ' + o.ot_num + ' · ' : ''}${o.equipo} ${o.denominacion || ''}${lugar ? ' — ' + lugar : ''} — ${progPeriodicidadCorta(o)}`;
+}
+function progAlturaTexto() {
+  const mes = progMesLegible(progState.otsMes || progState.mes);
+  const L = [`OTs de altura por guardia — ${mes}`, ''];
+  progAlturaPorGuardia().forEach(r => {
+    L.push(`${PROG_GUARDIAS[r.g].toUpperCase()} — Turno ${r.turno === 'mañana' ? 'Mañana' : 'Noche'} (${r.aire.length + r.mec.length} OTs de altura)`);
+    if (!r.aire.length && !r.mec.length) L.push('  · Sin OTs de altura este mes');
+    if (r.aire.length) { L.push(`  Aire (${r.aire.length}):`); r.aire.forEach(o => L.push('    · ' + progAlturaLinea(o, r.lugar(o)))); }
+    if (r.mec.length) { L.push(`  Mecánicos (${r.mec.length}):`); r.mec.forEach(o => L.push('    · ' + progAlturaLinea(o, r.lugar(o)))); }
+    L.push('');
+  });
+  return L.join('\n');
+}
+function progCopiarTexto(txt, okMsg) {
+  const ok = () => progToast(okMsg, 'success');
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, () => progCopiarFallback(txt, ok));
+  else progCopiarFallback(txt, ok);
+}
+function progCopiarAltura() { progCopiarTexto(progAlturaTexto(), '📋 OTs de altura copiadas: pegalas en el mail.'); }
+function renderProgResumenAltura() {
+  const wrap = document.getElementById('prog-resumen-altura');
+  if (!wrap) return;
+  if (!progState.ots.some(o => o.esAltura)) { wrap.innerHTML = ''; return; }
+  const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const lista = (titulo, ots, r) => ots.length ? `
+    <div style="font-size:11.5px;font-weight:800;color:var(--color-muted);text-transform:uppercase;letter-spacing:.05em;margin:8px 0 2px">${titulo} · ${ots.length}</div>
+    ${ots.map(o => `<div style="font-size:12px;padding:3px 0;border-top:1px solid var(--color-surface)">
+        ${o.ot_num ? `<span style="color:var(--color-muted)">OT ${esc(o.ot_num)}</span> · ` : ''}<b>${esc(o.equipo)}</b> ${esc(o.denominacion || '')}
+        <div style="font-size:11px;color:var(--color-muted)">${r.lugar(o) ? '📍 ' + esc(r.lugar(o)) + ' · ' : ''}📅 ${esc(progPeriodicidadCorta(o))}</div></div>`).join('')}` : '';
+  wrap.innerHTML = `
+    <div class="table-card" style="margin-top:20px">
+      <div style="padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-bottom:1px solid var(--color-border)">
+        <div style="flex:1;min-width:240px">
+          <div style="font-weight:800;font-size:14px">⛰️ OTs de altura por guardia · ${esc(progMesLegible(progState.otsMes || progState.mes))}</div>
+          <div style="font-size:12px;color:var(--color-muted)">Las OTs que pagan altura de cada guardia (aire y mecánicos), con su periodicidad. Para copiar y pegar en el mail.</div>
+        </div>
+        <button class="prog-btn prog-btn-primary" onclick="progCopiarAltura()">📋 Copiar OTs de altura</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;padding:14px 16px">
+        ${progAlturaPorGuardia().map(r => `
+          <div style="border:1px solid var(--color-border);border-radius:10px;padding:10px 12px">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+              <b style="font-size:13.5px;color:var(--color-primary);white-space:nowrap">${esc(PROG_GUARDIAS[r.g])}</b>
+              <span class="turno-badge ${r.turno === 'noche' ? 'noche' : 'manana'}">${r.turno === 'noche' ? '🌙 Noche' : '☀️ Mañana'}</span>
+              <span style="margin-left:auto;font-size:12px;color:var(--color-muted);font-weight:700">⛰️ ${r.aire.length + r.mec.length} OTs</span>
+            </div>
+            ${lista('💨 Aire', r.aire, r)}${lista('🔧 Mecánicos', r.mec, r)}
+            ${!r.aire.length && !r.mec.length ? '<div style="font-size:12px;color:var(--color-muted);margin-top:6px">Sin OTs de altura este mes.</div>' : ''}
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ─── OTs con tareas adicionales al mantenimiento básico ───
+   OTs cuya toma de este mes es de un paquete mayor que el básico de su hoja de ruta
+   (p. ej. plan 1M-3M-1A y esta OT es la trimestral): qué se agrega, por guardia. Si se
+   cargó la lista de operaciones (IW49), también el texto de las operaciones adicionales. */
+function progAdicionalesPorGuardia() {
+  const idx = progGetEquipoIndex();
+  const orden = PROG_FRECUENCIAS.map(([k]) => k);
+  return progOrdenGuardias().map(g => ({
+    g, turno: PROG_GUARDIA_TURNO[g],
+    ots: progState.ots.filter(o => o.guardia === g && progAdicionalDe(o))
+      .sort((a, b) => orden.indexOf(b.gama) - orden.indexOf(a.gama) || a.equipo.localeCompare(b.equipo, 'es', { numeric: true })),
+    lugar: o => (idx[o.equipo] && idx[o.equipo].sector) || o.zona || '',
+  }));
+}
+/* Texto de las operaciones de la OT que son del paquete adicional (no del básico). */
+function progOpsAdicionales(o) {
+  const ops = (progState.opsOT || {})[progNormOT(o.ot_num)] || [];
+  const b = progBasicoDe(o);
+  return ops.filter(t => { const fs = progFrecuenciasDeTexto(t); return fs.length && !fs.includes(b); });
+}
+function progAdicionalQue(o) {
+  return `además del mantenimiento ${progBasicoDe(o).toLowerCase()} se agregan las tareas ${o.gama.toLowerCase()}${progPluralTareas(o.gama)}${o.gamaDudosa ? ' (a confirmar)' : ''}`;
+}
+function progAdicionalesTexto() {
+  const mes = progMesLegible(progState.otsMes || progState.mes);
+  const L = [`OTs con tareas adicionales al mantenimiento básico — ${mes}`, ''];
+  progAdicionalesPorGuardia().forEach(r => {
+    L.push(`${PROG_GUARDIAS[r.g].toUpperCase()} — Turno ${r.turno === 'mañana' ? 'Mañana' : 'Noche'} (${r.ots.length} OT${r.ots.length === 1 ? '' : 's'})`);
+    if (!r.ots.length) L.push('  · Todas sus OTs de este mes son el mantenimiento básico');
+    r.ots.forEach(o => {
+      L.push(`  · ${o.ot_num ? 'OT ' + o.ot_num + ' · ' : ''}${o.equipo} ${o.denominacion || ''}${r.lugar(o) ? ' — ' + r.lugar(o) : ''}${o.esAltura ? ' — ⛰️ altura' : ''}`);
+      L.push(`      ${o.gama.toUpperCase()}: ${progAdicionalQue(o)}${o.textoOT ? ` (plan: ${o.textoOT})` : ''}`);
+      progOpsAdicionales(o).forEach(t => L.push(`      Operación: ${t}`));
+    });
+    L.push('');
+  });
+  return L.join('\n');
+}
+function progCopiarAdicionales() { progCopiarTexto(progAdicionalesTexto(), '📋 OTs con tareas adicionales copiadas: pegalas en el mail.'); }
+function renderProgResumenAdicionales() {
+  const wrap = document.getElementById('prog-resumen-adicionales');
+  if (!wrap) return;
+  const res = progState.ots.length ? progAdicionalesPorGuardia() : [];
+  if (!res.some(r => r.ots.length)) { wrap.innerHTML = ''; return; }
+  const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  wrap.innerHTML = `
+    <div class="table-card" style="margin-top:20px">
+      <div style="padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-bottom:1px solid var(--color-border)">
+        <div style="flex:1;min-width:240px">
+          <div style="font-weight:800;font-size:14px">➕ OTs con tareas adicionales al mantenimiento básico · ${esc(progMesLegible(progState.otsMes || progState.mes))}</div>
+          <div style="font-size:12px;color:var(--color-muted)">OTs que este mes no son solo el mantenimiento básico: qué tareas se agregan (trimestral, semestral, anual…). Para copiar y pegar en el mail.</div>
+        </div>
+        <button class="prog-btn prog-btn-primary" onclick="progCopiarAdicionales()">📋 Copiar OTs con tareas adicionales</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;padding:14px 16px">
+        ${res.map(r => `
+          <div style="border:1px solid var(--color-border);border-radius:10px;padding:10px 12px">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:4px">
+              <b style="font-size:13.5px;color:var(--color-primary);white-space:nowrap">${esc(PROG_GUARDIAS[r.g])}</b>
+              <span class="turno-badge ${r.turno === 'noche' ? 'noche' : 'manana'}">${r.turno === 'noche' ? '🌙 Noche' : '☀️ Mañana'}</span>
+              <span style="margin-left:auto;font-size:12px;color:var(--color-muted);font-weight:700">➕ ${r.ots.length} OT${r.ots.length === 1 ? '' : 's'}</span>
+            </div>
+            ${r.ots.length ? r.ots.map(o => `
+              <div style="font-size:12px;padding:5px 0;border-top:1px solid var(--color-surface)">
+                ${o.ot_num ? `<span style="color:var(--color-muted)">OT ${esc(o.ot_num)}</span> · ` : ''}<b>${esc(o.equipo)}</b> ${esc(o.denominacion || '')}${o.esAltura ? ' <span title="Paga altura">⛰️</span>' : ''}
+                <div style="font-size:11.5px;margin-top:2px"><span style="font-weight:800;color:${PROG_FREC_COLOR[o.gama] || '#b45309'}">${esc(o.gama)}</span>: ${esc(progAdicionalQue(o))}</div>
+                <div style="font-size:11px;color:var(--color-muted)">${r.lugar(o) ? '📍 ' + esc(r.lugar(o)) + ' · ' : ''}${o.textoOT ? 'plan: ' + esc(o.textoOT) : ''}</div>
+                ${progOpsAdicionales(o).map(t => `<div style="font-size:11px">🔧 ${esc(t)}</div>`).join('')}
+              </div>`).join('') : '<div style="font-size:12px;color:var(--color-muted)">Todas sus OTs de este mes son el mantenimiento básico.</div>'}
           </div>`).join('')}
       </div>
     </div>`;
@@ -1321,6 +1520,7 @@ function progExportExcel() {
       'Denominación': o.denominacion || '',
       'Gama de tareas': o.gama ? o.gama + (o.gamaDudosa ? ' (a confirmar)' : '') : '',
       'Incluye': (o.gamaIncluye || []).join(', '),
+      'Tareas adicionales al básico': progAdicionalDe(o),
       'Gama según': o.gamaFuente || '',
       'Hoja de ruta': o.hr || '',
       'Zona': o.zona,
