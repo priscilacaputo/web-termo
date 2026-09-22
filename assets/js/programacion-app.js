@@ -1,64 +1,88 @@
-/* ─── Programación de OTs — distribución mensual entre guardias ───
+/* ─── Programación de OTs — planificador inteligente mensual ───────────
+   Reparte las OTs del mes entre las 4 guardias (mismo número que la sección
+   Personal): 1 Avalos-Barberio · 2 Hasan-Gonzalez · 3 Ramirez-Perez-Lia ·
+   4 Villardi-Ortiz.
+
+   Turnos: cada mes 2 guardias están a la mañana y 2 a la noche. Las parejas
+   rotan de turno todos los meses, salvo al pasar a noviembre y a diciembre
+   (se mantienen como estaban). Ancla: septiembre 2026 → mañana Villardi-Ortiz
+   y Ramirez-Perez-Lia, noche Hasan-Gonzalez y Avalos-Barberio. Se puede
+   intercambiar a mano cualquier mes (progState.turnosOverride).
+
    Reglas fijas de turno (no negociables):
      - Equipos MEQ*        → siempre Turno Noche
+     - Equipos de Sala VIP → siempre Turno Noche (lista PROG_EQUIPOS_VIP)
      - Equipos Roof Top    → siempre Turno Mañana
      - Equipos AVO*        → siempre Turno Mañana
-     - Equipos de Sala VIP → siempre Turno Noche (lista PROG_EQUIPOS_VIP)
-   Guardias 1 y 2 = Turno Mañana · Guardias 3 y 4 = Turno Noche.
 
-   Dentro de esas reglas, el resto de los equipos (y también los que sí
-   tienen regla fija) se reparten entre las guardias del turno que les
-   corresponde optimizando estos criterios, en este orden:
-     0. Bloque por sector físico chico (solo altura, lista curada): un
-        puñado de equipos de altura que están físicamente juntos en un
-        sector puntual (p. ej. las 4 UTAs del Comedor de Aeropuertos, ver
-        PROG_ALTURA_GRUPOS_SECTOR) van siempre a la misma guardia. Esto NO
-        se infiere del campo "Ubicación técnica" de SAP porque ese campo
-        suele ser mucho más amplio que un sector real — p. ej. todo el
-        Patio de Valijas comparte un único código técnico — y agrupar
-        automáticamente por él metería decenas de equipos en una sola
-        guardia, rompiendo la equidad. Si el sector ya tenía equipos de
-        altura asignados en meses anteriores, el resto hereda esa misma
-        guardia en vez de recalcularse.
-     1. Cintas de Patio de Valijas (MEQ) que pagan altura: se ordenan por
-        su número de secuencia física (el código BF/BC/BFR/VB/GR/TT que
-        trae la denominación, p. ej. BF-1301) y se reparten en tramos
-        contiguos entre las guardias del turno noche — el corte se elige
-        para que la cantidad final quede lo más pareja posible, pero cada
-        guardia se lleva un tramo seguido en vez de cintas salteadas, para
-        no ir y volver por todo el patio.
-     2. Equidad de altura: el resto de los equipos que pagan altura se
-        reparten lo más parejo posible entre las guardias del turno (a
-        nivel de equipo individual, o de bloque completo cuando aplica la
-        regla 0; los bloques más grandes se ubican primero para que el
-        resultado final quede parejo).
-     4. Equidad de carga total: la cantidad total de OTs también se
-        reparte lo más parejo posible entre las guardias del turno.
-     5. Cercanía física: a igualdad de equidad, se prioriza agrupar
-        equipos de la misma zona/edificio en la misma guardia, para no
-        perder tiempo en logística.
-   Aire y Mecánicos se reparten cada uno por separado (ver progHandleFile),
-   así que la equidad (altura y carga total) se calcula de forma
-   independiente para cada gremio, no mezclada.
+   Cómo reparte (progAsignarPendientes), cada gremio (Aire / Mecánicos) por
+   separado:
+     1. Arma BLOQUES que van enteros a una misma guardia:
+        · todas las OTs de un mismo equipo;
+        · cada sistema de aire completo (condensadora + interiores);
+        · cada Manga con sus equipos de Aire;
+        · sectores físicos chicos curados (PROG_ALTURA_GRUPOS_SECTOR);
+        · equipos del mismo tipo en la MISMA UBICACIÓN TÉCNICA y mismo turno
+          (p. ej. los 14 Roof Top del Núcleo de Aire N°1). Si el grupo es muy
+          grande para una sola guardia se corta en tramos contiguos por
+          número de equipo / secuencia de cinta.
+     2. Ubica los bloques de mayor a menor. Para cada uno elige, entre las
+        guardias del turno que le corresponde:
+        la que menos empeora el balance, combinando (costo ponderado):
+          a) equidad de altura (pesa más);
+          b) equidad de carga total de OTs;
+          c) ROTACIÓN: penalidad si esa guardia ya tuvo esos equipos en los
+             últimos meses (historial por mes en progState.historial; el mes
+             anterior pesa más) → cada mes los equipos los ven guardias
+             distintas y el mantenimiento no queda sesgado;
+          d) un poco de cercanía (misma zona / ubicación que lo ya asignado).
+   Una re-carga del Excel del MISMO mes conserva lo ya asignado; la guardia
+   fija por Manga elegida a mano (panel de Mangas) siempre manda.
 
-   Sistemas de aire (condensadora + interiores, ver aac-sistemas-data.js):
-   SAP da de alta cada unidad como equipo separado, así que llegan como OTs
-   sueltas. En el reparto automático cada sistema es un BLOQUE indivisible
-   (progAsignarPendientes): los sistemas se dividen entre las guardias
-   buscando que cada una se lleve una cantidad pareja de equipos de sistema
-   (de mayor a menor, a la guardia con menos), y todos los equipos del mismo
-   sistema van a esa guardia — la condensadora y sus interiores son un solo
-   paquete de trabajo. Si el sistema ya tenía guardia de meses anteriores,
-   la conserva. Después se re-sincroniza (progSincronizarSistemasAire) y
-   también ante cualquier cambio manual de guardia, así que mover un equipo
-   del paquete mueve a todo el paquete. El botón "🔗 Repartir sistemas"
-   (progRepartirSistemas) vuelve a dividir los sistemas del mes cargado.
-
-   Todo queda 100% editable por fila con el desplegable de guardia. */
+   Todo queda 100% editable por fila con el desplegable de guardia (mover un
+   equipo de un sistema de aire mueve a todo el sistema). */
 
 const PROG_STORAGE_KEY   = 'programacion_ots_v1';
-const PROG_GUARDIA_TURNO = { 1: 'mañana', 2: 'mañana', 3: 'noche', 4: 'noche' };
-const PROG_POOL_TURNO    = { 'mañana': [1, 2], 'noche': [3, 4], 'libre': [1, 2, 3, 4] };
+const PROG_GUARDIAS = { 1: 'Avalos-Barberio', 2: 'Hasan-Gonzalez', 3: 'Ramirez-Perez-Lia', 4: 'Villardi-Ortiz' };
+const PROG_TURNO_ANCLA = { mes: '2026-09', 'mañana': [4, 3], 'noche': [1, 2] };
+const PROG_MESES_SIN_ROTACION = [11, 12];   // al entrar a estos meses las parejas NO cambian de turno
+/* Se recalculan para el mes de programación (progAplicarTurnosMes). */
+const PROG_GUARDIA_TURNO = {};
+const PROG_POOL_TURNO    = { 'mañana': [], 'noche': [], 'libre': [1, 2, 3, 4] };
+
+const progMesNum = mes => { const [y, m] = String(mes || PROG_TURNO_ANCLA.mes).split('-').map(Number); return y * 12 + (m - 1); };
+const progMesStr = n => `${Math.floor(n / 12)}-${String((n % 12) + 1).padStart(2, '0')}`;
+/* Turnos automáticos: desde el ancla, cada paso de mes intercambia las parejas,
+   salvo el paso que entra a noviembre o a diciembre. */
+function progTurnosCalculados(mes) {
+  const a = progMesNum(PROG_TURNO_ANCLA.mes), b = progMesNum(mes);
+  let cambios = 0;
+  for (let n = Math.min(a, b); n < Math.max(a, b); n++) {
+    const mesDestino = ((n + 1) % 12) + 1;   // mes (1-12) al que se entra en el paso n → n+1
+    if (!PROG_MESES_SIN_ROTACION.includes(mesDestino)) cambios++;
+  }
+  const m = PROG_TURNO_ANCLA['mañana'], nn = PROG_TURNO_ANCLA['noche'];
+  return cambios % 2 ? { 'mañana': nn.slice(), 'noche': m.slice() } : { 'mañana': m.slice(), 'noche': nn.slice() };
+}
+function progTurnosDelMes(mes, overrides) {
+  const ov = overrides && overrides[mes];
+  return ov ? { 'mañana': ov['mañana'].slice(), 'noche': ov['noche'].slice() } : progTurnosCalculados(mes);
+}
+function progAplicarTurnosMes(mes, overrides) {
+  const t = progTurnosDelMes(mes, overrides);
+  PROG_POOL_TURNO['mañana'] = t['mañana'];
+  PROG_POOL_TURNO['noche'] = t['noche'];
+  [1, 2, 3, 4].forEach(g => { PROG_GUARDIA_TURNO[g] = t['mañana'].includes(g) ? 'mañana' : 'noche'; });
+}
+progAplicarTurnosMes(new Date().toISOString().slice(0, 7), {});
+/* Meses anteriores a `mes` (el más reciente primero). */
+function progMesesAnteriores(mes, n) {
+  const b = progMesNum(mes);
+  return Array.from({ length: n }, (_, i) => progMesStr(b - 1 - i));
+}
+/* Guardias en orden de pantalla: primero las de la mañana. */
+const progOrdenGuardias = () => [...PROG_POOL_TURNO['mañana'], ...PROG_POOL_TURNO['noche']];
+const progOpcionGuardiaTxt = n => `${PROG_GUARDIAS[n]} (${PROG_GUARDIA_TURNO[n] === 'mañana' ? '☀️ Mañana' : '🌙 Noche'})`;
 
 /* ─── Equipos con ubicación en la Sala VIP → siempre Turno Noche ─────
    Lista cerrada pasada por la usuaria (2026-09-22): todos son Splits de
@@ -229,29 +253,38 @@ function progSincronizarSistemasAire(items, guardiaPrev, forzarDesde) {
   });
 }
 
-/* Vuelve a dividir los sistemas de aire del mes ya cargado entre las
-   guardias (sin tocar el resto de las OTs): útil para programaciones
-   armadas antes del reparto por bloques, o después de mover cosas a mano.
-   Cada gremio por separado, igual que el reparto al cargar el Excel. */
-function progRepartirSistemas() {
-  const deSistema = progState.ots.filter(o => progSistemaDeEquipo(o.equipo));
-  if (!deSistema.length) { progToast('No hay equipos de sistemas de aire en la programación.', 'error'); return; }
-  deSistema.forEach(o => { o.guardia = null; });
-  ['aire', 'mecanico'].forEach(g => {
-    progAsignarPendientes(
-      deSistema.filter(o => o.grupo === g),
-      progState.ots.filter(o => o.grupo === g && o.guardia != null)
-    );
+/* Reparte Aire y después Mecánicos. La Manga (MAN*, gremio Mecánicos) toma la guardia
+   que le tocó a sus equipos de Aire: el bloque de Aire es el que tiene regla de turno
+   (Roof Top → mañana), así que manda él. */
+function progRepartirGremios(pendientes, yaAsignados) {
+  progAsignarPendientes(pendientes.filter(o => o.grupo === 'aire'), yaAsignados.filter(o => o.grupo === 'aire'));
+  const extra = {};
+  [...yaAsignados, ...pendientes].forEach(o => {
+    const man = progMangaDeEquipo(o.equipo);
+    if (man && o.grupo === 'aire' && o.guardia != null && extra['man:' + man] == null) extra['man:' + man] = o.guardia;
   });
-  progSincronizarSistemasAire(progState.ots);
-  progSave();
-  renderProgramacion();
-  const porG = { 1: new Set(), 2: new Set(), 3: new Set(), 4: new Set() };
-  deSistema.forEach(o => { if (o.guardia) porG[o.guardia].add(progSistemaDeEquipo(o.equipo).id); });
-  progToast('🔗 Sistemas repartidos: ' + [1, 2, 3, 4].map(g => `G${g}: ${porG[g].size}`).join(' · '), 'success');
+  progAsignarPendientes(pendientes.filter(o => o.grupo !== 'aire'), yaAsignados.filter(o => o.grupo !== 'aire'), extra);
 }
 
-let progState  = { mes: '', ots: [], mangaGuardia: {}, hidrolavado: false };
+/* Vuelve a repartir TODAS las OTs cargadas con el motor actual (turnos del mes,
+   altura, ubicación técnica, sistemas completos y rotación). Se pierden los
+   cambios hechos a mano; la guardia fija de las Mangas se respeta. */
+function progReprogramar(sinPreguntar) {
+  if (!progState.ots.length) { progToast('Primero cargá el Excel del mes.', 'error'); return; }
+  if (!sinPreguntar && !confirm('¿Volver a repartir todas las OTs del mes? Se pierden los cambios hechos a mano (la guardia fija de las Mangas se respeta).')) return;
+  progAplicarTurnosMes(progState.mes, progState.turnosOverride);
+  progState.ots.forEach(o => { o.guardia = null; });
+  progRepartirGremios(progState.ots, []);
+  progSincronizarMangas(progState.ots);
+  progSincronizarEquipos(progState.ots, {});
+  progSincronizarSistemasAire(progState.ots, {});
+  progState.otsMes = progState.mes;
+  progSave();
+  renderProgramacion();
+  progToast('🔄 Mes reprogramado: altura pareja, por ubicación técnica, sistemas completos y rotando guardias.', 'success');
+}
+
+let progState  = { mes: '', otsMes: '', ots: [], mangaGuardia: {}, hidrolavado: false, historial: {}, turnosOverride: {} };
 let progSearch = '';
 let progFiltroTurno  = '';
 let progFiltroRegla  = '';
@@ -325,6 +358,9 @@ function progLoad() {
       if (parsed && Array.isArray(parsed.ots)) {
         if (!parsed.mangaGuardia) parsed.mangaGuardia = {};
         if (typeof parsed.hidrolavado !== 'boolean') parsed.hidrolavado = false;
+        if (!parsed.historial) parsed.historial = {};
+        if (!parsed.turnosOverride) parsed.turnosOverride = {};
+        progAplicarTurnosMes(parsed.mes || new Date().toISOString().slice(0, 7), parsed.turnosOverride);
         progMigrarReglaVIP(parsed.ots);
         progState = parsed;
       }
@@ -349,7 +385,16 @@ function progMigrarReglaVIP(ots) {
     o.guardia = g;
   });
 }
+/* Foto del reparto del mes en el historial (equipo → guardia): es lo que usa la
+   rotación para no repetir la misma guardia en los meses siguientes. */
+function progSnapshotHistorial(mes) {
+  if (!mes || !progState.ots.length) return;
+  const snap = {};
+  progState.ots.forEach(o => { if (o.guardia != null) snap[o.equipo] = o.guardia; });
+  (progState.historial = progState.historial || {})[mes] = snap;
+}
 function progSave() {
+  progSnapshotHistorial(progState.otsMes || progState.mes);
   try { localStorage.setItem(PROG_STORAGE_KEY, JSON.stringify(progState)); }
   catch (e) { progToast('⚠ No se pudo guardar en este navegador.', 'error'); }
 }
@@ -448,189 +493,134 @@ function progCompararClaves(a, b) {
   }
   return 0;
 }
-function progAsignarPendientes(pendientes, yaAsignados) {
-  const totalCount  = { 1: 0, 2: 0, 3: 0, 4: 0 };
-  const alturaCount = { 1: 0, 2: 0, 3: 0, 4: 0 };
-  const zonaCount   = { 1: {}, 2: {}, 3: {}, 4: {} };
-  const ubicCount   = { 1: {}, 2: {}, 3: {}, 4: {} };
-
-  function registrar(o) {
-    totalCount[o.guardia]++;
-    if (o.esAltura) alturaCount[o.guardia]++;
+function progAsignarPendientes(pendientes, yaAsignados, fijasExtra) {
+  if (!pendientes.length) return pendientes;
+  const total = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  const altura = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  const zonaCount = { 1: {}, 2: {}, 3: {}, 4: {} };
+  const ubicCount = { 1: {}, 2: {}, 3: {}, 4: {} };
+  const registrar = o => {
+    total[o.guardia]++;
+    if (o.esAltura) altura[o.guardia]++;
     zonaCount[o.guardia][o.zona] = (zonaCount[o.guardia][o.zona] || 0) + 1;
     ubicCount[o.guardia][o.ubicacionTecnica] = (ubicCount[o.guardia][o.ubicacionTecnica] || 0) + 1;
-  }
+  };
+  const poolDe = o => PROG_POOL_TURNO[o.turno] || PROG_POOL_TURNO.libre;
+  /* Vínculos que obligan a ir juntos: equipo, sistema de aire, Manga, sector curado. */
+  const claves = o => {
+    const k = ['eq:' + o.equipo];
+    const sis = progSistemaDeEquipo(o.equipo); if (sis) k.push('sis:' + sis.id);
+    const man = progMangaDeEquipo(o.equipo); if (man) k.push('man:' + man);
+    const sec = PROG_EQUIPO_A_GRUPO_SECTOR[o.equipo]; if (sec != null) k.push('sec:' + sec);
+    return k;
+  };
 
-  /* Guardia que ya venía atendiendo cada sector físico chico (lista
-     curada), de meses anteriores. Si el sector nuevo coincide con uno ya
-     asignado, el resto del grupo hereda esa guardia. */
-  const guardiaPorGrupoSector = {};
-  const sisCount = { 1: 0, 2: 0, 3: 0, 4: 0 };   // equipos de sistemas de aire por guardia
-  const guardiaPorSistema = {};
+  /* Continuidad dentro del mismo mes (re-carga) y guardia fija de Mangas. */
+  const fija = {};
   yaAsignados.forEach(o => {
     if (o.guardia == null) return;
     registrar(o);
-    const sis = progSistemaDeEquipo(o.equipo);
-    if (sis) {
-      sisCount[o.guardia]++;
-      if (guardiaPorSistema[sis.id] == null) guardiaPorSistema[sis.id] = o.guardia;
-    }
-    const grupoId = PROG_EQUIPO_A_GRUPO_SECTOR[o.equipo];
-    if (grupoId != null && guardiaPorGrupoSector[grupoId] == null) {
-      guardiaPorGrupoSector[grupoId] = o.guardia;
-    }
+    claves(o).forEach(k => { if (fija[k] == null) fija[k] = o.guardia; });
   });
+  Object.entries(progState.mangaGuardia || {}).forEach(([man, g]) => { fija['man:' + man] = g; });
+  Object.entries(fijasExtra || {}).forEach(([k, g]) => { if (fija[k] == null) fija[k] = g; });
 
-  function mejorGuardiaParaUnidad(items) {
-    const pool = PROG_POOL_TURNO[items[0].turno] || PROG_POOL_TURNO.libre;
-    const nTotal = items.length;
-    let mejorGuardia = pool[0];
-    let mejorClave = null;
-    pool.forEach(g => {
-      const cercaniaZona = zonaCount[g][items[0].zona] || 0;
-      const cercaniaUbic = ubicCount[g][items[0].ubicacionTecnica] || 0;
-      const clave = [alturaCount[g] + nTotal, totalCount[g] + nTotal, -cercaniaZona, -cercaniaUbic, g];
-      if (mejorClave === null || progCompararClaves(clave, mejorClave) < 0) {
-        mejorClave = clave;
-        mejorGuardia = g;
-      }
-    });
-    return mejorGuardia;
-  }
-
-  /* Reparte una lista de cintas YA ORDENADAS por número de secuencia
-     física en tramos contiguos entre las guardias del pool, buscando el
-     corte que deje la cantidad final de altura lo más pareja posible.
-     Con un solo corte por guardia, cada una se lleva un tramo seguido de
-     la fila en vez de cintas salteadas. */
-  function progRepartirContiguo(itemsOrdenados) {
-    const n = itemsOrdenados.length;
-    if (!n) return;
-    const pool = PROG_POOL_TURNO[itemsOrdenados[0].turno] || PROG_POOL_TURNO.libre;
-    const baseline = pool.map(g => alturaCount[g]);
-    const target = (baseline.reduce((a, b) => a + b, 0) + n) / pool.length;
-    let idx = 0;
-    pool.forEach((g, i) => {
-      const esUltimo = i === pool.length - 1;
-      let cantidad = esUltimo ? (n - idx) : Math.round(target - baseline[i]);
-      cantidad = Math.max(0, Math.min(cantidad, n - idx));
-      for (let j = 0; j < cantidad; j++) {
-        itemsOrdenados[idx].guardia = g;
-        registrar(itemsOrdenados[idx]);
-        idx++;
-      }
-    });
-  }
-
-  /* Equipos de altura del mismo sector físico chico (lista curada, ver
-     PROG_ALTURA_GRUPOS_SECTOR) se tratan como una sola unidad indivisible;
-     las cintas de Patio de Valijas (MEQ) con número de secuencia física
-     se reparten aparte, en tramos contiguos (progRepartirContiguo); el
-     resto de los equipos de altura son unidades de tamaño 1. Los bloques
-     de sector se resuelven de mayor a menor tamaño (heurística LPT) para
-     que la equidad final entre guardias quede lo más pareja posible: si
-     los bloques grandes se dejaran para el final, serían los más
-     difíciles de acomodar y desbalancearían el resultado. */
-  /* Sistemas de aire (condensadora + interiores): cada sistema es un
-     bloque indivisible y se ubica ANTES que el resto, así la equidad de
-     altura y de carga del resto de los equipos se acomoda alrededor de
-     ellos. Criterio: 1° que cada guardia tenga una cantidad pareja de
-     equipos de sistema (los sistemas se dividen entre las guardias), 2°
-     equidad de altura, 3° equidad de carga total. De mayor a menor (LPT).
-     Si el sistema ya tenía guardia de meses anteriores, la hereda. */
-  const gruposSis = {};
-  const sinSistema = [];
-  pendientes.forEach(o => {
-    const sis = progSistemaDeEquipo(o.equipo);
-    if (sis) (gruposSis[sis.id] = gruposSis[sis.id] || []).push(o);
-    else sinSistema.push(o);
+  /* ── 1) Bloques (union-find) ── */
+  const parent = pendientes.map((_, i) => i);
+  const find = i => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+  const unir = (a, b) => { a = find(a); b = find(b); if (a !== b) parent[b] = a; };
+  const porClave = {};
+  pendientes.forEach((o, i) => claves(o).forEach(k => {
+    if (porClave[k] != null) unir(porClave[k], i); else porClave[k] = i;
+  }));
+  /* Misma ubicación técnica + mismo tipo + mismo turno → misma guardia (p. ej. los Roof
+     Top del Núcleo N°1). Los grupos más grandes que lo que le toca a una guardia se
+     cortan en tramos contiguos (número de equipo / secuencia de cinta). */
+  const idx = progGetEquipoIndex();
+  const tipoDe = o => (idx[o.equipo] && idx[o.equipo].tipo) || String(o.equipo).replace(/\d.*$/, '');
+  const poolKey = o => poolDe(o).join('');
+  const nPorPool = {};
+  pendientes.forEach(o => { nPorPool[poolKey(o)] = (nPorPool[poolKey(o)] || 0) + 1; });
+  const numDe = o => {
+    const sq = String(o.equipo).startsWith('MEQ') ? progNumeroSecuenciaCinta(o.denominacion) : null;
+    return sq != null ? sq : (parseInt(String(o.equipo).replace(/^\D+/, ''), 10) || 0);
+  };
+  const gruposUbic = {};
+  pendientes.forEach((o, i) => {
+    const u = o.ubicacionTecnica;
+    if (!u || u === 'SIN UBICACIÓN' || !u.includes('-')) return;
+    /* los de una Manga o un sistema de aire ya van con su Manga / sistema: si además se
+       agruparan por ubicación, se encadenarían todas las mangas (comparten la ubicación
+       de Plataforma) o varios sistemas en un solo bloque gigante */
+    if (progMangaDeEquipo(o.equipo) || progSistemaDeEquipo(o.equipo)) return;
+    const k = [o.turno || 'libre', tipoDe(o), u].join('|');
+    (gruposUbic[k] = gruposUbic[k] || []).push(i);
   });
-  const ubicarSistema = (items, g) => items.forEach(o => { o.guardia = g; registrar(o); sisCount[g]++; });
-  Object.entries(gruposSis).forEach(([id, items]) => {
-    if (guardiaPorSistema[id] != null) ubicarSistema(items, guardiaPorSistema[id]);
-  });
-  Object.entries(gruposSis)
-    .filter(([id]) => guardiaPorSistema[id] == null)
-    .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
-    .forEach(([id, items]) => {
-      /* guardias que respetan la regla de turno de TODOS los equipos del sistema */
-      let pool = [1, 2, 3, 4];
-      items.forEach(o => { const p = PROG_POOL_TURNO[o.turno] || PROG_POOL_TURNO.libre; pool = pool.filter(g => p.includes(g)); });
-      if (!pool.length) pool = PROG_POOL_TURNO[items[0].turno] || PROG_POOL_TURNO.libre;
-      const n = items.length, alt = items.filter(o => o.esAltura).length;
-      let mejor = pool[0], mejorClave = null;
-      pool.forEach(g => {
-        const clave = [sisCount[g] + n, alturaCount[g] + alt, totalCount[g] + n, -(zonaCount[g][items[0].zona] || 0), g];
-        if (mejorClave === null || progCompararClaves(clave, mejorClave) < 0) { mejorClave = clave; mejor = g; }
-      });
-      guardiaPorSistema[id] = mejor;
-      ubicarSistema(items, mejor);
-    });
-
-  const gruposSector = {};
-  const cintas = [];
-  const alturaSueltos = [];
-  const noAltura = [];
-  sinSistema.forEach(o => {
-    if (!o.esAltura) { noAltura.push(o); return; }
-    const grupoId = PROG_EQUIPO_A_GRUPO_SECTOR[o.equipo];
-    if (grupoId != null) {
-      (gruposSector[grupoId] = gruposSector[grupoId] || []).push(o);
-      return;
-    }
-    const numSecuencia = String(o.equipo).toUpperCase().startsWith('MEQ')
-      ? progNumeroSecuenciaCinta(o.denominacion)
-      : null;
-    if (numSecuencia != null) {
-      o._numSecuencia = numSecuencia;
-      cintas.push(o);
-    } else {
-      alturaSueltos.push(o);
+  Object.values(gruposUbic).forEach(ids => {
+    if (ids.length < 2) return;
+    const o0 = pendientes[ids[0]];
+    /* tope: medio "cupo" de una guardia, entre 8 y 25 equipos (entra un núcleo de aire
+       entero, pero un tramo de cintas del patio no se come el reparto de altura) */
+    const cap = Math.max(8, Math.min(25, Math.ceil((nPorPool[poolKey(o0)] || 0) / (poolDe(o0).length * 2))));
+    /* si el grupo paga altura, tramos más cortos para poder emparejar la altura */
+    const capGrupo = ids.some(i => pendientes[i].esAltura) ? Math.min(cap, 16) : cap;   // 16: entra un núcleo de aire entero aunque pague altura (hidrolavado)
+    ids.sort((a, b) => numDe(pendientes[a]) - numDe(pendientes[b]));
+    const tramos = Math.ceil(ids.length / capGrupo);
+    const tam = Math.ceil(ids.length / tramos);
+    for (let t = 0; t < tramos; t++) {
+      const tramo = ids.slice(t * tam, (t + 1) * tam);
+      tramo.forEach(i => unir(tramo[0], i));
     }
   });
-
-  const bloquesSector = Object.values(gruposSector).sort((a, b) => b.length - a.length);
-  bloquesSector.forEach(items => {
-    const grupoId = PROG_EQUIPO_A_GRUPO_SECTOR[items[0].equipo];
-    const guardia = guardiaPorGrupoSector[grupoId] != null
-      ? guardiaPorGrupoSector[grupoId]
-      : mejorGuardiaParaUnidad(items);
-    items.forEach(o => { o.guardia = guardia; registrar(o); });
+  const porRaiz = {};
+  pendientes.forEach((o, i) => { (porRaiz[find(i)] = porRaiz[find(i)] || []).push(o); });
+  const bloques = [];
+  Object.values(porRaiz).forEach(items => {
+    let pool = [1, 2, 3, 4];
+    items.forEach(o => { const p = poolDe(o); pool = pool.filter(g => p.includes(g)); });
+    if (pool.length) { bloques.push({ items, pool }); return; }
+    /* el bloque mezcla turnos incompatibles: se separa por turno (la regla de turno manda) */
+    const porT = {};
+    items.forEach(o => { (porT[o.turno || 'libre'] = porT[o.turno || 'libre'] || []).push(o); });
+    Object.values(porT).forEach(its => bloques.push({ items: its, pool: poolDe(its[0]) }));
   });
 
-  cintas.sort((a, b) => a._numSecuencia - b._numSecuencia);
-  progRepartirContiguo(cintas);
-  cintas.forEach(o => { delete o._numSecuencia; });
+  /* ── 2) Rotación: cuántas veces tuvo cada guardia estos equipos en los últimos meses ── */
+  const hist = progState.historial || {};
+  const meses = progMesesAnteriores(progState.mes, 6);
+  const PESO = [8, 4, 2, 1, 1, 1];
+  const repeticion = (items, g) => {
+    let p = 0;
+    items.forEach(o => meses.forEach((m, k) => { if (hist[m] && hist[m][o.equipo] === g) p += PESO[k]; }));
+    return p / items.length;
+  };
 
-  alturaSueltos.forEach(o => {
-    const guardia = mejorGuardiaParaUnidad([o]);
-    o.guardia = guardia;
-    registrar(o);
+  /* ── 3) Ubicar bloques de mayor a menor ── */
+  bloques.forEach(b => { b.n = b.items.length; b.alt = b.items.filter(o => o.esAltura).length; });
+  bloques.sort((a, b) => (b.n - a.n) || (b.alt - a.alt));
+  bloques.forEach(b => {
+    let g = null;
+    for (const o of b.items) {
+      for (const k of claves(o)) if (fija[k] != null && b.pool.includes(fija[k])) { g = fija[k]; break; }
+      if (g != null) break;
+    }
+    if (g == null) {
+      /* Costo de poner el bloque en la guardia x = cuánto empeora el balance (carga ya
+         asignada × tamaño del bloque, con la altura pesando más) + penalidad por repetir
+         la guardia de meses anteriores − un poco de cercanía. Así un bloque grande no
+         cae en una guardia ya cargada solo porque "le toca" por un único criterio. */
+      const o0 = b.items[0];
+      const costo = x => {
+        const prox = Math.min(10, (zonaCount[x][o0.zona] || 0) + 0.5 * (ubicCount[x][o0.ubicacionTecnica] || 0));
+        return 6 * altura[x] * b.alt          // a) altura pareja
+          + total[x] * b.n                     // b) carga pareja
+          + repeticion(b.items, x) * b.n       // c) rotar respecto de meses anteriores
+          - 0.2 * prox * b.n;                  // d) cercanía
+      };
+      g = b.pool.slice().sort((x, y) => (costo(x) - costo(y)) || (total[x] - total[y]) || (x - y))[0];
+    }
+    b.items.forEach(o => { o.guardia = g; registrar(o); claves(o).forEach(k => { if (fija[k] == null) fija[k] = g; }); });
   });
-
-  const ordenados = noAltura.sort((a, b) => {
-    if (a.zona !== b.zona) return a.zona.localeCompare(b.zona);
-    if (a.ubicacionTecnica !== b.ubicacionTecnica) return a.ubicacionTecnica.localeCompare(b.ubicacionTecnica);
-    return 0;
-  });
-
-  ordenados.forEach(o => {
-    const pool = PROG_POOL_TURNO[o.turno] || PROG_POOL_TURNO.libre;
-    let mejorGuardia = pool[0];
-    let mejorClave = null;
-    pool.forEach(g => {
-      const cercaniaZona  = zonaCount[g][o.zona] || 0;
-      const cercaniaUbic  = ubicCount[g][o.ubicacionTecnica] || 0;
-      const clave = [totalCount[g], -cercaniaZona, -cercaniaUbic, g];   // 1° equidad de carga total, 2° cercanía por zona, 3° cercanía por ubicación técnica
-      if (mejorClave === null || progCompararClaves(clave, mejorClave) < 0) {
-        mejorClave = clave;
-        mejorGuardia = g;
-      }
-    });
-    o.guardia = mejorGuardia;
-    registrar(o);
-  });
-
   return pendientes;
 }
 
@@ -694,8 +684,16 @@ function progHandleFile(file) {
       }
 
       const idx = progGetEquipoIndex();
+      /* Mes a programar y sus turnos. Lo ya asignado sólo se reusa si es del MISMO
+         mes (re-carga del Excel); si es de otro mes queda en el historial y se usa
+         para rotar. */
+      const mesPrevio = progState.otsMes || progState.mes;
+      progState.mes = document.getElementById('prog-mes-input').value || progState.mes || new Date().toISOString().slice(0, 7);
+      progAplicarTurnosMes(progState.mes, progState.turnosOverride);
+      const mismoMes = !progState.ots.length || mesPrevio === progState.mes;
+      if (!mismoMes) progSnapshotHistorial(mesPrevio);
       const existingByKey = {};
-      progState.ots.forEach(o => { existingByKey[o.equipo + '|' + (o.ot_num || '')] = o; });
+      if (mismoMes) progState.ots.forEach(o => { existingByKey[o.equipo + '|' + (o.ot_num || '')] = o; });
 
       const merged = [];
       const pendientes = [];
@@ -742,12 +740,7 @@ function progHandleFile(file) {
          cercanía por zona/ubicación técnica se calculan solo contra el
          resto de OTs del mismo gremio (Aire o Mecánicos), no mezcladas,
          para que cada guardia quede pareja dentro de su propia disciplina. */
-      ['aire', 'mecanico'].forEach(g => {
-        progAsignarPendientes(
-          pendientes.filter(o => o.grupo === g),
-          yaAsignados.filter(o => o.grupo === g)
-        );
-      });
+      progRepartirGremios(pendientes, yaAsignados);
       progSincronizarMangas(merged);
 
       /* Une las OTs de un mismo equipo en una sola guardia (p. ej. la OT
@@ -772,10 +765,10 @@ function progHandleFile(file) {
       progSincronizarSistemasAire(merged, guardiaPrevPorSistema);
 
       progState.ots = merged;
-      if (!progState.mes) progState.mes = document.getElementById('prog-mes-input').value || new Date().toISOString().slice(0, 7);
+      progState.otsMes = progState.mes;
       progSave();
       renderProgramacion();
-      progToast(`✓ ${merged.length} equipos cargados (${pendientes.length} nuevos distribuidos automáticamente).`, 'success');
+      progToast(`✓ ${merged.length} equipos cargados (${pendientes.length} distribuidos automáticamente: altura pareja, por ubicación técnica, sistemas completos y rotando guardias respecto de meses anteriores).`, 'success');
 
     } catch (err) {
       progToast(`❌ Error al leer el archivo: ${err.message}`, 'error');
@@ -801,7 +794,50 @@ function progFiltered() {
 }
 
 /* ─── Render ─────────────────────────────────────────────── */
+/* Panel de turnos del mes: qué guardias están a la mañana / noche, con opción de
+   intercambiarlas a mano para ese mes. */
+const PROG_MES_NOMBRE = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const progMesLegible = mes => { const [y, m] = String(mes).split('-').map(Number); return `${PROG_MES_NOMBRE[m - 1]} ${y}`; };
+function progIntercambiarTurnos() {
+  const mes = progState.mes;
+  const t = progTurnosDelMes(mes, progState.turnosOverride);
+  const nuevo = { 'mañana': t['noche'], 'noche': t['mañana'] };
+  const auto = progTurnosCalculados(mes);
+  progState.turnosOverride = progState.turnosOverride || {};
+  if (nuevo['mañana'].slice().sort().join() === auto['mañana'].slice().sort().join()) delete progState.turnosOverride[mes];
+  else progState.turnosOverride[mes] = nuevo;
+  progAplicarTurnosMes(mes, progState.turnosOverride);
+  progSave();
+  if (progState.ots.length && progState.otsMes === mes && confirm('¿Reprogramar las OTs del mes con los turnos nuevos? (las reglas fijas de turno cambian de guardia)')) progReprogramar(true);
+  else renderProgramacion();
+}
+function renderProgTurnosPanel() {
+  const wrap = document.getElementById('prog-turnos-panel');
+  if (!wrap) return;
+  const mes = progState.mes || new Date().toISOString().slice(0, 7);
+  const manual = !!(progState.turnosOverride && progState.turnosOverride[mes]);
+  const nombres = arr => arr.map(g => `<b>${PROG_GUARDIAS[g]}</b>`).join(' · ');
+  const meses = Object.keys(progState.historial || {}).filter(m => m < mes).sort().slice(-3);
+  const fueraDeTurno = progState.ots.filter(o => o.guardia != null && o.turno && !PROG_POOL_TURNO[o.turno].includes(o.guardia)).length;
+  wrap.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13px">
+      <span style="font-weight:800">Turnos de ${progMesLegible(mes)}</span>
+      <span class="turno-badge manana">☀️ Mañana</span><span>${nombres(PROG_POOL_TURNO['mañana'])}</span>
+      <span class="turno-badge noche">🌙 Noche</span><span>${nombres(PROG_POOL_TURNO['noche'])}</span>
+      ${manual ? '<span class="prog-regla-badge libre" title="Cambiado a mano para este mes">✏️ a mano</span>' : ''}
+      <button class="prog-btn" style="margin-left:auto" onclick="progIntercambiarTurnos()">⇄ Intercambiar turnos este mes</button>
+    </div>
+    ${fueraDeTurno ? `<div style="margin-top:8px;padding:8px 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:12.5px">
+      ⚠ <b>${fueraDeTurno} OTs quedaron en una guardia que no respeta su regla de turno</b> (programación armada con los turnos anteriores o turnos cambiados).
+      <button class="prog-btn" style="margin-left:8px" onclick="progReprogramar(false)">🔄 Reprogramar mes</button></div>` : ''}
+    <div style="font-size:11.5px;color:var(--color-muted);margin-top:6px">
+      Las parejas rotan de turno cada mes, salvo al pasar a noviembre y a diciembre (se mantienen).
+      ${meses.length ? `🔄 Rotación: se evita repetir la guardia que tuvo cada equipo en ${meses.join(', ')}.` : '🔄 Rotación: todavía no hay meses anteriores guardados; desde el próximo mes cada equipo va rotando de guardia.'}
+    </div>`;
+}
+
 function renderProgramacion() {
+  renderProgTurnosPanel();
   const hasData = progState.ots.length > 0;
   document.getElementById('prog-empty-state').classList.toggle('hidden', hasData);
   document.getElementById('prog-toolbar').style.display = hasData ? '' : 'none';
@@ -824,14 +860,14 @@ function renderProgMangasPanel() {
   const mangas = Object.keys(PROG_MANGA_LABELS).sort((a, b) =>
     PROG_MANGA_LABELS[a].localeCompare(PROG_MANGA_LABELS[b], undefined, { numeric: true })
   );
-  const opcionesGuardia = selected => [1, 2, 3, 4].map(n =>
-    `<option value="${n}" ${n === selected ? 'selected' : ''}>Guardia ${n} (${PROG_GUARDIA_TURNO[n] === 'mañana' ? '☀️ Mañana' : '🌙 Noche'})</option>`
+  const opcionesGuardia = selected => progOrdenGuardias().map(n =>
+    `<option value="${n}" ${n === selected ? 'selected' : ''}>${progOpcionGuardiaTxt(n)}</option>`
   ).join('');
 
   wrap.innerHTML = `
     <div class="prog-mangas-header">
-      🛬 Guardia fija por Manga
-      <span class="prog-mangas-hint">— sus equipos de Aire (Roof Top, Split, UTA) quedan siempre con la misma guardia</span>
+      🛬 Guardia fija por Manga (opcional)
+      <span class="prog-mangas-hint">— la Manga y sus equipos de Aire van siempre juntos. Si la dejás "Sin asignar", rota de guardia cada mes como el resto</span>
     </div>
     <div class="prog-mangas-grid">
       ${mangas.map(man => `
@@ -877,8 +913,8 @@ function renderProgStats() {
   const manana         = progState.ots.filter(o => o.turno === 'mañana').length;
   const noche          = progState.ots.filter(o => o.turno === 'noche').length;
   const altura         = progState.ots.filter(o => o.esAltura).length;
-  const alturaAire      = progState.ots.filter(o => o.esAltura && o.puesto === 'aire').length;
-  const alturaMecanico  = progState.ots.filter(o => o.esAltura && o.puesto === 'mecanico').length;
+  const alturaAire      = progState.ots.filter(o => o.esAltura && o.grupo === 'aire').length;
+  const alturaMecanico  = progState.ots.filter(o => o.esAltura && o.grupo === 'mecanico').length;
   const sistemasEsteMes = new Set(
     progState.ots.map(o => { const s = progSistemaDeEquipo(o.equipo); return s && s.id; }).filter(Boolean)
   ).size;
@@ -903,7 +939,7 @@ function renderProgStats() {
 }
 
 function progGuardiaLabel(id) {
-  return `Guardia ${id}`;
+  return PROG_GUARDIAS[id] || `Guardia ${id}`;
 }
 
 function renderProgGuardias() {
@@ -920,8 +956,12 @@ function renderProgGuardias() {
   });
   const hayFiltrosActivos = !!(progSearch || progFiltroTurno || progFiltroRegla || progFiltroZona || progFiltroAltura);
 
-  wrap.innerHTML = [1, 2, 3, 4].map(gid => {
+  const mesAnt = progMesesAnteriores(progState.mes, 1)[0];
+  const histAnt = (progState.historial || {})[mesAnt] || {};
+  wrap.innerHTML = progOrdenGuardias().map(gid => {
     const turno = PROG_GUARDIA_TURNO[gid];
+    /* rotación: equipos que esta guardia ya tuvo el mes anterior */
+    const repiten = filtradas.filter(o => o.guardia === gid && histAnt[o.equipo] === gid).length;
     const items = filtradas.filter(o => o.guardia === gid);
     const aireEnGuardia = items.filter(o => o.grupo === 'aire').length;
     const mecEnGuardia  = items.filter(o => o.grupo === 'mecanico').length;
@@ -950,7 +990,7 @@ function renderProgGuardias() {
             })()}
             ${o.regla ? `<span class="prog-regla-badge ${o.turno === 'noche' ? 'noche' : 'manana'}">${o.turno === 'noche' ? '🌙' : '☀️'} ${o.regla}</span>` : `<span class="prog-regla-badge libre">✏️ Sin regla</span>`}
             <select class="prog-ot-select" data-id="${o.id}">
-              ${[1, 2, 3, 4].map(n => `<option value="${n}" ${n === o.guardia ? 'selected' : ''}>Guardia ${n} (${PROG_GUARDIA_TURNO[n] === 'mañana' ? '☀️ Mañana' : '🌙 Noche'})</option>`).join('')}
+              ${progOrdenGuardias().map(n => `<option value="${n}" ${n === o.guardia ? 'selected' : ''}>${progOpcionGuardiaTxt(n)}</option>`).join('')}
             </select>
           </div>
         `).join('')
@@ -961,7 +1001,7 @@ function renderProgGuardias() {
         <div class="prog-guardia-header">
           <span class="prog-guardia-name">${progGuardiaLabel(gid)}</span>
           <span class="turno-badge ${turno === 'noche' ? 'noche' : 'manana'}">${turno === 'noche' ? '🌙 Noche' : '☀️ Mañana'}</span>
-          <span class="prog-guardia-count">${items.length} OT${items.length === 1 ? '' : 's'} (💨 ${aireEnGuardia} aire · 🔧 ${mecEnGuardia} mec)${alturaEnGuardia ? ` · ⛰️ ${alturaEnGuardia} (💨 ${alturaAireEnGuardia} aire · 🔧 ${alturaMecEnGuardia} mec)` : ''}${sisEnGuardia.size ? ` · 🔗 ${sisEnGuardia.size} sistema${sisEnGuardia.size === 1 ? '' : 's'} (${eqSisEnGuardia} equipos)` : ''}</span>
+          <span class="prog-guardia-count">${items.length} OT${items.length === 1 ? '' : 's'} (💨 ${aireEnGuardia} aire · 🔧 ${mecEnGuardia} mec)${alturaEnGuardia ? ` · ⛰️ ${alturaEnGuardia} (💨 ${alturaAireEnGuardia} aire · 🔧 ${alturaMecEnGuardia} mec)` : ''}${sisEnGuardia.size ? ` · 🔗 ${sisEnGuardia.size} sistema${sisEnGuardia.size === 1 ? '' : 's'} (${eqSisEnGuardia} equipos)` : ''}${Object.keys(histAnt).length ? ` · 🔄 ${repiten} repiten de ${mesAnt}` : ''}</span>
         </div>
         <div class="prog-guardia-list">${rows}</div>
       </div>
@@ -993,7 +1033,7 @@ function progExportExcel() {
     return;
   }
   const rows = [...progState.ots]
-    .sort((a, b) => a.guardia - b.guardia || a.equipo.localeCompare(b.equipo))
+    .sort((a, b) => progOrdenGuardias().indexOf(a.guardia) - progOrdenGuardias().indexOf(b.guardia) || a.equipo.localeCompare(b.equipo))
     .map(o => ({
       'Guardia': progGuardiaLabel(o.guardia),
       'Turno': PROG_GUARDIA_TURNO[o.guardia] === 'noche' ? 'Noche' : 'Mañana',
@@ -1001,6 +1041,9 @@ function progExportExcel() {
       'Equipo': o.equipo,
       'Denominación': o.denominacion || '',
       'Zona': o.zona,
+      'Ubicación técnica': o.ubicacionTecnica || '',
+      'Sistema de aire': (progSistemaDeEquipo(o.equipo) || {}).nombre || '',
+      'Gremio': o.grupo === 'aire' ? 'Aire' : 'Mecánicos',
       'Paga altura': o.esAltura ? 'Sí' : 'No',
       'Puesto de trabajo': o.puesto === 'aire' ? 'Aire' : (o.puesto === 'mecanico' ? 'Mecánicos' : ''),
       'Regla aplicada': o.regla || 'Sin regla fija',
@@ -1018,7 +1061,8 @@ function progReset() {
   if (!progState.ots.length) return;
   const ok = window.confirm('¿Vaciar la programación actual? Esto borra todas las asignaciones cargadas (no afecta el Excel original).');
   if (!ok) return;
-  progState = { mes: document.getElementById('prog-mes-input').value || '', ots: [], mangaGuardia: progState.mangaGuardia || {} };
+  progState = { mes: document.getElementById('prog-mes-input').value || '', otsMes: '', ots: [], mangaGuardia: progState.mangaGuardia || {},
+    hidrolavado: progState.hidrolavado, historial: progState.historial || {}, turnosOverride: progState.turnosOverride || {} };
   progSave();
   renderProgramacion();
 }
@@ -1038,9 +1082,15 @@ function progToast(msg, type = 'success') {
 
   const mesInput = document.getElementById('prog-mes-input');
   mesInput.value = progState.mes || new Date().toISOString().slice(0, 7);
+  progAplicarTurnosMes(progState.mes || mesInput.value, progState.turnosOverride);
   mesInput.addEventListener('change', function () {
     progState.mes = this.value;
+    progAplicarTurnosMes(progState.mes, progState.turnosOverride);
     progSave();
+    renderProgramacion();
+    if (progState.ots.length && progState.otsMes && progState.otsMes !== progState.mes) {
+      progToast(`Las OTs cargadas son de ${progState.otsMes}. Cargá el Excel de ${progState.mes} para programarlo (rota respecto de ${progState.otsMes}).`, 'success');
+    }
   });
 
   document.getElementById('prog-upload-btn').addEventListener('click', () => {
@@ -1054,8 +1104,8 @@ function progToast(msg, type = 'success') {
 
   document.getElementById('prog-export-btn').addEventListener('click', progExportExcel);
   document.getElementById('prog-reset-btn').addEventListener('click', progReset);
-  const sisBtn = document.getElementById('prog-sistemas-btn');
-  if (sisBtn) sisBtn.addEventListener('click', progRepartirSistemas);
+  const reBtn = document.getElementById('prog-reprogramar-btn');
+  if (reBtn) reBtn.addEventListener('click', () => progReprogramar(false));
 
   document.getElementById('prog-search').addEventListener('input', function () {
     progSearch = this.value.trim().toLowerCase();
