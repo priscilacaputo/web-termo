@@ -1,4 +1,9 @@
-/* ─── Auditoría SAP — Inventario de equipos ────────────────────────
+/* ─── Auditoría SAP ─────────────────────────────────────────────────
+   Pestaña principal: "Qué corregir en SAP" (accionesHTML) — lista de tareas concretas
+   para SAP (qué hacer, transacción, objetos), armada con los hallazgos del resto de las
+   pestañas, que quedan como análisis de respaldo.
+
+   Inventario de equipos:
    Cruza EQUIPOS_SAP (maestro, export IH08) contra las fichas temáticas
    (AAC_DATA, BOMBAS_DATA, …) para responder: ¿qué está dado de alta en
    SAP, qué tiene ficha en la web y qué no reconcilia?
@@ -126,8 +131,8 @@
 
   /* ── Render ── */
   /* ── Pestañas de la auditoría ── */
-  const AUD_TABS = [['resumen', 'Resumen'], ['equipos', 'Equipos'], ['planes', 'Planes'], ['hdr', 'Hojas de ruta'], ['ots', 'Órdenes de trabajo'], ['mat', 'Materiales']];
-  let audTab = 'resumen';
+  const AUD_TABS = [['acciones', '✅ Qué corregir en SAP'], ['resumen', 'Diagnóstico'], ['equipos', 'Equipos'], ['planes', 'Planes'], ['hdr', 'Hojas de ruta'], ['ots', 'Órdenes de trabajo'], ['mat', 'Materiales']];
+  let audTab = 'acciones';
   window.audGoTab = function (k) {
     audTab = k;
     document.querySelectorAll('#auditoria-content .aud-pane').forEach((sec) => { sec.hidden = sec.dataset.pane !== k; });
@@ -166,6 +171,7 @@
       <div class="mant-tabs aud-tabs" style="margin-bottom:16px">
         ${AUD_TABS.map(([k, t]) => `<button class="mant-tab" data-tab="${k}" onclick="audGoTab('${k}')">${t}</button>`).join('')}
       </div>
+      <section class="aud-pane" data-pane="acciones">${accionesHTML()}</section>
       <section class="aud-pane" data-pane="resumen">${diagnosticoHTML()}</section>
       <section class="aud-pane" data-pane="planes">${planesHTML()}</section>
       <section class="aud-pane" data-pane="hdr">${(typeof hdrAuditCardHTML === 'function') ? hdrAuditCardHTML() : ''}</section>
@@ -458,15 +464,12 @@
     </div>`;
   }
 
-  function diagnosticoHTML() {
-    const P = (typeof PLANES_SAP_RESUMEN !== 'undefined') ? PLANES_SAP_RESUMEN : null;
+  /* Coherencia plan ↔ tipo de equipo (aire) y periodicidad por tipo (todas las familias).
+     Lo usan el Diagnóstico y la pestaña "Qué corregir en SAP". */
+  let _diag = null;
+  function calcDiag() {
+    if (_diag) return _diag;
     const PL = (typeof PLANES_SAP !== 'undefined') ? PLANES_SAP : [];
-    if (!P || !PL.length) return '';
-    const heading = (t) => `<div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">${t}</div>`;
-    const sem = (estado) => ({ ok: '🟢', rev: '🟡', mal: '🔴' }[estado] || '⚪');
-    const codes = (list) => (list || []).map((c) => `<span class="equipo-tag" style="margin:2px 3px 2px 0;display:inline-block">${esc(c)}</span>`).join('');
-
-    // equipo -> {tipo, familia} desde todas las fichas temáticas
     const SRC = [
       ['Aire acondicionado', typeof AAC_DATA !== 'undefined' ? AAC_DATA : []],
       ['Patio de valijas (BHS)', typeof PATIO_DATA !== 'undefined' ? PATIO_DATA : []],
@@ -537,6 +540,20 @@
     }).filter((x) => x.n >= 3).sort((a, b) => b.n - a.n);
     // solo cuenta como "problema" si el tipo tiene ≥4 equipos y >1 se aparta
     const totalOutliers = consist.reduce((s, x) => s + (x.n >= 4 ? x.outliers.length : 0), 0);
+
+    _diag = { mismatch, consist, totalOutliers };
+    return _diag;
+  }
+
+  function diagnosticoHTML() {
+    const P = (typeof PLANES_SAP_RESUMEN !== 'undefined') ? PLANES_SAP_RESUMEN : null;
+    const PL = (typeof PLANES_SAP !== 'undefined') ? PLANES_SAP : [];
+    if (!P || !PL.length) return '';
+    const heading = (t) => `<div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">${t}</div>`;
+    const sem = (estado) => ({ ok: '🟢', rev: '🟡', mal: '🔴' }[estado] || '⚪');
+    const codes = (list) => (list || []).map((c) => `<span class="equipo-tag" style="margin:2px 3px 2px 0;display:inline-block">${esc(c)}</span>`).join('');
+
+    const { mismatch, consist, totalOutliers } = calcDiag();
 
     // 3. Cobertura (del resumen)
     const sinPlan = (P.equiposMaestroSinPlan || {}).total || 0;
@@ -846,6 +863,350 @@
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:10px">${tarjetas}</div>
       ${pendConf.length ? `<div style="font-size:12px;margin-top:10px;padding:8px 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px"><b>⏳ Pendiente de asignar condensadora (${pendConf.length}):</b> ${pendConf.map((z) => tag(z.equipo, '#f59e0b')).join(' ')} <span style="color:var(--color-muted)">— la usuaria confirmó que no son del sistema del que se sacaron (2026-09-22); falta saber a cuál pertenecen. No se agrupan hasta confirmarlo.</span></div>` : ''}
       ${pisoTecho.length ? `<div style="font-size:12px;margin-top:8px"><b>Piso-techo autónomas (${pisoTecho.length}):</b> ${pisoTecho.map((z) => tag(z.equipo, '#94a3b8')).join(' ')} <span style="color:var(--color-muted)">— equipos sin condensadora aparte (comedores/talleres); no se agrupan.</span></div>` : ''}
+    </div>`;
+  }
+
+
+  /* ════════ "Qué corregir en SAP" ════════
+     Junta los hallazgos de todas las pestañas como TAREAS concretas: qué hay que hacer, en qué
+     transacción de SAP y sobre qué objetos (equipo / plan / hoja de ruta / material). Es la vista
+     orientativa de la auditoría; el resto de las pestañas queda como análisis de respaldo.
+     Cada tarea se puede marcar como hecha (en este navegador) y todo se exporta a Excel para
+     trabajarlo en SAP. Los cálculos se hacen en vivo contra EQUIPOS_SAP, así que al actualizar el
+     maestro las listas se recalculan solas. */
+  const ACC_KEY = 'aud_acciones_hecho_v1';
+  const accLeer = () => { try { return JSON.parse(localStorage.getItem(ACC_KEY)) || {}; } catch (e) { return {}; } };
+  const accGuardar = (m) => { try { localStorage.setItem(ACC_KEY, JSON.stringify(m)); } catch (e) { /* sin storage */ } };
+  const PRIO = { alta: { lbl: 'Alta', color: '#dc2626', bg: '#fee2e2', ord: 0 }, media: { lbl: 'Media', color: '#b45309', bg: '#fef3c7', ord: 1 }, baja: { lbl: 'Baja', color: '#475569', bg: '#f1f5f9', ord: 2 } };
+  let accFiltroArea = '';
+  let accVerHechas = false;
+
+  function calcAcciones() {
+    const maestro = getMaestro();
+    const enMaestro = new Set(maestro.map((e) => e.equipo));
+    const P = (typeof PLANES_SAP_RESUMEN !== 'undefined') ? PLANES_SAP_RESUMEN : {};
+    const PL = (typeof PLANES_SAP !== 'undefined') ? PLANES_SAP : [];
+    const O = (typeof OTS_SAP_RESUMEN !== 'undefined') ? OTS_SAP_RESUMEN : {};
+    const M = (typeof MM60_RESUMEN !== 'undefined') ? MM60_RESUMEN : {};
+    const B = (typeof MB51_RESUMEN !== 'undefined') ? MB51_RESUMEN : {};
+    const H = (typeof hdrAuditAcciones === 'function') ? hdrAuditAcciones() : null;
+    const den = {};
+    maestro.forEach((e) => { den[e.equipo] = e.denom || ''; });
+    const conPlan = new Set(PL.map((p) => p.equipo));
+    const A = [];
+    const add = (x) => { if (x.objetos.length || x.n) A.push(Object.assign({ n: x.objetos.length }, x)); };
+
+    /* ─── Equipos (maestro IH08) ─── */
+    add({
+      id: 'eq-sin-alta', area: 'Equipos', prio: 'alta',
+      titulo: 'Equipos que están en la web pero no figuran de alta en SAP',
+      que: 'Si el equipo existe: crearlo en SAP con el mismo código. Si ya no existe (se retiró o se renombró): avisar para sacarlo de la web.',
+      tx: 'IE01 (crear equipo) · IE03 (verificar)', tab: 'equipos',
+      objetos: GHOST.map((g) => ({ cod: g.equipo, det: `${g.denom || ''} — sección web: ${g.seccion}` })),
+    });
+    const paraBaja = (typeof EQUIPOS_SAP_PARA_BAJA !== 'undefined') ? EQUIPOS_SAP_PARA_BAJA : [];
+    add({
+      id: 'eq-baja-pendiente', area: 'Equipos', prio: 'media',
+      titulo: 'Equipos marcados para baja (NOAC / PTBO) que siguen en el maestro',
+      que: 'Ya no existen: completar la baja (status INAC / petición de borrado) y dar de baja sus planes si les queda alguno.',
+      tx: 'IE02 → Status → INAC / marcar para borrado · IP02 (plan)', tab: 'equipos',
+      objetos: paraBaja.map((e) => ({ cod: e.equipo, det: `${e.denom} — ${e.status}` })),
+    });
+    add({
+      id: 'eq-sin-abc', area: 'Equipos', prio: 'baja',
+      titulo: 'Equipos sin Indicador ABC (criticidad)',
+      que: 'Cargar el Indicador ABC según criticidad (A = crítico para la operación, B = importante, C = resto). Sirve para priorizar OTs y repuestos.',
+      tx: 'IE02 → pestaña Organización → Indicador ABC', tab: 'equipos',
+      objetos: maestro.filter((e) => e.abc === '').map((e) => ({ cod: e.equipo, det: e.denom || '' })),
+    });
+    const FAB_TYPO = { TOYOTS: 'TOYOTA' };
+    add({
+      id: 'eq-datos', area: 'Equipos', prio: 'baja',
+      titulo: 'Datos del equipo incompletos o mal escritos (fabricante)',
+      que: 'Completar el fabricante (y si se tiene, modelo y N° de serie) en la ficha del equipo; corregir los mal escritos.',
+      tx: 'IE02 → pestaña Datos generales → Fabricante', tab: 'equipos',
+      objetos: maestro.filter((e) => e.status === 'MONT' && (!e.fab || FAB_TYPO[String(e.fab).toUpperCase()]))
+        .map((e) => ({ cod: e.equipo, det: `${e.denom || ''} — ${e.fab ? `fabricante "${e.fab}" → "${FAB_TYPO[String(e.fab).toUpperCase()]}"` : 'sin fabricante'}` })),
+    });
+    add({
+      id: 'eq-her', area: 'Equipos', prio: 'baja',
+      titulo: 'Cajas de herramientas dadas de alta como equipo',
+      que: 'Son cajas asignadas a personas, no objetos técnicos de mantenimiento: evaluar darlas de baja como equipo (o moverlas a otra clase de objeto).',
+      tx: 'IE02 (status / clase de objeto)', tab: 'equipos',
+      objetos: ['HER0778', 'HER0875', 'HER0906', 'HER0926', 'HER0956'].map((c) => ({ cod: c, det: 'Caja de herramientas personal' })),
+    });
+
+    /* ─── Planes de mantenimiento (IP24 / IP02) ─── */
+    const sinPlan = maestro.filter((e) => e.status === 'MONT' && !conPlan.has(e.equipo) && !/^(HER|ECC|ECA)/.test(e.equipo)).map((e) => e.equipo);
+    const sug = {};
+    analizarSinPlan(sinPlan).forEach((r) => { sug[r.equipo] = r; });
+    add({
+      id: 'pl-sin-plan', area: 'Planes', prio: 'alta',
+      titulo: 'Equipos operativos sin ningún plan preventivo',
+      que: 'Asignarles un plan (agregar el equipo como posición de un plan existente del mismo tipo) o crear el plan si no existe para ese tipo. La columna de detalle trae la sugerencia por analogía.',
+      tx: 'IP02 (agregar posición al plan) · IP41/IP42 (crear plan)', tab: 'planes',
+      objetos: sinPlan.map((c) => {
+        const r = sug[c] || {};
+        const s = r.estado === 'recomendado' ? `Sugerido: ${r.sugerido} (igual que ${r.refEquipo})`
+          : r.estado === 'ambiguo' ? (r.parecido ? `Elegir entre ${r.nOpciones} planes — el más parecido: ${r.parecido.plan}` : `Elegir entre ${r.nOpciones} planes del mismo tipo`)
+          : r.estado === 'gap' ? 'No hay plan para este tipo en SAP: hay que crearlo'
+          : 'Sin ficha en la web para sugerir';
+        return { cod: c, det: `${den[c] || ''} — ${s}` };
+      }),
+    });
+    add({
+      id: 'pl-sin-equipo-alta', area: 'Planes', prio: 'alta',
+      titulo: 'Planes activos sobre equipos que no están dados de alta',
+      que: 'Crear el equipo en SAP (si existe) o reasignar la posición del plan al equipo correcto.',
+      tx: 'IE01 (crear equipo) · IP02 (cambiar objeto técnico de la posición)', tab: 'planes',
+      objetos: (P.equiposConPlanNoEnMaestro || []).filter((c) => !enMaestro.has(c))
+        .map((c) => ({ cod: c, det: PL.filter((p) => p.equipo === c).map((p) => `${p.desc} (plan ${p.plan})`).join(' + ') })),
+    });
+    add({
+      id: 'pl-pos-sin-equipo', area: 'Planes', prio: 'media',
+      titulo: 'Posiciones de plan sin equipo asignado',
+      que: 'Asignar el equipo (objeto técnico) a la posición del plan; si no corresponde a ninguno, dar de baja la posición.',
+      tx: 'IP02 → posición → Objeto técnico', tab: 'planes',
+      objetos: (P.planesSinEquipo || []).map((d) => ({ cod: 'Pos. ' + d.pos, det: d.desc + (d.ubic ? ' · ' + d.ubic : '') })),
+    });
+    const { mismatch, consist } = calcDiag();
+    add({
+      id: 'pl-tipo', area: 'Planes', prio: 'media',
+      titulo: 'Plan que no corresponde al tipo de equipo (aire)',
+      que: 'El plan nombra otro tipo de equipo (ej. un Split con plan de Roof Top): pasar el equipo al plan / hoja de ruta de su tipo.',
+      tx: 'IP02 (sacar la posición y agregarla al plan correcto)', tab: 'resumen',
+      objetos: mismatch.map((m) => ({ cod: m.equipo, det: `Es ${m.teq} y el plan dice ${m.tplan}: ${m.desc}` })),
+    });
+    add({
+      id: 'pl-periodicidad', area: 'Planes', prio: 'media',
+      titulo: 'Equipos con frecuencia distinta al resto de su tipo',
+      que: 'Revisar si la diferencia es a propósito. Si no, pasarlos al plan con la frecuencia habitual de su tipo; si sí, dejarlo documentado.',
+      tx: 'IP02 (cambiar de plan / ciclo) · IP10 (reprogramar)', tab: 'resumen',
+      objetos: consist.filter((c) => c.n >= 4).flatMap((c) => c.outliers.map((o) => ({ cod: o.equipo, det: `${c.te}: va ${o.b}, lo habitual es ${c.norma}` }))),
+    });
+    if (typeof AAC_SISTEMAS !== 'undefined') {
+      const bk = (eqs) => new Set(eqs.flatMap((e) => PL.filter((p) => p.equipo === e).map((p) => p.realBucket)));
+      add({
+        id: 'pl-sistemas', area: 'Planes', prio: 'baja',
+        titulo: 'Sistemas de aire con distinta frecuencia entre condensadora e interiores',
+        que: 'La condensadora y sus interiores se mantienen juntos: igualar la frecuencia de sus planes.',
+        tx: 'IP02 (plan de la condensadora o de los interiores)', tab: 'planes',
+        objetos: AAC_SISTEMAS.filter((x) => {
+          const c = bk([x.cabeza]), i = bk(x.miembros);
+          return [...c].some((b) => !i.has(b)) || [...i].some((b) => !c.has(b));
+        }).map((x) => ({ cod: x.cabeza, det: `${x.nombre} — condensadora ${[...bk([x.cabeza])].join('+') || 'sin plan'} · interiores ${[...bk(x.miembros)].join('+') || 'sin plan'}` })),
+      });
+    }
+    add({
+      id: 'pl-nombre', area: 'Planes', prio: 'baja',
+      titulo: 'El nombre del plan no coincide con la frecuencia con que se ejecuta',
+      que: 'Corregir el texto del plan (ej. dice 6M y se hace anual) o el ciclo, según cuál sea el correcto.',
+      tx: 'IP02 (texto del plan / ciclo)', tab: 'planes',
+      objetos: [].concat(P.desajusteMenosSeguido || [], P.desajusteNoCoincide || [])
+        .map((d) => ({ cod: 'Plan ' + d.plan, det: `${d.equipo} · ${d.desc} — dice ${d.declara || '—'}, se ejecuta cada ~${d.realDias} días (${d.realBucket})` })),
+    });
+    add({
+      id: 'pl-estrategia', area: 'Planes', prio: 'baja',
+      titulo: 'Frecuencia que no es un ciclo válido de su estrategia',
+      que: 'Ajustar el ciclo del plan a un paquete de la estrategia (o cambiar de estrategia).',
+      tx: 'IP02 (ciclo) · IP11 (estrategia)', tab: 'planes',
+      objetos: (P.fueraDePaquete || []).map((d) => ({ cod: 'Plan ' + d.plan, det: `${d.equipo} · ${d.desc} (${d.estr})` })),
+    });
+
+    /* ─── Hojas de ruta (IA17 / IA02) ─── */
+    if (H) {
+      const eqs = (l) => (l || []).slice(0, 12).join(', ') + ((l || []).length > 12 ? ` +${l.length - 12}` : '');
+      add({
+        id: 'hr-sin-ruta', area: 'Hojas de ruta', prio: 'alta',
+        titulo: 'Planes sin hoja de ruta (las OT salen sin tareas ni horas)',
+        que: 'Asignar la hoja de ruta que corresponde en la posición del plan; si no existe, crearla.',
+        tx: 'IP02 → posición → Hoja de ruta · IA05 (crear hoja de ruta)', tab: 'hdr',
+        objetos: H.sinRuta.map((r) => ({ cod: r.desc, det: `${r.n} posiciones · ${eqs(r.equipos)}` })),
+      });
+      add({
+        id: 'hr-no-usar', area: 'Hojas de ruta', prio: 'alta',
+        titulo: 'Planes que apuntan a una hoja de ruta "NO USAR" o vacía',
+        que: 'Cambiar la posición del plan a la hoja de ruta / contador vigente.',
+        tx: 'IP02 → posición → Hoja de ruta / contador', tab: 'hdr',
+        objetos: H.deprecados.map((r) => ({ cod: r.ruta, det: `${r.desc} — ${r.motivo} · ${eqs(r.equipos)}` })),
+      });
+      add({
+        id: 'hr-no-corresponde', area: 'Hojas de ruta', prio: 'media',
+        titulo: 'Hoja de ruta asignada que no parece corresponder al plan',
+        que: 'Verificar la hoja de ruta de la posición; si es un error, asignar la correcta.',
+        tx: 'IP02 → posición → Hoja de ruta', tab: 'hdr',
+        objetos: H.noCorresponde.map((r) => ({ cod: r.ruta, det: `Plan "${r.desc}" usa «${r.rutaDesc}» · ${eqs(r.equipos)}` })),
+      });
+      add({
+        id: 'hr-puestos', area: 'Hojas de ruta', prio: 'media',
+        titulo: 'Operaciones o planes con puesto de trabajo distinto de AUX_TER / AUX_MEC / MOEX',
+        que: 'Cambiar el puesto de trabajo de la operación (y el puesto responsable del plan) a AUX_TER, AUX_MEC o MOEX.',
+        tx: 'IA02 → operación → Puesto de trabajo · IP02 (puesto responsable)', tab: 'ots',
+        objetos: H.puestos.map((f) => ({ cod: `${f.ruta}/${f.cont}`, det: `${f.equipo} · ${f.desc} — puestos a cambiar: ${f.puestos.join(', ')}` })),
+      });
+      add({
+        id: 'hr-estandar', area: 'Hojas de ruta', prio: 'media',
+        titulo: 'Tareas del estándar del Manual de Mtto que faltan en las hojas de ruta',
+        que: 'Agregar las operaciones que faltan (o corregir su frecuencia) en la hoja de ruta. Si el tipo está bien así, marcarlo "Dar por OK" en la pestaña Hojas de ruta.',
+        tx: 'IA02 → hoja de ruta → operaciones', tab: 'hdr',
+        objetos: H.estandar.map((g) => ({ cod: g.nombre, det: `${g.falta.length} tareas faltan · ${g.otraFrec} con otra frecuencia — hojas de ruta: ${g.pares.map((x) => x.rc).join(', ')}` })),
+      });
+      add({
+        id: 'hr-sin-hr-tipo', area: 'Hojas de ruta', prio: 'baja',
+        titulo: 'Tipos de equipo del estándar sin ninguna hoja de ruta en SAP',
+        que: 'Crear la hoja de ruta con las tareas del estándar y asignarla a los planes de esos equipos.',
+        tx: 'IA05 (crear hoja de ruta) · IP02', tab: 'hdr',
+        objetos: H.sinHojaDeRuta.map((g) => ({ cod: g.nombre, det: `${g.nStd} tareas en el estándar` })),
+      });
+    }
+
+    /* ─── Órdenes de trabajo (IW38) ─── */
+    add({
+      id: 'ot-sin-equipo', area: 'Órdenes de trabajo', prio: 'media',
+      titulo: 'OTs preventivas sin equipo asignado',
+      que: 'Asignar el equipo en la OT; si se repite, corregir el plan que la genera (le falta el objeto técnico).',
+      tx: 'IW32 → Objeto de referencia · IP02', tab: 'ots',
+      n: O.otSinEquipoTotal || (O.otSinEquipo || []).length,
+      objetos: (O.otSinEquipo || []).map((x) => ({ cod: 'OT ' + x.orden, det: x.texto })),
+    });
+    add({
+      id: 'ot-fuera-maestro', area: 'Órdenes de trabajo', prio: 'media',
+      titulo: 'Equipos con OT que no están en el maestro',
+      que: 'Crear el equipo o corregir el equipo de la OT / plan que la genera.',
+      tx: 'IE01 · IW32 · IP02', tab: 'ots',
+      objetos: (O.equiposConOTfueraDelMaestro || []).filter((c) => !enMaestro.has(c) && !paraBaja.some((e) => e.equipo === c)).map((c) => ({ cod: c, det: '' })),
+    });
+    if (O.backlogViejo) add({
+      id: 'ot-backlog', area: 'Órdenes de trabajo', prio: 'media',
+      titulo: `Backlog: ${O.backlogViejo} OTs abiertas con más de 6 meses`,
+      que: 'Filtrar las OT abiertas viejas: cerrar técnicamente (CTEC) las que ya se hicieron y anular o reprogramar el resto.',
+      tx: 'IW38 (filtro por fecha y status ABIE) → IW32 (CTEC)', tab: 'ots', n: O.backlogViejo, objetos: [],
+    });
+    if (O.cerradas && O.notificadas < O.cerradas) add({
+      id: 'ot-notif', area: 'Órdenes de trabajo', prio: 'baja',
+      titulo: `Solo ${O.pctNotificadas}% de las OTs cerradas tiene notificación de horas`,
+      que: 'Proceso, no dato puntual: al cerrar la OT, notificar horas reales y fecha de ejecución. Sin eso no se puede medir HH ni cumplimiento.',
+      tx: 'IW41 (notificar) / IW42', tab: 'ots', n: O.cerradas - O.notificadas, objetos: [],
+    });
+
+    /* ─── Materiales (MM60 / MB51) ─── */
+    add({
+      id: 'mat-sin-codigo', area: 'Materiales', prio: 'media',
+      titulo: 'Repuestos del BOM cargados como texto, sin código SAP',
+      que: 'Dar de alta el material (o buscar su código existente) para poder pedirlo y reservarlo en las OT.',
+      tx: 'MM01 (crear material) · MM03', tab: 'mat',
+      objetos: (M.bomSinCodigoReal || []).map((c) => ({ cod: c, det: '' })),
+    });
+    add({
+      id: 'mat-faltantes', area: 'Materiales', prio: 'media',
+      titulo: 'Materiales que se consumen seguido y tienen stock 0',
+      que: 'Revisar punto de pedido / stock de seguridad (planificación MRP) para que no se queden en cero.',
+      tx: 'MM02 → vista MRP · MD04 (situación de stock)', tab: 'mat', n: B.faltantesTotal,
+      objetos: (B.faltantes || []).map((x) => ({ cod: x.m, det: `${x.txt} — consumo ${x.anual}/año, stock ${x.stock}` })),
+    });
+    add({
+      id: 'mat-bom-abc', area: 'Materiales', prio: 'baja',
+      titulo: 'Repuestos del BOM sin clasificación ABC',
+      que: 'Cargar la clasificación ABC del material para priorizar su reposición.',
+      tx: 'MM02 → vista MRP 1 → Indicador ABC', tab: 'mat',
+      objetos: (M.bomSinABC || []).map((c) => ({ cod: c, det: '' })),
+    });
+    return A;
+  }
+
+  window.audAccHecho = function (id, cb) {
+    const m = accLeer();
+    if (cb.checked) m[id] = new Date().toISOString().slice(0, 10); else delete m[id];
+    accGuardar(m);
+    const host = document.querySelector('#auditoria-content .aud-pane[data-pane="acciones"]');
+    if (host) host.innerHTML = accionesHTML();
+  };
+  window.audAccArea = function (a) {
+    accFiltroArea = accFiltroArea === a ? '' : a;
+    const host = document.querySelector('#auditoria-content .aud-pane[data-pane="acciones"]');
+    if (host) host.innerHTML = accionesHTML();
+  };
+  window.audAccVerHechas = function (on) {
+    accVerHechas = !!on;
+    const host = document.querySelector('#auditoria-content .aud-pane[data-pane="acciones"]');
+    if (host) host.innerHTML = accionesHTML();
+  };
+  window.audAccExport = function () {
+    if (typeof XLSX === 'undefined') return;
+    const hechas = accLeer();
+    const A = calcAcciones().sort((a, b) => PRIO[a.prio].ord - PRIO[b.prio].ord);
+    const wb = XLSX.utils.book_new();
+    const add = (rows, name, cols) => {
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws['!cols'] = cols.map((w) => ({ wch: w }));
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    };
+    add(A.map((x) => ({
+      'Prioridad': PRIO[x.prio].lbl, 'Área': x.area, 'Qué corregir': x.titulo, 'Cantidad': x.n,
+      'Qué hacer': x.que, 'Dónde en SAP': x.tx, 'Hecho': hechas[x.id] ? 'Sí (' + hechas[x.id] + ')' : '',
+    })), 'Resumen', [9, 18, 60, 9, 80, 44, 14]);
+    add(A.flatMap((x) => x.objetos.map((o) => ({
+      'Prioridad': PRIO[x.prio].lbl, 'Área': x.area, 'Qué corregir': x.titulo, 'Objeto': o.cod, 'Detalle': o.det,
+      'Dónde en SAP': x.tx, 'Hecho (completar)': '',
+    }))), 'Detalle por objeto', [9, 18, 50, 22, 90, 44, 16]);
+    XLSX.writeFile(wb, `AEP_Que_corregir_en_SAP_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  function accionesHTML() {
+    const hechas = accLeer();
+    const todas = calcAcciones().sort((a, b) => (PRIO[a.prio].ord - PRIO[b.prio].ord) || (b.n - a.n));
+    const pend = todas.filter((x) => !hechas[x.id]);
+    const areas = [...new Set(todas.map((x) => x.area))];
+    const vis = todas.filter((x) => (!accFiltroArea || x.area === accFiltroArea) && (accVerHechas || !hechas[x.id]));
+    const cuenta = (pr) => pend.filter((x) => x.prio === pr).length;
+    const pill = (pr) => `<span style="display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;color:${PRIO[pr].color};background:${PRIO[pr].bg}">${PRIO[pr].lbl}</span>`;
+    const tarjeta = (x) => {
+      const ok = !!hechas[x.id];
+      const lista = x.objetos.length ? `<details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:var(--color-primary)">ver ${x.objetos.length === x.n ? 'los ' + x.n : x.objetos.length + ' de ' + x.n}</summary>
+          <div class="table-wrap" style="margin-top:6px;max-height:320px;overflow:auto"><table style="font-size:12px">
+            <tbody>${x.objetos.slice(0, 400).map((o) => `<tr><td style="white-space:nowrap"><span class="equipo-tag">${esc(o.cod)}</span></td><td>${esc(o.det)}</td></tr>`).join('')}</tbody>
+          </table></div>${x.objetos.length > 400 ? `<div style="font-size:11px;color:var(--color-muted)">… y ${x.objetos.length - 400} más (están todos en el Excel)</div>` : ''}</details>` : '';
+      return `<div style="border:1px solid var(--color-border);border-left:4px solid ${PRIO[x.prio].color};border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--color-card, #fff);${ok ? 'opacity:.6' : ''}">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+          ${pill(x.prio)}<span style="font-size:11px;color:var(--color-muted);text-transform:uppercase;letter-spacing:.05em">${esc(x.area)}</span>
+          <b style="font-size:13.5px;flex:1;min-width:200px${ok ? ';text-decoration:line-through' : ''}">${esc(x.titulo)}</b>
+          <span style="font-weight:800;font-size:18px;color:${PRIO[x.prio].color}">${x.n.toLocaleString('es-AR')}</span>
+        </div>
+        <div style="font-size:12.5px;margin:6px 0 4px">${esc(x.que)}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:12px">
+          <span>📍 <b>Dónde en SAP:</b> <code>${esc(x.tx)}</code></span>
+          <button class="mant-tab" style="padding:2px 8px;font-size:11px" onclick="audGoTab('${x.tab}')">Ver análisis →</button>
+          <label style="margin-left:auto;cursor:pointer;white-space:nowrap"><input type="checkbox" ${ok ? 'checked' : ''} onchange="audAccHecho('${x.id}', this)"> Hecho${ok ? ' (' + esc(hechas[x.id]) + ')' : ''}</label>
+        </div>
+        ${lista}
+      </div>`;
+    };
+    return `<div class="table-card" style="margin-bottom:20px">
+      <div style="padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-bottom:1px solid var(--color-border)">
+        <div style="flex:1;min-width:240px">
+          <div style="font-weight:800;font-size:14px">Qué corregir en SAP</div>
+          <div style="font-size:12px;color:var(--color-muted)">Cada tarjeta es una corrección concreta: qué hacer, en qué transacción y sobre qué equipos. Ordenadas por prioridad. Marcá "Hecho" a medida que avanzás (se guarda en este navegador); se vuelven a calcular con cada export nuevo.</div>
+        </div>
+        <button class="mant-tab" onclick="audAccExport()">⬇ Descargar Excel para trabajar en SAP</button>
+      </div>
+      <div style="padding:14px 16px">
+        <div class="stats-grid" style="margin-bottom:12px">
+          ${card('Prioridad alta', cuenta('alta'), '#dc2626', 'Tareas pendientes — rompen el preventivo')}
+          ${card('Prioridad media', cuenta('media'), '#f59e0b', 'Tareas pendientes — datos incorrectos')}
+          ${card('Prioridad baja', cuenta('baja'), '#64748b', 'Tareas pendientes — calidad de datos')}
+          ${card('Hechas', todas.length - pend.length, '#10b981', `de ${todas.length} tareas`)}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px">
+          <button class="mant-tab${accFiltroArea ? '' : ' active'}" onclick="audAccArea('')">Todas</button>
+          ${areas.map((a) => `<button class="mant-tab${accFiltroArea === a ? ' active' : ''}" onclick="audAccArea('${esc(a)}')">${esc(a)} · ${pend.filter((x) => x.area === a).length}</button>`).join('')}
+          <label style="margin-left:auto;font-size:12px;cursor:pointer"><input type="checkbox" ${accVerHechas ? 'checked' : ''} onchange="audAccVerHechas(this.checked)"> Mostrar las hechas</label>
+        </div>
+        ${vis.map(tarjeta).join('') || '<p style="color:var(--color-muted);font-size:13px">No hay tareas pendientes con este filtro. 🎉</p>'}
+        <div style="margin-top:6px;font-size:11.5px;color:var(--color-muted)">
+          Fuentes: maestro de equipos (IH08, actualizado con "equipos (3).xlsx"), planes (IP24), hojas de ruta (IA17), OTs (IW38), materiales (MM60 / MB51).
+          Las listas de planes, OTs y materiales se recalculan contra el maestro actual; para que reflejen correcciones hechas en SAP hay que subir los exports nuevos.
+        </div>
+      </div>
     </div>`;
   }
 

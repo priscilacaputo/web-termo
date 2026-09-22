@@ -368,6 +368,23 @@ Motivo (opcional):`, '');
     return { filas, porPuesto, opsFuera: HDR_OPS_FUERA };
   }
 
+  /* Datos para la pestaña "Qué corregir en SAP" (auditoria-app.js): los hallazgos de hojas de
+     ruta como listas de objetos a modificar. Los tipos "dados por OK" no se cuentan. */
+  window.hdrAuditAcciones = function () {
+    const d = data();
+    if (!d) return null;
+    const okMap = leerOK();
+    const estandar = (typeof HDR_ESTANDAR !== 'undefined')
+      ? HDR_ESTANDAR.grupos.filter((g) => g.conDetalle && !okMap[g.nombre] && (g.falta.length || g.otraFrec))
+      : [];
+    const p = puestosFuera();
+    return {
+      sinRuta: d.sinRutaArr, deprecados: d.deprecArr, noCorresponde: d.noCorrArr,
+      estandar, sinHojaDeRuta: (typeof HDR_ESTANDAR !== 'undefined') ? HDR_ESTANDAR.sinHojaDeRuta : [],
+      puestos: p ? p.filas : [],
+    };
+  };
+
   window.hdrPuestosResumen = function () {
     const d = puestosFuera();
     if (!d) return null;
