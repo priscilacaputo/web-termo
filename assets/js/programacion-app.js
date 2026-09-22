@@ -849,6 +849,7 @@ function renderProgramacion() {
   renderProgStats();
   renderProgMangasPanel();
   renderProgGuardias();
+  renderProgResumenSistemas();
 }
 
 /* ─── Panel: guardia fija por Manga ─────────────────────────────────
@@ -1022,6 +1023,112 @@ function renderProgGuardias() {
       }
     });
   });
+}
+
+/* ─── Resumen de sistemas de aire por guardia (para mandar por mail) ───
+   Al final de la página: qué sistemas (condensadora + interiores) le tocaron
+   a cada guardia este mes. Botón para copiar el texto y otro que abre el
+   programa de correo con el resumen cargado (el envío lo hace la persona). */
+function progResumenSistemas() {
+  const idx = progGetEquipoIndex();
+  const porGuardia = {};
+  const vistos = {};
+  progState.ots.forEach(o => {
+    const sis = progSistemaDeEquipo(o.equipo);
+    if (!sis || o.guardia == null) return;
+    const k = o.guardia + '|' + sis.id;
+    if (!vistos[k]) {
+      vistos[k] = { sis, equipos: new Set() };
+      (porGuardia[o.guardia] = porGuardia[o.guardia] || []).push(vistos[k]);
+    }
+    vistos[k].equipos.add(o.equipo);
+  });
+  return progOrdenGuardias().map(g => ({
+    g,
+    turno: PROG_GUARDIA_TURNO[g],
+    sistemas: (porGuardia[g] || []).map(x => {
+      const rec = idx[x.sis.cabeza] || {};
+      return {
+        cabeza: x.sis.cabeza, nombre: x.sis.nombre, sector: rec.sector || '',
+        cargados: x.equipos.size, total: x.sis.miembros.length + 1,
+        interiores: x.sis.miembros.filter(m => x.equipos.has(m)),
+      };
+    }).sort((a, b) => a.sector.localeCompare(b.sector) || a.cabeza.localeCompare(b.cabeza, 'es', { numeric: true })),
+  }));
+}
+function progResumenTexto() {
+  const mes = progMesLegible(progState.otsMes || progState.mes);
+  const lineas = [`Programación de OTs — ${mes}`, 'Sistemas de aire (condensadora + interiores) asignados por guardia:', ''];
+  progResumenSistemas().forEach(r => {
+    lineas.push(`${PROG_GUARDIAS[r.g].toUpperCase()} — Turno ${r.turno === 'mañana' ? 'Mañana' : 'Noche'} (${r.sistemas.length} sistema${r.sistemas.length === 1 ? '' : 's'})`);
+    if (!r.sistemas.length) lineas.push('  · Sin sistemas de aire este mes');
+    r.sistemas.forEach(x => {
+      lineas.push(`  · ${x.cabeza} ${x.nombre}${x.sector ? ' — ' + x.sector : ''} — ${x.cargados} equipo${x.cargados === 1 ? '' : 's'}${x.cargados < x.total ? ` (de ${x.total}; el resto no tiene OT este mes)` : ''}`);
+      if (x.interiores.length) lineas.push(`      Interiores: ${x.interiores.join(', ')}`);
+    });
+    lineas.push('');
+  });
+  lineas.push('Cada sistema se mantiene completo (condensadora e interiores) por la misma guardia.');
+  return lineas.join('\n');
+}
+function progCopiarFallback(txt, ok) {
+  const ta = document.createElement('textarea');
+  ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); ok(); } catch (e) { progToast('No se pudo copiar: seleccioná el texto a mano.', 'error'); }
+  ta.remove();
+}
+function progCopiarResumen() {
+  const txt = progResumenTexto();
+  const ok = () => progToast('📋 Resumen copiado: pegalo en el mail.', 'success');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(ok, () => progCopiarFallback(txt, ok));
+  } else progCopiarFallback(txt, ok);
+}
+function progMailResumen() {
+  const mes = progMesLegible(progState.otsMes || progState.mes);
+  const asunto = encodeURIComponent(`Sistemas de aire por guardia — ${mes}`);
+  let cuerpo = progResumenTexto();
+  /* los programas de correo cortan los links muy largos: si no entra, se copia y se abre el mail para pegarlo */
+  if (encodeURIComponent(cuerpo).length > 1800) {
+    progCopiarResumen();
+    cuerpo = 'Pegá acá el resumen (ya está copiado al portapapeles).';
+  }
+  window.location.href = `mailto:?subject=${asunto}&body=${encodeURIComponent(cuerpo)}`;
+}
+function renderProgResumenSistemas() {
+  const wrap = document.getElementById('prog-resumen-sistemas');
+  if (!wrap) return;
+  const res = progState.ots.length ? progResumenSistemas() : [];
+  const nSis = res.reduce((t, r) => t + r.sistemas.length, 0);
+  if (!nSis) { wrap.innerHTML = ''; return; }
+  const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  wrap.innerHTML = `
+    <div class="table-card" style="margin-top:20px">
+      <div style="padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-bottom:1px solid var(--color-border)">
+        <div style="flex:1;min-width:240px">
+          <div style="font-weight:800;font-size:14px">❄️ Resumen: sistemas de aire por guardia · ${esc(progMesLegible(progState.otsMes || progState.mes))}</div>
+          <div style="font-size:12px;color:var(--color-muted)">Qué sistemas (condensadora + interiores) le toca mantener a cada guardia este mes. Listo para mandar por mail.</div>
+        </div>
+        <button class="prog-btn" onclick="progCopiarResumen()">📋 Copiar resumen</button>
+        <button class="prog-btn prog-btn-primary" onclick="progMailResumen()">✉ Abrir en el mail</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;padding:14px 16px">
+        ${res.map(r => `
+          <div style="border:1px solid var(--color-border);border-radius:10px;padding:10px 12px">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px">
+              <b style="font-size:13.5px;color:var(--color-primary);white-space:nowrap">${esc(PROG_GUARDIAS[r.g])}</b>
+              <span class="turno-badge ${r.turno === 'noche' ? 'noche' : 'manana'}">${r.turno === 'noche' ? '🌙 Noche' : '☀️ Mañana'}</span>
+              <span style="margin-left:auto;font-size:12px;color:var(--color-muted);font-weight:700">${r.sistemas.length} sistema${r.sistemas.length === 1 ? '' : 's'}</span>
+            </div>
+            ${r.sistemas.length ? r.sistemas.map(x => `
+              <div style="font-size:12.5px;padding:5px 0;border-top:1px solid var(--color-surface)">
+                <span class="equipo-tag" style="background:#6366f1">${esc(x.cabeza)}</span> <b>${esc(x.nombre)}</b>
+                <div style="color:var(--color-muted);font-size:11.5px;margin-top:2px">${x.sector ? '📍 ' + esc(x.sector) + ' · ' : ''}${x.cargados} equipo${x.cargados === 1 ? '' : 's'}${x.cargados < x.total ? ` de ${x.total} (el resto no tiene OT este mes)` : ''}</div>
+              </div>`).join('') : '<div style="font-size:12px;color:var(--color-muted)">Sin sistemas de aire este mes.</div>'}
+          </div>`).join('')}
+      </div>
+    </div>`;
 }
 
 /* ─── Exportar Excel ─────────────────────────────────────── */
