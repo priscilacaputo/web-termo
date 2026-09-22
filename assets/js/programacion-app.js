@@ -43,12 +43,16 @@
 
    Sistemas de aire (condensadora + interiores, ver aac-sistemas-data.js):
    SAP da de alta cada unidad como equipo separado, así que llegan como OTs
-   sueltas y el reparto automático las trataría como independientes. Igual
-   que las Mangas, después de repartir se fuerza a que TODOS los equipos de
-   un mismo sistema compartan una sola guardia (progSincronizarSistemasAire)
-   — la condensadora y sus interiores son un solo paquete de trabajo, no
-   tareas sueltas. Se re-sincroniza también ante cualquier cambio manual de
-   guardia, así que mover un equipo del paquete mueve a todo el paquete.
+   sueltas. En el reparto automático cada sistema es un BLOQUE indivisible
+   (progAsignarPendientes): los sistemas se dividen entre las guardias
+   buscando que cada una se lleve una cantidad pareja de equipos de sistema
+   (de mayor a menor, a la guardia con menos), y todos los equipos del mismo
+   sistema van a esa guardia — la condensadora y sus interiores son un solo
+   paquete de trabajo. Si el sistema ya tenía guardia de meses anteriores,
+   la conserva. Después se re-sincroniza (progSincronizarSistemasAire) y
+   también ante cualquier cambio manual de guardia, así que mover un equipo
+   del paquete mueve a todo el paquete. El botón "🔗 Repartir sistemas"
+   (progRepartirSistemas) vuelve a dividir los sistemas del mes cargado.
 
    Todo queda 100% editable por fila con el desplegable de guardia. */
 
@@ -223,6 +227,28 @@ function progSincronizarSistemasAire(items, guardiaPrev, forzarDesde) {
     }
     grupo.forEach(o => { o.guardia = destino; });
   });
+}
+
+/* Vuelve a dividir los sistemas de aire del mes ya cargado entre las
+   guardias (sin tocar el resto de las OTs): útil para programaciones
+   armadas antes del reparto por bloques, o después de mover cosas a mano.
+   Cada gremio por separado, igual que el reparto al cargar el Excel. */
+function progRepartirSistemas() {
+  const deSistema = progState.ots.filter(o => progSistemaDeEquipo(o.equipo));
+  if (!deSistema.length) { progToast('No hay equipos de sistemas de aire en la programación.', 'error'); return; }
+  deSistema.forEach(o => { o.guardia = null; });
+  ['aire', 'mecanico'].forEach(g => {
+    progAsignarPendientes(
+      deSistema.filter(o => o.grupo === g),
+      progState.ots.filter(o => o.grupo === g && o.guardia != null)
+    );
+  });
+  progSincronizarSistemasAire(progState.ots);
+  progSave();
+  renderProgramacion();
+  const porG = { 1: new Set(), 2: new Set(), 3: new Set(), 4: new Set() };
+  deSistema.forEach(o => { if (o.guardia) porG[o.guardia].add(progSistemaDeEquipo(o.equipo).id); });
+  progToast('🔗 Sistemas repartidos: ' + [1, 2, 3, 4].map(g => `G${g}: ${porG[g].size}`).join(' · '), 'success');
 }
 
 let progState  = { mes: '', ots: [], mangaGuardia: {}, hidrolavado: false };
@@ -439,8 +465,16 @@ function progAsignarPendientes(pendientes, yaAsignados) {
      curada), de meses anteriores. Si el sector nuevo coincide con uno ya
      asignado, el resto del grupo hereda esa guardia. */
   const guardiaPorGrupoSector = {};
+  const sisCount = { 1: 0, 2: 0, 3: 0, 4: 0 };   // equipos de sistemas de aire por guardia
+  const guardiaPorSistema = {};
   yaAsignados.forEach(o => {
+    if (o.guardia == null) return;
     registrar(o);
+    const sis = progSistemaDeEquipo(o.equipo);
+    if (sis) {
+      sisCount[o.guardia]++;
+      if (guardiaPorSistema[sis.id] == null) guardiaPorSistema[sis.id] = o.guardia;
+    }
     const grupoId = PROG_EQUIPO_A_GRUPO_SECTOR[o.equipo];
     if (grupoId != null && guardiaPorGrupoSector[grupoId] == null) {
       guardiaPorGrupoSector[grupoId] = o.guardia;
@@ -497,11 +531,47 @@ function progAsignarPendientes(pendientes, yaAsignados) {
      que la equidad final entre guardias quede lo más pareja posible: si
      los bloques grandes se dejaran para el final, serían los más
      difíciles de acomodar y desbalancearían el resultado. */
+  /* Sistemas de aire (condensadora + interiores): cada sistema es un
+     bloque indivisible y se ubica ANTES que el resto, así la equidad de
+     altura y de carga del resto de los equipos se acomoda alrededor de
+     ellos. Criterio: 1° que cada guardia tenga una cantidad pareja de
+     equipos de sistema (los sistemas se dividen entre las guardias), 2°
+     equidad de altura, 3° equidad de carga total. De mayor a menor (LPT).
+     Si el sistema ya tenía guardia de meses anteriores, la hereda. */
+  const gruposSis = {};
+  const sinSistema = [];
+  pendientes.forEach(o => {
+    const sis = progSistemaDeEquipo(o.equipo);
+    if (sis) (gruposSis[sis.id] = gruposSis[sis.id] || []).push(o);
+    else sinSistema.push(o);
+  });
+  const ubicarSistema = (items, g) => items.forEach(o => { o.guardia = g; registrar(o); sisCount[g]++; });
+  Object.entries(gruposSis).forEach(([id, items]) => {
+    if (guardiaPorSistema[id] != null) ubicarSistema(items, guardiaPorSistema[id]);
+  });
+  Object.entries(gruposSis)
+    .filter(([id]) => guardiaPorSistema[id] == null)
+    .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
+    .forEach(([id, items]) => {
+      /* guardias que respetan la regla de turno de TODOS los equipos del sistema */
+      let pool = [1, 2, 3, 4];
+      items.forEach(o => { const p = PROG_POOL_TURNO[o.turno] || PROG_POOL_TURNO.libre; pool = pool.filter(g => p.includes(g)); });
+      if (!pool.length) pool = PROG_POOL_TURNO[items[0].turno] || PROG_POOL_TURNO.libre;
+      const n = items.length, alt = items.filter(o => o.esAltura).length;
+      let mejor = pool[0], mejorClave = null;
+      pool.forEach(g => {
+        const clave = [sisCount[g] + n, alturaCount[g] + alt, totalCount[g] + n, -(zonaCount[g][items[0].zona] || 0), g];
+        if (mejorClave === null || progCompararClaves(clave, mejorClave) < 0) { mejorClave = clave; mejor = g; }
+      });
+      guardiaPorSistema[id] = mejor;
+      ubicarSistema(items, mejor);
+    });
+
   const gruposSector = {};
   const cintas = [];
   const alturaSueltos = [];
   const noAltura = [];
-  pendientes.forEach(o => {
+  sinSistema.forEach(o => {
     if (!o.esAltura) { noAltura.push(o); return; }
     const grupoId = PROG_EQUIPO_A_GRUPO_SECTOR[o.equipo];
     if (grupoId != null) {
@@ -858,6 +928,8 @@ function renderProgGuardias() {
     const alturaEnGuardia = items.filter(o => o.esAltura).length;
     const alturaAireEnGuardia = items.filter(o => o.esAltura && o.grupo === 'aire').length;
     const alturaMecEnGuardia  = items.filter(o => o.esAltura && o.grupo === 'mecanico').length;
+    const sisEnGuardia = new Set(items.map(o => { const s = progSistemaDeEquipo(o.equipo); return s && s.id; }).filter(Boolean));
+    const eqSisEnGuardia = items.filter(o => progSistemaDeEquipo(o.equipo)).length;
 
     const rows = items.length
       ? items.map(o => `
@@ -889,7 +961,7 @@ function renderProgGuardias() {
         <div class="prog-guardia-header">
           <span class="prog-guardia-name">${progGuardiaLabel(gid)}</span>
           <span class="turno-badge ${turno === 'noche' ? 'noche' : 'manana'}">${turno === 'noche' ? '🌙 Noche' : '☀️ Mañana'}</span>
-          <span class="prog-guardia-count">${items.length} OT${items.length === 1 ? '' : 's'} (💨 ${aireEnGuardia} aire · 🔧 ${mecEnGuardia} mec)${alturaEnGuardia ? ` · ⛰️ ${alturaEnGuardia} (💨 ${alturaAireEnGuardia} aire · 🔧 ${alturaMecEnGuardia} mec)` : ''}</span>
+          <span class="prog-guardia-count">${items.length} OT${items.length === 1 ? '' : 's'} (💨 ${aireEnGuardia} aire · 🔧 ${mecEnGuardia} mec)${alturaEnGuardia ? ` · ⛰️ ${alturaEnGuardia} (💨 ${alturaAireEnGuardia} aire · 🔧 ${alturaMecEnGuardia} mec)` : ''}${sisEnGuardia.size ? ` · 🔗 ${sisEnGuardia.size} sistema${sisEnGuardia.size === 1 ? '' : 's'} (${eqSisEnGuardia} equipos)` : ''}</span>
         </div>
         <div class="prog-guardia-list">${rows}</div>
       </div>
@@ -982,6 +1054,8 @@ function progToast(msg, type = 'success') {
 
   document.getElementById('prog-export-btn').addEventListener('click', progExportExcel);
   document.getElementById('prog-reset-btn').addEventListener('click', progReset);
+  const sisBtn = document.getElementById('prog-sistemas-btn');
+  if (sisBtn) sisBtn.addEventListener('click', progRepartirSistemas);
 
   document.getElementById('prog-search').addEventListener('input', function () {
     progSearch = this.value.trim().toLowerCase();
