@@ -4747,3 +4747,58 @@ tr:hover .admin-edit-btn { opacity: 1; }
   .plan-cal-grid { gap: 3px; }
   .plan-cal-cell { min-height: 62px; }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   COMPATIBILIDAD CON TODAS LAS PANTALLAS
+   · Celulares chicos (desde 320 px): nada se sale del ancho.
+   · Tablets / notebooks chicas (769–1100 px): barra lateral más angosta.
+   · Celulares en horizontal: sin barra inferior (queda el menú ☰).
+   · Pantallas grandes (≥1700 px): el contenido se centra con ancho máximo.
+   ═══════════════════════════════════════════════════════════════════ */
+img, canvas, svg, video { max-width: 100%; }
+select, input, textarea { max-width: 100%; }
+select { text-overflow: ellipsis; }
+/* Sin esto una tarjeta con texto largo estira toda la columna de la grilla más allá de la pantalla */
+[class*="-grid"] > *, .toolbar > *, .stats-grid > * { min-width: 0; }
+.aac-card, .asc-card, .mangas-card, .puertas-card { overflow-wrap: anywhere; }
+.aac-card-header { flex-wrap: wrap; gap: 6px; min-width: 0; }
+.aac-card-code, .aac-card-denom { white-space: normal; overflow-wrap: anywhere; min-width: 0; }
+.aac-tipo-badge { white-space: normal; max-width: 100%; }
+.filter-select, .ots-filter-sel { min-width: 0; max-width: 100%; }
+.table-wrap { -webkit-overflow-scrolling: touch; }
+
+@media (max-width: 480px) {
+  .filter-select { flex: 1 1 100%; min-width: 0; }
+  .ots-filters { padding: 10px 12px; }
+  .ots-filter-sel { flex: 1 1 100%; min-width: 0; }
+  .ots-date-group { flex: 1 1 100%; min-width: 0; }
+  .ots-date-group .ots-filter-sel { flex: 1 1 0; min-width: 0; }
+  .kpis-cards-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .kpis-chart-card { min-width: 0; max-width: 100%; overflow-x: auto; padding: 16px 12px 12px; }
+  .kpis-chart-card canvas { max-width: 100%; }
+  /* botones de vista (Tabla / Planes / Plano…) ocupan el ancho y se reparten */
+  .toolbar { align-items: stretch; }
+  .mangas-view-toggle { display: flex; width: 100%; flex-shrink: 1; }
+  .mangas-view-toggle button { flex: 1 1 0; min-width: 0; padding-inline: 6px !important; white-space: nowrap; }
+  .export-btn { max-width: 100%; }
+}
+
+@media (min-width: 769px) and (max-width: 1100px) {
+  :root { --sidebar-w: 224px; }
+  .page { padding: 24px 22px; }
+  .topbar { padding: 12px 20px; }
+}
+
+@media (max-width: 900px) and (max-height: 480px) and (orientation: landscape) {
+  .mobile-bottom-nav { display: none !important; }
+  .page { padding-bottom: 24px; }
+}
+
+@media (min-width: 1700px) {
+  .page { width: 100%; max-width: 1680px; margin-inline: auto; padding-inline: 40px; }
+  .topbar { padding-inline: max(28px, calc((100% - 1680px) / 2 + 40px)); }
+}
+@media (min-width: 2200px) {
+  body { font-size: 15px; }
+}
