@@ -191,10 +191,39 @@
       </table></div>`;
   }
 
+  /* ── "Dar por OK": tipos de equipo que se aceptan aunque la cobertura contra el estándar no
+     llegue al 100% (p. ej. el plan de SAP está bien y el estándar pide de más, o lo que falta
+     se hace por otra vía). Se guarda en este navegador: { nombre del tipo: { fecha, nota } }. ── */
+  const OK_KEY = 'hdr_estandar_ok_v1';
+  function leerOK() {
+    try { return JSON.parse(localStorage.getItem(OK_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function guardarOK(m) {
+    try { localStorage.setItem(OK_KEY, JSON.stringify(m)); } catch (e) { /* sin storage: no persiste */ }
+  }
+  window.hdrEstandarToggleOK = function (i) {
+    const g = HDR_ESTANDAR.grupos[i];
+    if (!g) return;
+    const m = leerOK();
+    if (m[g.nombre]) {
+      if (!confirm(`¿Quitar el OK de "${g.nombre}"? Vuelve a contar como pendiente.`)) return;
+      delete m[g.nombre];
+    } else {
+      const nota = prompt(`Dar por OK "${g.nombre}" aunque la cobertura no sea 100%.
+Motivo (opcional):`, '');
+      if (nota == null) return;
+      m[g.nombre] = { fecha: new Date().toISOString().slice(0, 10), nota: nota.trim() };
+    }
+    guardarOK(m);
+    const wrap = document.getElementById('hdr-estandar-wrap');
+    if (wrap) wrap.outerHTML = estandarHTML();
+  };
+
   /* ── Gama de tareas de SAP vs estándar del Manual de Mtto ── */
   function estandarHTML() {
     if (typeof HDR_ESTANDAR === 'undefined') return '';
     const E = HDR_ESTANDAR;
+    const okMap = leerOK();
     const pct = g => g.nStd ? Math.round(g.cub / g.nStd * 100) : 0;
     const color = p => p >= 85 ? '#10b981' : p >= 60 ? '#f59e0b' : '#ef4444';
     const conDet = E.grupos.filter(g => g.conDetalle);
@@ -216,25 +245,32 @@
         </div></details>`;
     };
 
-    const rows = conDet.slice().sort((a, b) => pct(a) - pct(b)).map(g => {
+    const nOK = conDet.filter(g => okMap[g.nombre]).length;
+    /* pendientes primero (de menor a mayor cobertura), los dados por OK al final */
+    const rows = conDet.slice().sort((a, b) => (!!okMap[a.nombre] - !!okMap[b.nombre]) || (pct(a) - pct(b))).map(g => {
       const p = pct(g);
-      return `<tr>
-        <td>${esc(g.nombre)}</td>
+      const ok = okMap[g.nombre];
+      const i = E.grupos.indexOf(g);
+      const okTit = ok ? `Dado por OK el ${ok.fecha}${ok.nota ? ' — ' + ok.nota : ''}. Clic para quitarlo.` : 'Aceptar este tipo aunque la cobertura no sea 100%';
+      const okBtn = `<button class="mant-tab" style="padding:2px 8px;font-size:11px;white-space:nowrap${ok ? ';background:#10b981;color:#fff;border-color:#10b981' : ''}" title="${esc(okTit)}" onclick="hdrEstandarToggleOK(${i})">${ok ? '✓ OK' : 'Dar por OK'}</button>`;
+      return `<tr${ok ? ' style="background:rgba(16,185,129,.06)"' : ''}>
+        <td>${esc(g.nombre)}${ok && ok.nota ? `<div style="font-size:11px;color:var(--color-muted)">✓ ${esc(ok.nota)}</div>` : ''}</td>
         <td style="text-align:center">${g.nEquipos}</td>
         <td style="text-align:center">${g.nStd}</td>
         <td style="text-align:center">${g.cub}</td>
         <td style="text-align:center">${g.otraFrec}</td>
         <td style="text-align:center">${g.falta.length}</td>
-        <td style="text-align:center"><b style="color:${color(p)}">${p}%</b></td>
+        <td style="text-align:center"><b style="color:${ok ? '#10b981' : color(p)}">${p}%</b>${ok ? ' <span title="' + esc(okTit) + '">✓</span>' : ''}</td>
+        <td>${okBtn}</td>
         <td>${detalle(g)}</td></tr>`;
     }).join('');
 
     const sinDetRows = sinDet.map(g => `<tr><td>${esc(g.nombre)}</td><td style="text-align:center">${g.nEquipos}</td>
         <td style="text-align:center">${g.nStd}</td>
-        <td colspan="5" style="color:var(--color-muted)">${g.pares.map(x => esc(x.rc)).join(', ')} — la hoja de ruta de SAP no trae el texto de las tareas (falta el texto largo del IA17; puede ser MOEX)</td></tr>`).join('');
+        <td colspan="6" style="color:var(--color-muted)">${g.pares.map(x => esc(x.rc)).join(', ')} — la hoja de ruta de SAP no trae el texto de las tareas (falta el texto largo del IA17; puede ser MOEX)</td></tr>`).join('');
     const sinHR = E.sinHojaDeRuta.map(g => `<li>${esc(g.nombre)} <span style="color:var(--color-muted)">(${g.nStd} tareas en el estándar)</span></li>`).join('');
 
-    return `
+    return `<div id="hdr-estandar-wrap">
       <div style="padding:18px 16px 4px;font-weight:700;font-size:14px;color:var(--color-navy)">
         📐 Gama de tareas vs estándar del Manual de Mtto
         <span style="font-weight:400;font-size:12px;color:var(--color-muted)">— ¿las hojas de ruta de SAP hacen lo que dice el estándar?</span>
@@ -242,21 +278,24 @@
       <div class="stats-grid" style="padding:10px 16px 4px">
         <div class="stat-card" style="--stat-color:${color(pTot)};min-width:150px"><span class="stat-label">Tareas del estándar cubiertas</span><span class="stat-value">${pTot}%</span></div>
         <div class="stat-card" style="--stat-color:#0096d6;min-width:150px"><span class="stat-label">Tipos comparados</span><span class="stat-value">${conDet.length}</span></div>
+        <div class="stat-card" style="--stat-color:#10b981;min-width:150px"><span class="stat-label">Tipos OK (100% o dados por OK)</span><span class="stat-value">${conDet.filter(g => okMap[g.nombre] || pct(g) >= 100).length} / ${conDet.length}</span></div>
         <div class="stat-card" style="--stat-color:#f59e0b;min-width:150px"><span class="stat-label">Tipos sin texto de tareas en SAP</span><span class="stat-value">${sinDet.length}</span></div>
         <div class="stat-card" style="--stat-color:#ef4444;min-width:150px"><span class="stat-label">Tipos del estándar sin hoja de ruta</span><span class="stat-value">${E.sinHojaDeRuta.length}</span></div>
       </div>
       <div style="padding:0 16px 8px;font-size:11px;color:var(--color-muted)">
         Cruce por palabras (aproximado): una tarea del estándar se considera cubierta si una tarea de la hoja de ruta comparte ≥60% de sus palabras, con la misma frecuencia.
         Los vehículos (por kilómetros) no se comparan.
+        Con <b>Dar por OK</b> se acepta un tipo aunque no llegue al 100% (queda al final de la tabla, en verde; se guarda en este navegador)${nOK ? ` · ${nOK} dado${nOK === 1 ? '' : 's'} por OK` : ''}.
       </div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Tipo de equipo</th><th style="text-align:center">Equipos</th><th style="text-align:center">Tareas estándar</th><th style="text-align:center">Cubiertas</th><th style="text-align:center">Otra frecuencia</th><th style="text-align:center">Faltan en SAP</th><th style="text-align:center">Cobertura</th><th>Detalle</th></tr></thead>
+        <thead><tr><th>Tipo de equipo</th><th style="text-align:center">Equipos</th><th style="text-align:center">Tareas estándar</th><th style="text-align:center">Cubiertas</th><th style="text-align:center">Otra frecuencia</th><th style="text-align:center">Faltan en SAP</th><th style="text-align:center">Cobertura</th><th>Estado</th><th>Detalle</th></tr></thead>
         <tbody>${rows}${sinDetRows}</tbody>
       </table></div>
       <div style="padding:10px 16px 14px;font-size:12px">
         <b>Tipos del estándar sin ninguna hoja de ruta en SAP:</b>
         <ul style="margin:4px 0 0 18px">${sinHR}</ul>
-      </div>`;
+      </div>
+    </div>`;
   }
 
   window.hdrAuditExport = function () {
@@ -276,8 +315,11 @@
         g.otraFrecL.forEach(t => filas.push({ 'Tipo de equipo': g.nombre, 'Resultado': 'Otra frecuencia', 'Frecuencia estándar': t.f || '', 'Tarea (estándar)': t.t, 'Frecuencia en SAP': t.sap || '' }));
       });
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), 'Gama vs estándar');
+      const okMap = leerOK();
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(HDR_ESTANDAR.grupos.map(g => ({
         'Tipo de equipo': g.nombre, 'Equipos': g.nEquipos, 'Tareas estándar': g.nStd,
+        'Dado por OK': okMap[g.nombre] ? 'Sí (' + okMap[g.nombre].fecha + ')' : '',
+        'Motivo OK': okMap[g.nombre] ? okMap[g.nombre].nota : '',
         'Con texto de tareas en SAP': g.conDetalle ? 'Sí' : 'No', 'Cubiertas': g.cub,
         'Otra frecuencia': g.otraFrec, 'Faltan': g.falta.length, 'Hojas de ruta': g.pares.map(x => x.rc).join(', '),
       }))), 'Resumen estándar');
