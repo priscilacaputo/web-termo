@@ -3,6 +3,7 @@
      - Equipos MEQ*        → siempre Turno Noche
      - Equipos Roof Top    → siempre Turno Mañana
      - Equipos AVO*        → siempre Turno Mañana
+     - Equipos de Sala VIP → siempre Turno Noche (lista PROG_EQUIPOS_VIP)
    Guardias 1 y 2 = Turno Mañana · Guardias 3 y 4 = Turno Noche.
 
    Dentro de esas reglas, el resto de los equipos (y también los que sí
@@ -54,6 +55,12 @@
 const PROG_STORAGE_KEY   = 'programacion_ots_v1';
 const PROG_GUARDIA_TURNO = { 1: 'mañana', 2: 'mañana', 3: 'noche', 4: 'noche' };
 const PROG_POOL_TURNO    = { 'mañana': [1, 2], 'noche': [3, 4], 'libre': [1, 2, 3, 4] };
+
+/* ─── Equipos con ubicación en la Sala VIP → siempre Turno Noche ─────
+   Lista cerrada pasada por la usuaria (2026-09-22): todos son Splits de
+   "Sala Vip (Recepcion)", ubicación técnica AEP-ED5-NIVEL0-UBITEC161.
+   Se trabajan de noche para no molestar la operación de la sala. */
+const PROG_EQUIPOS_VIP = new Set(['AAC1270', 'AAC1271', 'AAC3473', 'AAC3474', 'AAC3475', 'AAC3476']);
 
 /* ─── Mangas de Embarque ↔ sus equipos de Aire asociados ────────────
    La guardia que atiende la Manga (MAN*) es la que manda: sus equipos
@@ -292,10 +299,29 @@ function progLoad() {
       if (parsed && Array.isArray(parsed.ots)) {
         if (!parsed.mangaGuardia) parsed.mangaGuardia = {};
         if (typeof parsed.hidrolavado !== 'boolean') parsed.hidrolavado = false;
+        progMigrarReglaVIP(parsed.ots);
         progState = parsed;
       }
     }
   } catch (e) { /* localStorage corrupto o no disponible: arrancamos vacío */ }
+}
+/* Programaciones guardadas antes de la regla Sala VIP: se reclasifican y,
+   si quedaron en una guardia de mañana, pasan a la guardia de noche con
+   menos OTs de su gremio (todas las OTs de un mismo equipo juntas). */
+function progMigrarReglaVIP(ots) {
+  const destinoPorEquipo = {};
+  ots.forEach(o => {
+    if (!PROG_EQUIPOS_VIP.has(String(o.equipo || '').toUpperCase())) return;
+    o.regla = 'Sala VIP'; o.turno = 'noche';
+    if (o.guardia == null || PROG_POOL_TURNO.noche.includes(o.guardia)) return;
+    let g = destinoPorEquipo[o.equipo];
+    if (g == null) {
+      const carga = n => ots.filter(x => x.guardia === n && x.grupo === o.grupo).length;
+      g = PROG_POOL_TURNO.noche.reduce((a, b) => carga(b) < carga(a) ? b : a);
+      destinoPorEquipo[o.equipo] = g;
+    }
+    o.guardia = g;
+  });
 }
 function progSave() {
   try { localStorage.setItem(PROG_STORAGE_KEY, JSON.stringify(progState)); }
@@ -359,6 +385,7 @@ function progClasificar(equipo, denominacionExcel, tipoExcel) {
   const denom = String(denominacionExcel || (rec && rec.denominacion) || '').toLowerCase();
   const tipo  = String(tipoExcel || (rec && rec.tipo) || '').toLowerCase();
 
+  if (PROG_EQUIPOS_VIP.has(eq)) return { regla: 'Sala VIP', turno: 'noche' };
   if (eq.startsWith('MEQ')) return { regla: 'MEQ', turno: 'noche' };
   if (eq.startsWith('AVO')) return { regla: 'AVO', turno: 'mañana' };
 
@@ -618,10 +645,17 @@ function progHandleFile(file) {
         const puesto = r.puesto_trabajo ? progClasificarPuesto(r.puesto_trabajo) : ((prev && prev.puesto) || null);
         const grupo = progGrupoEquipo(equipo, puesto, regla);
 
-        if (prev) {
+        /* Si la guardia que traía ya no respeta su regla de turno (p. ej.
+           una regla nueva como Sala VIP), se vuelve a repartir. */
+        const guardiaValida = prev && (prev.guardia == null || !turno || PROG_POOL_TURNO[turno].includes(prev.guardia));
+        if (prev && guardiaValida) {
           const item = { ...prev, equipo, denominacion, ot_num: otNum, regla, turno, esAltura, zona, ubicacionTecnica, puesto, grupo };
           merged.push(item);
           yaAsignados.push(item);
+        } else if (prev) {
+          const item = { ...prev, equipo, denominacion, ot_num: otNum, regla, turno, esAltura, zona, ubicacionTecnica, puesto, grupo, guardia: null };
+          merged.push(item);
+          pendientes.push(item);
         } else {
           const item = {
             id: equipo + '#' + i + '#' + Date.now(),
@@ -842,7 +876,7 @@ function renderProgGuardias() {
               const tit = `Sistema ${sis.cabeza} (${sis.nombre}) — va siempre junto a los otros ${cargados - 1} equipo${cargados - 1 === 1 ? '' : 's'} de este sistema cargados este mes` + (faltan > 0 ? `. Ojo: ${faltan} equipo${faltan === 1 ? '' : 's'} del sistema no está en el Excel de este mes.` : '.');
               return `<span class="prog-regla-badge ${faltan > 0 ? 'libre' : 'manana'}" title="${tit}">🔗 ${faltan > 0 ? 'Sistema incompleto' : 'Sistema'}</span>`;
             })()}
-            ${o.regla ? `<span class="prog-regla-badge ${o.turno === 'noche' ? 'noche' : 'manana'}">${o.regla === 'MEQ' ? '🌙' : '☀️'} ${o.regla}</span>` : `<span class="prog-regla-badge libre">✏️ Sin regla</span>`}
+            ${o.regla ? `<span class="prog-regla-badge ${o.turno === 'noche' ? 'noche' : 'manana'}">${o.turno === 'noche' ? '🌙' : '☀️'} ${o.regla}</span>` : `<span class="prog-regla-badge libre">✏️ Sin regla</span>`}
             <select class="prog-ot-select" data-id="${o.id}">
               ${[1, 2, 3, 4].map(n => `<option value="${n}" ${n === o.guardia ? 'selected' : ''}>Guardia ${n} (${PROG_GUARDIA_TURNO[n] === 'mañana' ? '☀️ Mañana' : '🌙 Noche'})</option>`).join('')}
             </select>
