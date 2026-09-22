@@ -730,10 +730,13 @@
       equipos.push(filaEq(sis, sis.cabeza, 'Condensadora / exterior'));
       sis.miembros.forEach((m) => equipos.push(filaEq(sis, m, 'Interior')));
     });
-    const sinExt = ((typeof AAC_SIN_EXTERIOR !== 'undefined') ? AAC_SIN_EXTERIOR : []).map((x) => ({
+    const sinExtArr = (typeof AAC_SIN_EXTERIOR !== 'undefined') ? AAC_SIN_EXTERIOR : [];
+    const filaSinExt = (x) => ({
       'Equipo': x.equipo, 'Denominación': x.denom, 'Sector': ubicAire(x.equipo).sector, 'Ubicación técnica': ubicAire(x.equipo).ubic,
       'Plan': planTxt(x.equipo), 'Frecuencia real': frecTxt(x.equipo),
-    }));
+    });
+    const pendientes = sinExtArr.filter((x) => x.motivo === 'pendiente-condensadora').map(filaSinExt);
+    const pisoTecho = sinExtArr.filter((x) => x.motivo !== 'pendiente-condensadora').map(filaSinExt);
     const wb = XLSX.utils.book_new();
     const add = (rows, name, cols) => {
       const ws = XLSX.utils.json_to_sheet(rows);
@@ -742,7 +745,8 @@
     };
     add(sistemas, 'Sistemas', [10, 44, 28, 26, 50, 12, 34, 46, 18, 26, 12, 70]);
     add(equipos, 'Equipos por sistema', [10, 40, 22, 10, 44, 28, 28, 60, 16, 34, 16, 24]);
-    if (sinExt.length) add(sinExt, 'Interiores sin condensadora', [10, 44, 28, 28, 60, 16]);
+    if (pendientes.length) add(pendientes, 'Pendiente asignar condensadora', [10, 44, 28, 28, 60, 16]);
+    if (pisoTecho.length) add(pisoTecho, 'Piso-techo autónomas', [10, 44, 28, 28, 60, 16]);
     XLSX.writeFile(wb, 'Sistemas_de_aire_condensadora_interiores.xlsx');
   };
 
@@ -821,6 +825,8 @@
     </div>`).join('');
 
     const sinExt = (typeof AAC_SIN_EXTERIOR !== 'undefined') ? AAC_SIN_EXTERIOR : [];
+    const pendConf = sinExt.filter((z) => z.motivo === 'pendiente-condensadora');
+    const pisoTecho = sinExt.filter((z) => z.motivo !== 'pendiente-condensadora');
     const filtroBtn = (k, txt, act) => `<button class="mant-tab aud-sis-filtro${act ? ' active' : ''}" onclick="audSisFiltro(this,'${k}')">${txt}</button>`;
     return `<div class="aud-sis-box">
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
@@ -838,7 +844,8 @@
         <span style="font-size:12px;color:var(--color-muted);margin-left:auto">${nInt} interiores en total · pasá el mouse sobre un equipo para ver su denominación</span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:10px">${tarjetas}</div>
-      ${sinExt.length ? `<div style="font-size:12px;margin-top:10px"><b>Unidades interiores sin condensadora identificable (${sinExt.length}):</b> ${sinExt.map((z) => tag(z.equipo, '#94a3b8')).join(' ')} <span style="color:var(--color-muted)">— piso-techo aisladas, o sacadas a mano de un sistema por no corresponder (a confirmar dónde van); no se agrupan.</span></div>` : ''}
+      ${pendConf.length ? `<div style="font-size:12px;margin-top:10px;padding:8px 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px"><b>⏳ Pendiente de asignar condensadora (${pendConf.length}):</b> ${pendConf.map((z) => tag(z.equipo, '#f59e0b')).join(' ')} <span style="color:var(--color-muted)">— la usuaria confirmó que no son del sistema del que se sacaron (2026-09-22); falta saber a cuál pertenecen. No se agrupan hasta confirmarlo.</span></div>` : ''}
+      ${pisoTecho.length ? `<div style="font-size:12px;margin-top:8px"><b>Piso-techo autónomas (${pisoTecho.length}):</b> ${pisoTecho.map((z) => tag(z.equipo, '#94a3b8')).join(' ')} <span style="color:var(--color-muted)">— equipos sin condensadora aparte (comedores/talleres); no se agrupan.</span></div>` : ''}
     </div>`;
   }
 
