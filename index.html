@@ -1731,6 +1731,8 @@
         <div class="prog-upload-actions">
           <button class="prog-btn prog-btn-primary" id="prog-upload-btn">⬆ Cargar Excel del mes</button>
           <input type="file" id="prog-file-input" accept=".xlsx,.xls" style="display:none" />
+          <button class="prog-btn" id="prog-ops-btn" title="Export de SAP 'lista de operaciones' (IW49) de las OTs del mes: con el texto de cada operación se sabe si la OT es mensual, trimestral, semestral, anual…">📋 Cargar operaciones (IW49)</button>
+          <input type="file" id="prog-ops-input" accept=".xlsx,.xls" style="display:none" />
           <button class="export-btn" id="prog-export-btn">⬇ Exportar programación</button>
           <button class="prog-btn" id="prog-reprogramar-btn" title="Vuelve a repartir todas las OTs del mes: altura pareja, por ubicación técnica, sistemas completos y rotando guardias">🔄 Reprogramar mes</button>
           <button class="prog-btn prog-btn-danger" id="prog-reset-btn">🗑 Vaciar</button>
@@ -2192,7 +2194,8 @@
   <script src="assets/js/global-search.js?v=1"></script>
   <script src="assets/js/export-utils.js?v=2"></script>
   <script src="assets/js/panol-app.js?v=3"></script>
-  <script src="assets/js/programacion-app.js?v=8"></script>
+  <script src="assets/js/gama-ciclos-data.js?v=2"></script>
+  <script src="assets/js/programacion-app.js?v=12"></script>
 
   <!-- ── Admin login modal ──────────────────────────────── -->
   <div id="admin-login-modal" class="admin-overlay">

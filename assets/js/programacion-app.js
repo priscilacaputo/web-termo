@@ -363,6 +363,7 @@ function progLoad() {
         if (!parsed.otsMes && parsed.ots.length) parsed.otsMes = parsed.mes || '';
         progAplicarTurnosMes(parsed.mes || new Date().toISOString().slice(0, 7), parsed.turnosOverride);
         progMigrarReglaVIP(parsed.ots);
+        if (!parsed.opsOT) parsed.opsOT = {};
         progState = parsed;
       }
     }
@@ -669,6 +670,9 @@ function progHandleFile(file) {
         'tipo': 'tipo', 'clase de equipo': 'tipo',
         'ubicación técnica': 'ubicacion_tecnica', 'ubicacion tecnica': 'ubicacion_tecnica',
         'orden': 'ot_num', 'ot': 'ot_num', 'n° de orden': 'ot_num', 'número de orden': 'ot_num',
+        'texto breve': 'texto_ot', 'texto breve de la orden': 'texto_ot', 'texto breve orden': 'texto_ot',
+        'hoja de ruta para mantenimiento': 'hoja_ruta', 'posición mantenim.': 'pos', 'posicion mantenim.': 'pos',
+        'posición de mantenimiento': 'pos', 'fecha de inicio': 'fecha_inicio', 'inicio extremo': 'fecha_inicio',
         'puesto de trabajo principal': 'puesto_trabajo', 'puesto de trabajo': 'puesto_trabajo',
       };
 
@@ -691,6 +695,13 @@ function progHandleFile(file) {
             if (desc) obj.denominacion = desc;
           }
         }
+        /* export de Fiori: "Orden" viene como "Texto de la OT (número)" */
+        if (!obj.texto_ot && /\(\d+\)\s*$/.test(obj.ot_num || '') && typeof extractOTName === 'function') obj.texto_ot = extractOTName(obj.ot_num);
+        /* "Hoja de ruta para mantenimiento": "MP Roof Top ... (A/AACS5AEP/1)" → AACS5AEP/1 */
+        const mHR = String(obj.hoja_ruta || '').match(/\((?:[A-Z]\/)?([A-Z0-9]+)\/(\w+)\)\s*$/i);
+        obj.hr = mHR ? `${mHR[1].toUpperCase()}/${mHR[2]}` : '';
+        const mPos = String(obj.pos || '').match(/(\d+)\)?\s*$/);
+        obj.posNum = mPos ? mPos[1] : '';
         return obj;
       }).filter(o => String(o.equipo || '').trim() !== '');
 
@@ -734,17 +745,17 @@ function progHandleFile(file) {
            una regla nueva como Sala VIP), se vuelve a repartir. */
         const guardiaValida = prev && (prev.guardia == null || !turno || PROG_POOL_TURNO[turno].includes(prev.guardia));
         if (prev && guardiaValida) {
-          const item = { ...prev, equipo, denominacion, ot_num: otNum, regla, turno, esAltura, zona, ubicacionTecnica, puesto, grupo };
+          const item = { ...prev, equipo, denominacion, ot_num: otNum, textoOT: r.texto_ot || prev.textoOT || '', hr: r.hr || prev.hr || '', pos: r.posNum || prev.pos || '', fechaInicio: r.fecha_inicio || prev.fechaInicio || '', regla, turno, esAltura, zona, ubicacionTecnica, puesto, grupo };
           merged.push(item);
           yaAsignados.push(item);
         } else if (prev) {
-          const item = { ...prev, equipo, denominacion, ot_num: otNum, regla, turno, esAltura, zona, ubicacionTecnica, puesto, grupo, guardia: null };
+          const item = { ...prev, equipo, denominacion, ot_num: otNum, textoOT: r.texto_ot || prev.textoOT || '', hr: r.hr || prev.hr || '', pos: r.posNum || prev.pos || '', fechaInicio: r.fecha_inicio || prev.fechaInicio || '', regla, turno, esAltura, zona, ubicacionTecnica, puesto, grupo, guardia: null };
           merged.push(item);
           pendientes.push(item);
         } else {
           const item = {
             id: equipo + '#' + i + '#' + Date.now(),
-            equipo, denominacion, ot_num: otNum,
+            equipo, denominacion, ot_num: otNum, textoOT: r.texto_ot || '', hr: r.hr || '', pos: r.posNum || '', fechaInicio: r.fecha_inicio || '',
             regla, turno, esAltura, zona, ubicacionTecnica, puesto, grupo,
             guardia: null,
           };
@@ -783,6 +794,7 @@ function progHandleFile(file) {
 
       progState.ots = merged;
       progState.otsMes = progState.mes;
+      progCalcGamas();
       progSave();
       renderProgramacion();
       progToast(`✓ ${merged.length} equipos cargados (${pendientes.length} distribuidos automáticamente: altura pareja, por ubicación técnica, sistemas completos y rotando guardias respecto de meses anteriores).`, 'success');
@@ -854,6 +866,7 @@ function renderProgTurnosPanel() {
 }
 
 function renderProgramacion() {
+  if (progState.ots.some(o => o.gama === undefined || o.gamaDudosa === undefined)) progCalcGamas();
   renderProgTurnosPanel();
   const hasData = progState.ots.length > 0;
   document.getElementById('prog-empty-state').classList.toggle('hidden', hasData);
@@ -945,6 +958,7 @@ function renderProgStats() {
     { label: '⛰️ Altura Aire', value: alturaAire, icon: '💨', color: '#0369a1' },
     { label: '⛰️ Altura Mecánicos', value: alturaMecanico, icon: '🔧', color: '#b45309' },
     { label: '🔗 Sistemas de aire (paquete)', value: sistemasEsteMes, icon: '🔗', color: '#6366f1' },
+    { label: `📅 Gama segura${progState.ots.some(o => o.gamaDudosa || !o.gama) ? ' · ' + progState.ots.filter(o => o.gamaDudosa || !o.gama).length + ' a confirmar' : ''}`, value: `${progState.ots.filter(o => o.gama && !o.gamaDudosa).length} / ${total}`, icon: '📅', color: '#8b5cf6' },
   ];
 
   wrap.innerHTML = cards.map(c => `
@@ -998,6 +1012,7 @@ function renderProgGuardias() {
               <span class="prog-ot-denom" title="${o.denominacion}">${o.denominacion || '—'}</span>
               <span class="prog-ot-zona">📍 ${o.zona}</span>
             </div>
+            ${progGamaBadge(o)}
             ${o.esAltura ? `<span class="prog-altura-badge" title="Paga altura">⛰️</span>` : ''}
             ${(() => {
               const sis = progSistemaDeEquipo(o.equipo);
@@ -1039,6 +1054,145 @@ function renderProgGuardias() {
       }
     });
   });
+}
+
+/* ─── Gama de tareas de cada OT (mensual / trimestral / semestral / anual…) ───
+   SAP arma cada OT preventiva con las operaciones del paquete que vence en esa
+   toma, y el texto de cada operación dice la frecuencia ("MP Trimestral Roof
+   Top…"). El texto de la OT en cambio es el del plan ("MP 1M-3M-1A Roof Top"),
+   que no dice cuál toca. Por eso, en orden de confianza:
+     1. Operaciones de la OT (export "lista de operaciones", IW49) → la mayor
+        frecuencia es la gama; las menores van en "incluye".
+     2. Hoja de ruta de la OT (columna "Hoja de ruta para mantenimiento" del
+        export de órdenes): si todas sus operaciones son de UN paquete, esa es
+        la gama (GAMA_HR, gama-ciclos-data.js).
+     3. Hoja de ruta de varios paquetes: punto del ciclo del plan deducido del
+        historial (GAMA_POS) + fecha de la OT → paquete que vence en esa toma.
+     4. Texto de la OT, si nombra una sola frecuencia.
+     5. Periodicidad real del plan del equipo (PLANES_SAP), si es una sola.
+   Medido sobre 2.162 OTs del IW49: 86% una sola frecuencia, 9% varias, 5% sin
+   frecuencia en el texto. */
+const PROG_FRECUENCIAS = [
+  ['Semanal', /semanal|\b7\s*d(ias|ías)?\b/],
+  ['Quincenal', /quincenal|\b15\s*d(ias|ías)?\b/],
+  ['Mensual', /mensual|(^|[^0-9])1\s*m\b/],
+  ['Bimestral', /bimestral|(^|[^0-9])2\s*m\b/],
+  ['Trimestral', /trimestral|(^|[^0-9])3\s*m\b/],
+  ['Cuatrimestral', /cuatrimestral|(^|[^0-9])4\s*m\b/],
+  ['Semestral', /semestral|(^|[^0-9])6\s*m\b/],
+  ['Anual', /anual|(^|[^0-9])1\s*a\b|(^|[^0-9])12\s*m\b/],
+  ['Bianual', /bianual|(^|[^0-9])2\s*a\b/],
+];
+const PROG_FREC_COLOR = { Semanal: '#0ea5e9', Quincenal: '#06b6d4', Mensual: '#10b981', Bimestral: '#84cc16', Trimestral: '#f59e0b', Cuatrimestral: '#f97316', Semestral: '#ef4444', Anual: '#8b5cf6', Bianual: '#6d28d9' };
+function progFrecuenciasDeTexto(t) {
+  const x = String(t || '').toLowerCase();
+  const out = PROG_FRECUENCIAS.filter(([, rx]) => rx.test(x)).map(([k]) => k);
+  /* "bianual" también matchea "anual": si está bianual, sacar anual */
+  return out.includes('Bianual') ? out.filter(k => k !== 'Anual') : out;
+}
+const progNormOT = v => String(v == null ? '' : v).replace(/\D/g, '').replace(/^0+/, '');
+const PROG_CICLO_NOMBRE = { 1: 'Diaria', 7: 'Semanal', 14: 'Quincenal', 15: 'Quincenal', 30: 'Mensual', 60: 'Bimestral', 90: 'Trimestral', 120: 'Cuatrimestral', 180: 'Semestral', 360: 'Anual', 720: 'Bianual', 1080: 'Cada 3 años', 1440: 'Cada 4 años', 1800: 'Cada 5 años' };
+const progCicloNombre = d => PROG_CICLO_NOMBRE[d] || `Cada ${d} días`;
+/* Fecha de la OT desde el Excel: serial de Excel, ISO o dd/mm/aaaa. */
+function progParseFecha(v) {
+  const t = String(v == null ? '' : v).trim();
+  if (!t) return null;
+  if (/^\d+(\.\d+)?$/.test(t) && +t > 30000) return new Date(Math.round((+t - 25569) * 86400000));
+  let m = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  m = t.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/);
+  if (m) return new Date(+m[3] < 100 ? 2000 + +m[3] : +m[3], +m[2] - 1, +m[1]);
+  const d = new Date(t);
+  return isNaN(d) ? null : d;
+}
+/* Gama por hoja de ruta: segura si la hoja de ruta tiene un solo paquete; si tiene varios,
+   se deduce con el punto del ciclo del plan (historial) y la fecha de la OT. */
+function progGamaPorHojaDeRuta(o) {
+  if (typeof GAMA_HR === 'undefined' || !o.hr) return null;
+  const cyc = GAMA_HR[o.hr];
+  if (!cyc || !cyc.length) return null;
+  if (cyc.length === 1) return { gama: progCicloNombre(cyc[0]), incluye: [], fuente: `hoja de ruta ${o.hr} (un solo paquete)` };
+  const mixto = cyc.map(progCicloNombre).join('-');
+  const P = (typeof GAMA_POS !== 'undefined' && o.pos) ? GAMA_POS[o.pos] : null;
+  const f = progParseFecha(o.fechaInicio);
+  if (P && P[4] === o.hr && f && cyc.every(c => c % 30 === 0)) {
+    const [offs, base, nRef, fRef] = P;
+    const r = progParseFecha(fRef);
+    const meses = (f.getFullYear() - r.getFullYear()) * 12 + (f.getMonth() - r.getMonth()) + (f.getDate() - r.getDate()) / 30;
+    const n = nRef + Math.round(meses / base);
+    /* con cada punto del ciclo que el historial deja posible, qué paquete vence en la toma n */
+    const mayores = new Set([].concat(offs).map(off => {
+      const vence = cyc.map(c => c / 30).filter(c => (base * n + off) % c === 0);
+      return vence.length ? Math.max(...vence) : 0;
+    }));
+    if (mayores.size === 1 && !mayores.has(0)) {
+      return { gama: progCicloNombre([...mayores][0] * 30), incluye: [], fuente: `ciclo del plan (hoja de ruta ${mixto}, toma ${n}, deducido del historial)` };
+    }
+  }
+  return { gama: null, incluye: [], mixto, fuente: `hoja de ruta de varios paquetes (${mixto}): cargá la lista de operaciones para saber cuál toca` };
+}
+function progGamaDe(o) {
+  const orden = PROG_FRECUENCIAS.map(([k]) => k);
+  const armar = (fs, fuente) => {
+    const lista = [...new Set(fs)].sort((a, b) => orden.indexOf(a) - orden.indexOf(b));
+    return { gama: lista[lista.length - 1], incluye: lista.slice(0, -1), fuente };
+  };
+  const ops = (progState.opsOT || {})[progNormOT(o.ot_num)];
+  if (ops && ops.length) {
+    const fs = ops.flatMap(progFrecuenciasDeTexto);
+    if (fs.length) return armar(fs, 'operaciones de la OT (IW49)');
+  }
+  const porHR = progGamaPorHojaDeRuta(o);
+  if (porHR && porHR.gama) return porHR;
+  const ft = [...new Set(progFrecuenciasDeTexto(o.textoOT))];
+  if (ft.length === 1 && !porHR) return armar(ft, 'texto de la OT');
+  const pl = (typeof PLANES_SAP !== 'undefined' ? PLANES_SAP : []).filter(p => p.equipo === o.equipo && p.realBucket && orden.includes(p.realBucket));
+  const bs = [...new Set(pl.map(p => p.realBucket))];
+  if (bs.length === 1) return { gama: bs[0], incluye: [], dudosa: ft.length > 1, fuente: 'periodicidad real del plan (IP24)' + (ft.length > 1 ? ` · el plan combina ${ft.join('-')}: esta OT puede ser de un paquete mayor, confirmá con las operaciones` : '') };
+  if (porHR) return porHR;
+  if (ft.length > 1) return { gama: null, incluye: [], fuente: `plan mixto (${ft.join('-')}): cargá la lista de operaciones para saber cuál toca` };
+  return { gama: null, incluye: [], fuente: 'sin dato: cargá la lista de operaciones (IW49)' };
+}
+function progCalcGamas() {
+  progState.ots.forEach(o => { const g = progGamaDe(o); o.gama = g.gama; o.gamaIncluye = g.incluye; o.gamaFuente = g.fuente; o.gamaDudosa = !!g.dudosa; });
+}
+function progGamaBadge(o) {
+  if (!o.gama) return `<span class="prog-regla-badge libre" title="${String(o.gamaFuente || '').replace(/"/g, '&quot;')}">📅 ¿gama?</span>`;
+  const c = PROG_FREC_COLOR[o.gama] || '#64748b';
+  const tit = `Gama ${o.gama}${o.gamaIncluye && o.gamaIncluye.length ? ' (incluye ' + o.gamaIncluye.join(', ') + ')' : ''} — según ${o.gamaFuente}`;
+  return `<span class="prog-regla-badge" style="background:${c}1f;color:${c};border:1px ${o.gamaDudosa ? 'dashed' : 'solid'} ${c}${o.gamaDudosa ? '' : '55'}" title="${tit.replace(/"/g, '&quot;')}">📅 ${o.gama}${o.gamaIncluye && o.gamaIncluye.length ? ' +' : ''}${o.gamaDudosa ? '?' : ''}</span>`;
+}
+/* Export "lista de operaciones" de SAP (IW49 / IW37N): columnas Orden + Texto breve operación. */
+function progHandleOps(file) {
+  if (typeof XLSX === 'undefined') { progToast('❌ La librería para leer Excel no está disponible.', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+      const hs = Object.keys(rows[0] || {});
+      const norm = h => String(h).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const cOrden = hs.find(h => norm(h) === 'orden');
+      const cTexto = hs.find(h => /texto breve operacion|descripcion operacion|texto breve op/.test(norm(h))) || hs.find(h => norm(h) === 'texto breve');
+      if (!cOrden || !cTexto) { progToast('❌ No encontré las columnas "Orden" y "Texto breve operación".\nColumnas: ' + hs.join(', '), 'error'); return; }
+      const cargadas = new Set(progState.ots.map(o => progNormOT(o.ot_num)).filter(Boolean));
+      const mapa = {};
+      rows.forEach(r => {
+        const k = progNormOT(r[cOrden]);
+        if (!k || (cargadas.size && !cargadas.has(k))) return;
+        (mapa[k] = mapa[k] || []).push(String(r[cTexto] || '').trim());
+      });
+      progState.opsOT = Object.assign({}, progState.opsOT || {}, mapa);
+      progCalcGamas();
+      progSave();
+      renderProgramacion();
+      const con = progState.ots.filter(o => o.gama && !o.gamaDudosa).length;
+      progToast(`✓ Operaciones de ${Object.keys(mapa).length} OTs leídas. Gama segura en ${con} de ${progState.ots.length} OTs.`, 'success');
+    } catch (err) {
+      progToast('❌ Error al leer el archivo: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 /* ─── Resumen de sistemas de aire por guardia (para mandar por mail) ───
@@ -1165,6 +1319,10 @@ function progExportExcel() {
       'OT': o.ot_num || '',
       'Equipo': o.equipo,
       'Denominación': o.denominacion || '',
+      'Gama de tareas': o.gama ? o.gama + (o.gamaDudosa ? ' (a confirmar)' : '') : '',
+      'Incluye': (o.gamaIncluye || []).join(', '),
+      'Gama según': o.gamaFuente || '',
+      'Hoja de ruta': o.hr || '',
       'Zona': o.zona,
       'Ubicación técnica': o.ubicacionTecnica || '',
       'Sistema de aire': (progSistemaDeEquipo(o.equipo) || {}).nombre || '',
@@ -1228,6 +1386,17 @@ function progToast(msg, type = 'success') {
   });
 
   document.getElementById('prog-export-btn').addEventListener('click', progExportExcel);
+  const opsBtn = document.getElementById('prog-ops-btn');
+  if (opsBtn) {
+    opsBtn.addEventListener('click', () => {
+      if (!progState.ots.length) { progToast('Primero cargá el Excel del mes.', 'error'); return; }
+      document.getElementById('prog-ops-input').click();
+    });
+    document.getElementById('prog-ops-input').addEventListener('change', function () {
+      const file = this.files[0]; this.value = '';
+      if (file) progHandleOps(file);
+    });
+  }
   document.getElementById('prog-reset-btn').addEventListener('click', progReset);
   const reBtn = document.getElementById('prog-reprogramar-btn');
   if (reBtn) reBtn.addEventListener('click', () => progReprogramar(false));
