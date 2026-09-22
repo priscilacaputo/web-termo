@@ -838,7 +838,7 @@
         <span style="font-size:12px;color:var(--color-muted);margin-left:auto">${nInt} interiores en total · pasá el mouse sobre un equipo para ver su denominación</span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:10px">${tarjetas}</div>
-      ${sinExt.length ? `<div style="font-size:12px;margin-top:10px"><b>Unidades interiores sin condensadora identificable (${sinExt.length}):</b> ${sinExt.map((z) => tag(z.equipo, '#94a3b8')).join(' ')} <span style="color:var(--color-muted)">— piso-techo aisladas; no se agrupan.</span></div>` : ''}
+      ${sinExt.length ? `<div style="font-size:12px;margin-top:10px"><b>Unidades interiores sin condensadora identificable (${sinExt.length}):</b> ${sinExt.map((z) => tag(z.equipo, '#94a3b8')).join(' ')} <span style="color:var(--color-muted)">— piso-techo aisladas, o sacadas a mano de un sistema por no corresponder (a confirmar dónde van); no se agrupan.</span></div>` : ''}
     </div>`;
   }
 

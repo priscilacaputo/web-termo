@@ -19,7 +19,6 @@ const AAC_SISTEMAS = [
    "AAC2086",
    "AAC2087",
    "AAC2088",
-   "AAC2089",
    "AAC2090",
    "AAC2091",
    "AAC2092",
@@ -36,7 +35,7 @@ const AAC_SISTEMAS = [
   "nombre": "VRF Unidad Exterior UC 01 CHEC IN SIST 1",
   "cabeza": "AAC3908",
   "ubic": "AEP-ED6-NIVEL7-UBITEC009",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
    "AAC3909",
    "AAC3910",
@@ -49,7 +48,7 @@ const AAC_SISTEMAS = [
   "nombre": "VRF Unidad Exterior UC 02 SIST 2",
   "cabeza": "AAC3913",
   "ubic": "AEP-ED6-NIVEL7-UBITEC009",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
    "AAC3914",
    "AAC3915",
@@ -62,7 +61,7 @@ const AAC_SISTEMAS = [
   "nombre": "VRF Unidad Exterior UC 03 S3",
   "cabeza": "AAC3918",
   "ubic": "AEP-ED6-NIVEL7-UBITEC009",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
    "AAC3919",
    "AAC3920",
@@ -75,7 +74,7 @@ const AAC_SISTEMAS = [
   "nombre": "VRF Unidad Exterior UC 04 S4",
   "cabeza": "AAC3923",
   "ubic": "AEP-ED6-NIVEL7-UBITEC009",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
    "AAC3924",
    "AAC3925",
@@ -88,7 +87,7 @@ const AAC_SISTEMAS = [
   "nombre": "VRF Ext UE-003 Arribos Inter Migra PB",
   "cabeza": "AAC3955",
   "ubic": "AEP-ED7-NIVEL7-UBITEC001",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
    "AAC3956",
    "AAC3957",
@@ -106,7 +105,7 @@ const AAC_SISTEMAS = [
   "nombre": "VRF Exterior UE-002 Aduana-Senasa PB",
   "cabeza": "AAC3965",
   "ubic": "AEP-ED7-NIVEL7-UBITEC001",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
    "AAC3966",
    "AAC3967",
@@ -127,7 +126,7 @@ const AAC_SISTEMAS = [
   "nombre": "VRF Unidad Exterior UC-Inter Aduana PA",
   "cabeza": "AAC3978",
   "ubic": "AEP-ED7-NIVEL7-UBITEC001",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
    "AAC3979",
    "AAC3980",
@@ -141,7 +140,7 @@ const AAC_SISTEMAS = [
   "nombre": "VRF Ext UC-PSA-RXYMQ8 Inter PSA PA",
   "cabeza": "AAC3984",
   "ubic": "AEP-ED7-NIVEL7-UBITEC001",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
    "AAC3985",
    "AAC3986",
@@ -157,7 +156,7 @@ const AAC_SISTEMAS = [
   "nombre": "VRF Unidad Exterior Box Migra Out 1",
   "cabeza": "AAC3992",
   "ubic": "AEP-ED7-NIVEL7-UBITEC001",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
    "AAC3993"
   ]
@@ -167,7 +166,7 @@ const AAC_SISTEMAS = [
   "nombre": "VRF Unidad Exterior Box Migra Out 2",
   "cabeza": "AAC3994",
   "ubic": "AEP-ED7-NIVEL7-UBITEC001",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
    "AAC3995"
   ]
@@ -177,7 +176,7 @@ const AAC_SISTEMAS = [
   "nombre": "U.C Sist. 1 Multi Split Oficina AA",
   "cabeza": "AAC4112",
   "ubic": "AEP-ED4-NIVEL0-UBITEC033",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
    "AAC4113",
    "AAC4114",
@@ -189,7 +188,7 @@ const AAC_SISTEMAS = [
   "nombre": "U.C Sist. 1 Multi Split F/C Oficinas Mtt",
   "cabeza": "AAC4118",
   "ubic": "AEP-LAA-UBI225",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
    "AAC4119",
    "AAC4120",
@@ -202,7 +201,7 @@ const AAC_SISTEMAS = [
   "nombre": "U.C Sist. 1 Multi V5 VRF OFICINAS MANTEN",
   "cabeza": "AAC4123",
   "ubic": "AEP-LAA-UBI225",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
    "AAC4124",
    "AAC4125",
@@ -230,7 +229,7 @@ const AAC_SISTEMAS = [
   "nombre": "VRF Unidad Condensadora UC 01 SALA VIP",
   "cabeza": "AAC9401",
   "ubic": "AEP-ED5-NIVEL0-UBITEC234",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
    "AAC9402",
    "AAC9403",
@@ -249,13 +248,12 @@ const AAC_SISTEMAS = [
   "nombre": "VRF Unidad Exterior UC 02",
   "cabeza": "AAC9412",
   "ubic": "AEP-ED5-NIVEL0-UBITEC049",
-  "conf": "media",
+  "conf": "alta",
   "miembros": [
-   "AAC9413",
-   "AAC9414"
+   "AAC9413"
   ]
  }
 ];
 
 /* Unidades interiores sin unidad exterior identificable (piso-techo aisladas) */
-const AAC_SIN_EXTERIOR = [{"equipo": "AAC4107", "denom": "Unidad Piso Techo 1 Comedor Aeroparque"}, {"equipo": "AAC4108", "denom": "Unidad Piso Techo 2 Comedor Aeroparque"}, {"equipo": "AAC4109", "denom": "Unidad Piso Techo 3 Comedor Aeroparque"}, {"equipo": "AAC4110", "denom": "Unidad Piso Techo Taller Termomecanica"}, {"equipo": "AAC4111", "denom": "Unidad Piso Techo Taller Infraestructura"}, {"equipo": "AAC4116", "denom": "Unidad Piso Techo Comedor Mantenimiento"}, {"equipo": "AAC4117", "denom": "Unidad Piso Techo Comedor Mantenimiento"}, {"equipo": "AAC4132", "denom": "Unidad Piso Techo 4 Comedor Aeroparque"}];
+const AAC_SIN_EXTERIOR = [{"equipo": "AAC4107", "denom": "Unidad Piso Techo 1 Comedor Aeroparque"}, {"equipo": "AAC4108", "denom": "Unidad Piso Techo 2 Comedor Aeroparque"}, {"equipo": "AAC4109", "denom": "Unidad Piso Techo 3 Comedor Aeroparque"}, {"equipo": "AAC4110", "denom": "Unidad Piso Techo Taller Termomecanica"}, {"equipo": "AAC4111", "denom": "Unidad Piso Techo Taller Infraestructura"}, {"equipo": "AAC4116", "denom": "Unidad Piso Techo Comedor Mantenimiento"}, {"equipo": "AAC4117", "denom": "Unidad Piso Techo Comedor Mantenimiento"}, {"equipo": "AAC4132", "denom": "Unidad Piso Techo 4 Comedor Aeroparque"}, {"equipo": "AAC2089", "denom": "VRF Unidad Interior Pared UE 08.1"}, {"equipo": "AAC9414", "denom": "VRF Unidad Interior Cassette UE 2"}];
