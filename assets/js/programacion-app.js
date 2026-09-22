@@ -39,6 +39,16 @@
    Aire y Mecánicos se reparten cada uno por separado (ver progHandleFile),
    así que la equidad (altura y carga total) se calcula de forma
    independiente para cada gremio, no mezclada.
+
+   Sistemas de aire (condensadora + interiores, ver aac-sistemas-data.js):
+   SAP da de alta cada unidad como equipo separado, así que llegan como OTs
+   sueltas y el reparto automático las trataría como independientes. Igual
+   que las Mangas, después de repartir se fuerza a que TODOS los equipos de
+   un mismo sistema compartan una sola guardia (progSincronizarSistemasAire)
+   — la condensadora y sus interiores son un solo paquete de trabajo, no
+   tareas sueltas. Se re-sincroniza también ante cualquier cambio manual de
+   guardia, así que mover un equipo del paquete mueve a todo el paquete.
+
    Todo queda 100% editable por fila con el desplegable de guardia. */
 
 const PROG_STORAGE_KEY   = 'programacion_ots_v1';
@@ -155,6 +165,55 @@ function progSincronizarEquipos(items, guardiaPrev) {
     if (!asignadas.length) return;
     let destino = prev[equipo];
     if (destino == null) destino = (asignadas.find(o => o.regla) || asignadas[0]).guardia;
+    grupo.forEach(o => { o.guardia = destino; });
+  });
+}
+
+/* ─── Sistemas de aire (condensadora + interiores) ──────────────────
+   AAC_SISTEMAS (aac-sistemas-data.js) agrupa cada unidad exterior/
+   condensadora VRF o multi split con sus unidades interiores, deducido
+   de la denominación, la ubicación técnica y la secuencia de códigos
+   (validado a mano por la usuaria). */
+let _progSisIdx = null;
+function progSistemaDeEquipo(equipo) {
+  if (typeof AAC_SISTEMAS === 'undefined') return null;
+  if (!_progSisIdx) {
+    _progSisIdx = new Map();
+    AAC_SISTEMAS.forEach(s => { _progSisIdx.set(s.cabeza, s); s.miembros.forEach(m => _progSisIdx.set(m, s)); });
+  }
+  return _progSisIdx.get(String(equipo || '').trim().toUpperCase()) || null;
+}
+/* Fuerza que todos los equipos de un mismo sistema (condensadora + sus
+   interiores) compartan una sola guardia — es un solo paquete de trabajo,
+   no OTs independientes. Manda, en este orden:
+     1. Si se edita a mano una fila del grupo (forzarDesde = esa fila), esa
+        guardia gana siempre — es la intención explícita de la persona.
+     2. Si no, la guardia que el sistema ya tenía de meses anteriores
+        (guardiaPrev).
+     3. Si no, la guardia con más miembros ya asignados este mes (mayoría) —
+        converge al resultado del reparto automático en vez de partirlo.
+   Se salta si el grupo mezcla OTs de turnos distintos (no debería pasar:
+   el aire sin regla fija no tiene turno). */
+function progSincronizarSistemasAire(items, guardiaPrev, forzarDesde) {
+  const prev = guardiaPrev || {};
+  const porSistema = {};
+  items.forEach(o => {
+    const sis = progSistemaDeEquipo(o.equipo);
+    if (sis) (porSistema[sis.id] = porSistema[sis.id] || []).push(o);
+  });
+  Object.entries(porSistema).forEach(([sisId, grupo]) => {
+    if (grupo.length < 2) return;
+    const turnos = new Set(grupo.map(o => o.turno).filter(Boolean));
+    if (turnos.size > 1) return;
+    let destino = (forzarDesde && grupo.includes(forzarDesde) && forzarDesde.guardia != null) ? forzarDesde.guardia : null;
+    if (destino == null) destino = prev[sisId];
+    if (destino == null) {
+      const cuenta = {};
+      grupo.forEach(o => { if (o.guardia != null) cuenta[o.guardia] = (cuenta[o.guardia] || 0) + 1; });
+      const entradas = Object.entries(cuenta);
+      if (!entradas.length) return;
+      destino = +entradas.sort((a, b) => b[1] - a[1])[0][0];
+    }
     grupo.forEach(o => { o.guardia = destino; });
   });
 }
@@ -598,6 +657,16 @@ function progHandleFile(file) {
       });
       progSincronizarEquipos(merged, guardiaPrevPorEquipo);
 
+      /* Idem para los sistemas de aire (condensadora + interiores). */
+      const guardiaPrevPorSistema = {};
+      yaAsignados.forEach(o => {
+        const sis = progSistemaDeEquipo(o.equipo);
+        if (sis && o.guardia != null && guardiaPrevPorSistema[sis.id] == null) {
+          guardiaPrevPorSistema[sis.id] = o.guardia;
+        }
+      });
+      progSincronizarSistemasAire(merged, guardiaPrevPorSistema);
+
       progState.ots = merged;
       if (!progState.mes) progState.mes = document.getElementById('prog-mes-input').value || new Date().toISOString().slice(0, 7);
       progSave();
@@ -679,6 +748,7 @@ function renderProgMangasPanel() {
       if (this.value) progState.mangaGuardia[man] = parseInt(this.value, 10);
       else delete progState.mangaGuardia[man];
       progSincronizarMangas(progState.ots);
+      progSincronizarSistemasAire(progState.ots);
       progSave();
       renderProgramacion();
     });
@@ -705,6 +775,9 @@ function renderProgStats() {
   const altura         = progState.ots.filter(o => o.esAltura).length;
   const alturaAire      = progState.ots.filter(o => o.esAltura && o.puesto === 'aire').length;
   const alturaMecanico  = progState.ots.filter(o => o.esAltura && o.puesto === 'mecanico').length;
+  const sistemasEsteMes = new Set(
+    progState.ots.map(o => { const s = progSistemaDeEquipo(o.equipo); return s && s.id; }).filter(Boolean)
+  ).size;
 
   const cards = [
     { label: 'Total equipos', value: total, icon: '🗓️', color: '#1a56a4' },
@@ -713,6 +786,7 @@ function renderProgStats() {
     { label: '⛰️ Pagan altura', value: altura, icon: '⛰️', color: '#92400e' },
     { label: '⛰️ Altura Aire', value: alturaAire, icon: '💨', color: '#0369a1' },
     { label: '⛰️ Altura Mecánicos', value: alturaMecanico, icon: '🔧', color: '#b45309' },
+    { label: '🔗 Sistemas de aire (paquete)', value: sistemasEsteMes, icon: '🔗', color: '#6366f1' },
   ];
 
   wrap.innerHTML = cards.map(c => `
@@ -733,6 +807,13 @@ function renderProgGuardias() {
   if (!progState.ots.length) { wrap.innerHTML = ''; return; }
 
   const filtradas = progFiltered();
+  /* Para el badge 🔗: cuántos equipos del mismo sistema hay cargados este
+     mes (no solo en esta guardia), para avisar si alguno quedó fuera. */
+  const sisMiembrosEsteMes = {};
+  progState.ots.forEach(o => {
+    const sis = progSistemaDeEquipo(o.equipo);
+    if (sis) (sisMiembrosEsteMes[sis.id] = sisMiembrosEsteMes[sis.id] || new Set()).add(o.equipo);
+  });
   const hayFiltrosActivos = !!(progSearch || progFiltroTurno || progFiltroRegla || progFiltroZona || progFiltroAltura);
 
   wrap.innerHTML = [1, 2, 3, 4].map(gid => {
@@ -753,6 +834,14 @@ function renderProgGuardias() {
               <span class="prog-ot-zona">📍 ${o.zona}</span>
             </div>
             ${o.esAltura ? `<span class="prog-altura-badge" title="Paga altura">⛰️</span>` : ''}
+            ${(() => {
+              const sis = progSistemaDeEquipo(o.equipo);
+              if (!sis) return '';
+              const cargados = sisMiembrosEsteMes[sis.id] ? sisMiembrosEsteMes[sis.id].size : 1;
+              const faltan = sis.miembros.length + 1 - cargados;   // +1 por la condensadora
+              const tit = `Sistema ${sis.cabeza} (${sis.nombre}) — va siempre junto a los otros ${cargados - 1} equipo${cargados - 1 === 1 ? '' : 's'} de este sistema cargados este mes` + (faltan > 0 ? `. Ojo: ${faltan} equipo${faltan === 1 ? '' : 's'} del sistema no está en el Excel de este mes.` : '.');
+              return `<span class="prog-regla-badge ${faltan > 0 ? 'libre' : 'manana'}" title="${tit}">🔗 ${faltan > 0 ? 'Sistema incompleto' : 'Sistema'}</span>`;
+            })()}
             ${o.regla ? `<span class="prog-regla-badge ${o.turno === 'noche' ? 'noche' : 'manana'}">${o.regla === 'MEQ' ? '🌙' : '☀️'} ${o.regla}</span>` : `<span class="prog-regla-badge libre">✏️ Sin regla</span>`}
             <select class="prog-ot-select" data-id="${o.id}">
               ${[1, 2, 3, 4].map(n => `<option value="${n}" ${n === o.guardia ? 'selected' : ''}>Guardia ${n} (${PROG_GUARDIA_TURNO[n] === 'mañana' ? '☀️ Mañana' : '🌙 Noche'})</option>`).join('')}
@@ -779,6 +868,7 @@ function renderProgGuardias() {
       if (ot) {
         ot.guardia = parseInt(this.value, 10);
         progSincronizarMangas(progState.ots);
+        progSincronizarSistemasAire(progState.ots, null, ot);
         progSave();
         renderProgramacion();
       }
