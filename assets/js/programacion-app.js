@@ -500,7 +500,11 @@ function progAsignarPendientes(pendientes, yaAsignados, fijasExtra) {
   const altura = { 1: 0, 2: 0, 3: 0, 4: 0 };
   const zonaCount = { 1: {}, 2: {}, 3: {}, 4: {} };
   const ubicCount = { 1: {}, 2: {}, 3: {}, 4: {} };
+  const sisEq = { 1: 0, 2: 0, 3: 0, 4: 0 };                 // equipos de sistemas de aire por guardia
+  const sisIds = { 1: new Set(), 2: new Set(), 3: new Set(), 4: new Set() };   // sistemas por guardia
   const registrar = o => {
+    const sis = progSistemaDeEquipo(o.equipo);
+    if (sis) { sisEq[o.guardia]++; sisIds[o.guardia].add(sis.id); }
     total[o.guardia]++;
     if (o.esAltura) altura[o.guardia]++;
     zonaCount[o.guardia][o.zona] = (zonaCount[o.guardia][o.zona] || 0) + 1;
@@ -597,8 +601,16 @@ function progAsignarPendientes(pendientes, yaAsignados, fijasExtra) {
   };
 
   /* ── 3) Ubicar bloques de mayor a menor ── */
-  bloques.forEach(b => { b.n = b.items.length; b.alt = b.items.filter(o => o.esAltura).length; });
-  bloques.sort((a, b) => (b.n - a.n) || (b.alt - a.alt));
+  bloques.forEach(b => {
+    b.n = b.items.length;
+    b.alt = b.items.filter(o => o.esAltura).length;
+    b.sisIds = [...new Set(b.items.map(o => { const x = progSistemaDeEquipo(o.equipo); return x && x.id; }).filter(Boolean))];
+    b.sisEq = b.items.filter(o => progSistemaDeEquipo(o.equipo)).length;
+  });
+  /* Primero los sistemas de aire (de mayor a menor): se reparten buscando la misma
+     cantidad de sistemas y de equipos de sistema por guardia. Después el resto de los
+     bloques, que emparejan la carga total y la altura alrededor de ellos. */
+  bloques.sort((a, b) => (!!b.sisEq - !!a.sisEq) || (b.sisEq - a.sisEq) || (b.n - a.n) || (b.alt - a.alt));
   bloques.forEach(b => {
     let g = null;
     for (const o of b.items) {
@@ -611,7 +623,11 @@ function progAsignarPendientes(pendientes, yaAsignados, fijasExtra) {
          la guardia de meses anteriores − un poco de cercanía. Así un bloque grande no
          cae en una guardia ya cargada solo porque "le toca" por un único criterio. */
       const o0 = b.items[0];
-      const costo = x => {
+      const costoSistema = x =>
+        sisEq[x] * b.sisEq                     // equipos de sistema parejos
+        + 4 * sisIds[x].size * b.sisIds.length // cantidad de sistemas pareja
+        + 0.8 * repeticion(b.items, x) * b.sisEq;   // rotar respecto de meses anteriores
+      const costo = b.sisEq ? costoSistema : x => {
         const prox = Math.min(10, (zonaCount[x][o0.zona] || 0) + 0.5 * (ubicCount[x][o0.ubicacionTecnica] || 0));
         return 6 * altura[x] * b.alt          // a) altura pareja
           + total[x] * b.n                     // b) carga pareja
