@@ -3915,6 +3915,12 @@ tr:hover .admin-edit-btn { opacity: 1; }
   font-weight: 700;
   color: var(--color-muted);
 }
+/* Programación: nombre de la guardia en una línea con su turno, contadores abajo */
+.prog-guardia-header { flex-wrap: wrap; row-gap: 6px; }
+.prog-guardia-header .prog-guardia-name { white-space: nowrap; flex: 1 1 auto; }
+.prog-guardia-header .turno-badge { flex: none; }
+.prog-guardia-header .prog-guardia-count { flex: 1 0 100%; line-height: 1.55; font-weight: 600; }
+.prog-guardia-header .prog-guardia-count b { color: var(--color-text); font-weight: 800; }
 .turno-badge {
   font-size: 11px;
   font-weight: 700;

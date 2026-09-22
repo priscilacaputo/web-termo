@@ -360,6 +360,7 @@ function progLoad() {
         if (typeof parsed.hidrolavado !== 'boolean') parsed.hidrolavado = false;
         if (!parsed.historial) parsed.historial = {};
         if (!parsed.turnosOverride) parsed.turnosOverride = {};
+        if (!parsed.otsMes && parsed.ots.length) parsed.otsMes = parsed.mes || '';
         progAplicarTurnosMes(parsed.mes || new Date().toISOString().slice(0, 7), parsed.turnosOverride);
         progMigrarReglaVIP(parsed.ots);
         progState = parsed;
@@ -394,7 +395,7 @@ function progSnapshotHistorial(mes) {
   (progState.historial = progState.historial || {})[mes] = snap;
 }
 function progSave() {
-  progSnapshotHistorial(progState.otsMes || progState.mes);
+  progSnapshotHistorial(progState.otsMes);
   try { localStorage.setItem(PROG_STORAGE_KEY, JSON.stringify(progState)); }
   catch (e) { progToast('⚠ No se pudo guardar en este navegador.', 'error'); }
 }
@@ -956,8 +957,9 @@ function renderProgGuardias() {
   });
   const hayFiltrosActivos = !!(progSearch || progFiltroTurno || progFiltroRegla || progFiltroZona || progFiltroAltura);
 
-  const mesAnt = progMesesAnteriores(progState.mes, 1)[0];
-  const histAnt = (progState.historial || {})[mesAnt] || {};
+  const mesOts = progState.otsMes || progState.mes;
+  const mesAnt = progMesesAnteriores(mesOts, 1)[0];
+  const histAnt = (mesOts === progState.mes && (progState.historial || {})[mesAnt]) || {};
   wrap.innerHTML = progOrdenGuardias().map(gid => {
     const turno = PROG_GUARDIA_TURNO[gid];
     /* rotación: equipos que esta guardia ya tuvo el mes anterior */
@@ -1001,7 +1003,7 @@ function renderProgGuardias() {
         <div class="prog-guardia-header">
           <span class="prog-guardia-name">${progGuardiaLabel(gid)}</span>
           <span class="turno-badge ${turno === 'noche' ? 'noche' : 'manana'}">${turno === 'noche' ? '🌙 Noche' : '☀️ Mañana'}</span>
-          <span class="prog-guardia-count">${items.length} OT${items.length === 1 ? '' : 's'} (💨 ${aireEnGuardia} aire · 🔧 ${mecEnGuardia} mec)${alturaEnGuardia ? ` · ⛰️ ${alturaEnGuardia} (💨 ${alturaAireEnGuardia} aire · 🔧 ${alturaMecEnGuardia} mec)` : ''}${sisEnGuardia.size ? ` · 🔗 ${sisEnGuardia.size} sistema${sisEnGuardia.size === 1 ? '' : 's'} (${eqSisEnGuardia} equipos)` : ''}${Object.keys(histAnt).length ? ` · 🔄 ${repiten} repiten de ${mesAnt}` : ''}</span>
+          <span class="prog-guardia-count"><b>${items.length} OT${items.length === 1 ? '' : 's'}</b>: 💨 ${aireEnGuardia} aire · 🔧 ${mecEnGuardia} mec${alturaEnGuardia ? ` &nbsp;|&nbsp; ⛰️ <b>${alturaEnGuardia}</b> altura: 💨 ${alturaAireEnGuardia} · 🔧 ${alturaMecEnGuardia}` : ''}${sisEnGuardia.size ? ` &nbsp;|&nbsp; 🔗 ${sisEnGuardia.size} sistema${sisEnGuardia.size === 1 ? '' : 's'} (${eqSisEnGuardia} eq.)` : ''}${Object.keys(histAnt).length ? ` &nbsp;|&nbsp; <span title="Equipos que esta guardia ya tuvo en ${progMesLegible(mesAnt)}">🔄 ${repiten} repiten de ${progMesLegible(mesAnt)}</span>` : ''}</span>
         </div>
         <div class="prog-guardia-list">${rows}</div>
       </div>
