@@ -24,6 +24,10 @@
    MBO1166. Los 43 equipos agregados a mano (MCD, ARC, MEQ1948-54, AAC344/4119, MAS588,
    EMO1575), que no vienen en este export, se conservan igual por estar confirmados de
    alta en SAP. Total: 1136 equipos.
+   2026-09-23: chequeados los 392 AAC de "EXPORT_20260923185533.xlsx" (IH08, solo AAC)
+   contra el maestro: los 10 "MONT NOAC PTBO" ya excluidos siguen sin figurar (ok), y
+   se detectó −AAC3907 (Split - Control PSA Bravo, status MONT) que no aparece en este
+   export; decisión usuaria: eliminado por no estar de alta en SAP. Total: 1135 equipos.
    Regenerar con scratchpad/gen_equipos_termec.py. Es la fuente de verdad del
    INVENTARIO TER/MEC. Campos: equipo, denom, ubic, dim, fab, nParte, nSerie,
    equipoSup, status (MONT = montado/operativo), tipoDenom, serv. */
@@ -261,7 +265,6 @@ const EQUIPOS_SAP = [
   {"equipo": "AAC3836", "denom": "Roof Top (11A) - F/C por Gas PTA 9-10", "ubic": "AEP-ED5-NIVEL7-UBITEC001", "dim": "30 TR", "fab": "Lennox", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "LGH360H4GM2M", "serv": "2023-08-15", "abc": "C"},
   {"equipo": "AAC3837", "denom": "Roof Top (11B) - F/C por Gas PTA9 -10", "ubic": "AEP-ED5-NIVEL7-UBITEC001", "dim": "30 TR", "fab": "Lennox", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "LGH360H4GM2M", "serv": "2023-08-15", "abc": "C"},
   {"equipo": "AAC3838", "denom": "Roof Top (11C) - F/C por Gas SECTOR A", "ubic": "AEP-ED5-NIVEL7-UBITEC001", "dim": "30 TR", "fab": "Lennox", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "LGH360H4GM2M", "serv": "2023-08-15", "abc": "C"},
-  {"equipo": "AAC3907", "denom": "Split - Control PSA Bravo", "ubic": "AEP-TER-AIREAC-AIREAC202", "dim": "8000 KCAL", "fab": "LG", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "UV-H368KLAO", "serv": "", "abc": "C"},
   {"equipo": "AAC3908", "denom": "VRF Unidad Exterior UC 01 CHEC IN SIST 1", "ubic": "AEP-ED6-NIVEL7-UBITEC009", "dim": "", "fab": "Trane", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "4TVH0140BD000AA", "serv": "2023-08-15", "abc": "C"},
   {"equipo": "AAC3909", "denom": "VRF Unidad Interior Cassette UE 01.1 S 1", "ubic": "AEP-ED5-NIVEL0-UBITEC287", "dim": "", "fab": "Trane", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "4TVC0024BB000AA", "serv": "2024-02-07", "abc": "C"},
   {"equipo": "AAC3910", "denom": "VRF Unidad Interior Cassette UE 01.3 s1", "ubic": "AEP-ED5-NIVEL0-UBITEC287", "dim": "", "fab": "Trane", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "4TVC0024BB000AA", "serv": "2024-02-07", "abc": "C"},
