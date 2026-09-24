@@ -445,7 +445,9 @@ const MANT_KM = [
     id: "fiat",
     modelo: "FIAT UNO / FIORINO FIRE 1242 MPI 8V",
     condicion: "Normal",
-    vehiculos: ["AVO219"],
+    // AVO219 (única Fiat Uno de la flota) dado de baja en SAP 2026-09-24; se conserva el plan
+    // por si se agrega otro vehículo de este modelo, sin vehículo asignado por ahora.
+    vehiculos: [],
     intervalos: [
       {
         km: 10000,

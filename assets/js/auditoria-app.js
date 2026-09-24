@@ -66,7 +66,6 @@
   const OBSERVACIONES = [
     'Incendios: la web usa códigos ECA1–ECA27 (propios); SAP los tiene como ECC054–ECC101 y ECC556–ECC561. Hay que mapear ECA ↔ ECC.',
     'HER0778 / HER0875 / HER0906 / HER0926 / HER0956: dadas de alta como "equipo" en SAP pero son cajas de herramientas asignadas a personas. Revisar si corresponde que sean objetos técnicos.',
-    'AVO219 (status "MONT PTBO") sigue pendiente de revisar.',
     'Campanas CPN: solo CPN15 y CPN16 tienen plan "MP 1M Campanas y sistema de extracción" en IP24; las otras 16 no tienen ninguno (probable: falta asignarles el mismo plan mensual).',
   ];
 
