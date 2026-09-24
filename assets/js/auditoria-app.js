@@ -782,6 +782,127 @@
       fabricante: f.fabricante || '', modelo: f.modelo || '', tipo: f.tipo || '', modeloTxt: modelo };
   }
 
+  /* ── Posibles altas duplicadas (mismo hallazgo que AAC9300≡AAC9412, pero genérico) ──
+     Un mismo equipo físico dado de alta DOS veces en SAP con códigos distintos: se detecta
+     por compartir ubicación técnica + fabricante + modelo, y tener el mismo número de
+     posición/unidad en la denominación (p. ej. "…9" en "Posicion 9" e "…Manga 9"), con
+     códigos de equipo bien separados (si son correlativos, casi siempre es una pareja real:
+     dos aparatos distintos instalados juntos, como "Split N°1"/"N°2"). Cubre las familias
+     con fabricante+modelo cargados en la ficha: Aire (AAC_DATA), Bombas (BOMBAS_DATA),
+     Puertas (PUERTAS_DATA). Es una sugerencia para que la usuaria confirme — no se borra
+     nada solo. */
+  function duplicadosAireBombasPuertas() {
+    const fuentes = [
+      ['Aire', typeof AAC_DATA !== 'undefined' ? AAC_DATA : []],
+      ['Bombas', typeof BOMBAS_DATA !== 'undefined' ? BOMBAS_DATA : []],
+      ['Puertas', typeof PUERTAS_DATA !== 'undefined' ? PUERTAS_DATA : []],
+    ];
+    const maestroIdx = {};
+    getMaestro().forEach((e) => { maestroIdx[e.equipo] = e; });
+    const yaEnSistema = new Set();
+    if (typeof AAC_SISTEMAS !== 'undefined') AAC_SISTEMAS.forEach((s) => { yaEnSistema.add(s.cabeza); s.miembros.forEach((m) => yaEnSistema.add(m)); });
+    const normD = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+    const numsDe = (s) => new Set((normD(s).match(/\d{1,3}/g) || []).map(Number));
+    const numEq = (e) => parseInt(String(e).replace(/\D/g, '') || '0', 10);
+
+    /* Revisado y descartado por la usuaria (2026-09-24): las puertas del puente de embarque
+       son 2 equipos reales por posición (una del lado terminal + una intermedia dentro de la
+       manga), no una duplicada. Se excluye ese grupo para no seguir sugiriéndolo. */
+    const NO_DUPLICADO_CONFIRMADO = new Set([
+      normD('AEP-LAA-UBI017-UBITEC001') + '|' + normD('Manusa') + '|' + normD('Visio 125'),
+    ]);
+
+    const grupos = {};
+    fuentes.forEach(([fam, data]) => {
+      data.forEach((d) => {
+        if (!d.fabricante || !d.modelo || !String(d.fabricante).trim() || !String(d.modelo).trim()) return;
+        const ubic = (maestroIdx[d.equipo] || {}).ubic || d.ubicacion || '';
+        if (!ubic) return;
+        const k = normD(ubic) + '|' + normD(d.fabricante) + '|' + normD(d.modelo);
+        if (NO_DUPLICADO_CONFIRMADO.has(k)) return;
+        (grupos[k] = grupos[k] || { fam, ubic, fabricante: d.fabricante, modelo: d.modelo, items: [] }).items.push(d);
+      });
+    });
+
+    const hallazgos = [];
+    Object.values(grupos).filter((g) => g.items.length >= 2).forEach((g) => {
+      const porNumero = {};
+      g.items.forEach((d) => { numsDe(d.denominacion).forEach((n) => { (porNumero[n] = porNumero[n] || []).push(d); }); });
+      Object.entries(porNumero).forEach(([n, eqs]) => {
+        const uniq = [...new Map(eqs.map((e) => [e.equipo, e])).values()];
+        if (uniq.length < 2) return;
+        const nums = uniq.map((e) => numEq(e.equipo));
+        const gap = Math.max(...nums) - Math.min(...nums);
+        if (gap < 15) return;
+        if (uniq.every((e) => yaEnSistema.has(e.equipo))) return;   // ya vinculados como 1 sistema
+        hallazgos.push({ fam: g.fam, ubic: g.ubic, fabricante: g.fabricante, modelo: g.modelo, numero: n, gap, equipos: uniq });
+      });
+    });
+    // agrupar por (ubic+modelo) para mostrar como una sola tarjeta con varias posiciones
+    const porGrupo = {};
+    hallazgos.forEach((h) => {
+      const k = h.fam + '|' + h.ubic + '|' + h.modelo;
+      (porGrupo[k] = porGrupo[k] || { fam: h.fam, ubic: h.ubic, fabricante: h.fabricante, modelo: h.modelo, posiciones: [] }).posiciones.push(h);
+    });
+    return Object.values(porGrupo).sort((a, b) => b.posiciones.length - a.posiciones.length);
+  }
+
+  window.audDupExport = function () {
+    if (typeof XLSX === 'undefined') return;
+    const PL = (typeof PLANES_SAP !== 'undefined') ? PLANES_SAP : [];
+    const porEq = {};
+    PL.forEach((p) => { (porEq[p.equipo] = porEq[p.equipo] || []).push(p); });
+    const planTxt = (eq) => (porEq[eq] || []).map((p) => `${p.desc} (plan ${p.plan}, próxima ${p.proxima || '—'})`).join(' + ') || 'SIN PLAN';
+    const filas = [];
+    duplicadosAireBombasPuertas().forEach((g) => {
+      g.posiciones.forEach((h) => {
+        h.equipos.forEach((e) => filas.push({
+          'Familia': g.fam, 'Ubicación técnica': g.ubic, 'Fabricante': g.fabricante, 'Modelo': g.modelo,
+          'Posición/número compartido': h.numero, 'Equipo': e.equipo, 'Denominación': e.denominacion,
+          'Plan': planTxt(e.equipo), '¿Es el mismo equipo? (completar)': '', 'Cuál dar de baja (completar)': '',
+        }));
+      });
+    });
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(filas);
+    ws['!cols'] = [14, 40, 14, 20, 10, 10, 40, 60, 24, 24].map((w) => ({ wch: w }));
+    XLSX.utils.book_append_sheet(wb, ws, 'Posibles duplicados');
+    XLSX.writeFile(wb, 'Posibles_altas_duplicadas.xlsx');
+  };
+
+  function duplicadosHTML() {
+    const heading = (t) => `<div style="font-weight:700;font-size:12px;margin:16px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-muted)">${t}</div>`;
+    const grupos = duplicadosAireBombasPuertas();
+    if (!grupos.length) return '';
+    const PL = (typeof PLANES_SAP !== 'undefined') ? PLANES_SAP : [];
+    const porEq = {};
+    PL.forEach((p) => { (porEq[p.equipo] = porEq[p.equipo] || []).push(p); });
+    const planCorto = (eq) => (porEq[eq] || []).map((p) => `${p.desc} (${p.realBucket || '—'})`).join(' + ') || '<span style="color:#dc2626">sin plan</span>';
+    const nPos = grupos.reduce((t, g) => t + g.posiciones.length, 0);
+    const nEq = grupos.reduce((t, g) => t + g.posiciones.reduce((s, h) => s + h.equipos.length, 0), 0);
+    const tarjetas = grupos.map((g) => `<div style="border:1px solid var(--color-border);border-radius:10px;padding:12px 14px;background:var(--color-surface);margin-bottom:10px">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between">
+        <div><b style="font-size:13px">${esc(g.fabricante)} ${esc(g.modelo)}</b> <span style="color:var(--color-muted);font-size:12px">· ${esc(g.fam)}</span></div>
+        <span class="aud-pill aud-curso">A confirmar</span>
+      </div>
+      <div style="font-size:12px;margin:3px 0 8px">📍 ${esc(g.ubic.replace(/^AEP-/, ''))}</div>
+      ${g.posiciones.map((h) => `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--color-border)">
+        <div style="font-size:11.5px;color:var(--color-muted);margin-bottom:3px">Posición/número <b>${esc(h.numero)}</b> aparece en ${h.equipos.length} equipos con códigos muy separados (¿la misma puerta/equipo dada de alta dos veces?):</div>
+        ${h.equipos.map((e) => `<div style="font-size:12px;padding:2px 0"><span class="equipo-tag" style="background:#f59e0b">${esc(e.equipo)}</span> ${esc(e.denominacion)} <span style="color:var(--color-muted)">— ${planCorto(e.equipo)}</span></div>`).join('')}
+      </div>`).join('')}
+    </div>`).join('');
+    return `
+      ${heading('Posibles altas duplicadas · ' + nPos + ' casos (' + nEq + ' equipos)')}
+      <div style="font-size:12px;color:var(--color-muted);margin-bottom:10px;line-height:1.5">
+        Mismo hallazgo que con la condensadora de aire duplicada: mismo fabricante, modelo y ubicación técnica, con el mismo número
+        de posición nombrado de dos formas distintas y códigos de equipo muy separados (una pareja correlativa, como "N°1"/"N°2" en la
+        misma instalación, NO se marca acá — es normal). <b>Es una sugerencia para revisar, no una baja automática.</b>
+        <button class="mant-tab" style="margin-left:8px" onclick="audDupExport()">⬇ Descargar Excel</button>
+      </div>
+      ${tarjetas}
+    `;
+  }
+
   window.audSisFiltro = function (btn, k) {
     const box = btn.closest('.aud-sis-box');
     box.querySelectorAll('.aud-sis-filtro').forEach((x) => x.classList.toggle('active', x === btn));
@@ -1348,6 +1469,7 @@
           </div>`).join('') : ''}
 
         ${sistemasAireHTML()}
+        ${duplicadosHTML()}
 
         <div style="margin-top:14px;padding:10px 12px;background:var(--color-surface);border-radius:8px;font-size:12px">
           Cumplimiento: de ${(cmp.tomasVencidas || 0).toLocaleString('es-AR')} tomas vencidas solo ${cmp.sinOrden || 0} quedaron sin OT.
