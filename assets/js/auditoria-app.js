@@ -724,7 +724,8 @@
     const vinc = (sis) => (sis.conf === 'alta' ? 'Seguro (misma ubicación técnica)' : 'Revisar (deducido por secuencia de códigos)');
     const filaEq = (sis, eq, rol) => ({
       'Sistema': sis.cabeza, 'Nombre del sistema': sis.nombre, 'Rol': rol, 'Equipo': eq,
-      'Denominación': (maestro[eq] || {}).denom || '', 'Sector': ubicAire(eq).sector, 'Ubicación técnica': ubicAire(eq).ubic,
+      'Denominación': (maestro[eq] || {}).denom || '', 'Fabricante': ubicAire(eq).fabricante, 'Modelo': ubicAire(eq).modelo,
+      'Sector': ubicAire(eq).sector, 'Ubicación técnica': ubicAire(eq).ubic,
       'Plan': planTxt(eq), 'Frecuencia real': frecTxt(eq), 'Vínculo': vinc(sis),
       'Correcto? (completar)': '', 'Condensadora correcta (completar)': '',
     });
@@ -733,7 +734,9 @@
       const bI = new Set(sis.miembros.flatMap((m) => (porEq[m] || []).map((p) => p.realBucket)));
       const distinta = [...bC].some((b) => !bI.has(b)) || [...bI].some((b) => !bC.has(b));
       return {
-        'Sistema': sis.cabeza, 'Nombre': sis.nombre, 'Sector de la condensadora': ubicAire(sis.cabeza).sector, 'Ubicación técnica condensadora': ubicAire(sis.cabeza).ubic,
+        'Sistema': sis.cabeza, 'Nombre': sis.nombre, 'Modelo condensadora': ubicAire(sis.cabeza).modeloTxt,
+        'Modelos de los interiores': [...new Set(sis.miembros.map((m) => ubicAire(m).modeloTxt || 'sin modelo cargado'))].join(' | '),
+        'Sector de la condensadora': ubicAire(sis.cabeza).sector, 'Ubicación técnica condensadora': ubicAire(sis.cabeza).ubic,
         'Ubicaciones de los interiores': [...new Set(sis.miembros.map((m) => (ubicAire(m).sector ? ubicAire(m).sector + ' · ' : '') + ubicAire(m).corta))].join(' | '),
         'Cantidad de interiores': sis.miembros.length, 'Vínculo': vinc(sis),
         'Plan de la condensadora': planTxt(sis.cabeza), 'Frecuencia condensadora': frecTxt(sis.cabeza),
@@ -749,7 +752,8 @@
     });
     const sinExtArr = (typeof AAC_SIN_EXTERIOR !== 'undefined') ? AAC_SIN_EXTERIOR : [];
     const filaSinExt = (x) => ({
-      'Equipo': x.equipo, 'Denominación': x.denom, 'Sector': ubicAire(x.equipo).sector, 'Ubicación técnica': ubicAire(x.equipo).ubic,
+      'Equipo': x.equipo, 'Denominación': x.denom, 'Fabricante': ubicAire(x.equipo).fabricante, 'Modelo': ubicAire(x.equipo).modelo,
+      'Sector': ubicAire(x.equipo).sector, 'Ubicación técnica': ubicAire(x.equipo).ubic,
       'Plan': planTxt(x.equipo), 'Frecuencia real': frecTxt(x.equipo),
     });
     const pendientes = sinExtArr.filter((x) => x.motivo === 'pendiente-condensadora').map(filaSinExt);
@@ -760,10 +764,10 @@
       if (cols) ws['!cols'] = cols.map((w) => ({ wch: w }));
       XLSX.utils.book_append_sheet(wb, ws, name);
     };
-    add(sistemas, 'Sistemas', [10, 44, 28, 26, 50, 12, 34, 46, 18, 26, 12, 70]);
-    add(equipos, 'Equipos por sistema', [10, 40, 22, 10, 44, 28, 28, 60, 16, 34, 16, 24]);
-    if (pendientes.length) add(pendientes, 'Pendiente asignar condensadora', [10, 44, 28, 28, 60, 16]);
-    if (pisoTecho.length) add(pisoTecho, 'Piso-techo autónomas', [10, 44, 28, 28, 60, 16]);
+    add(sistemas, 'Sistemas', [10, 44, 18, 40, 28, 26, 50, 12, 34, 46, 18, 26, 12, 70]);
+    add(equipos, 'Equipos por sistema', [10, 40, 22, 10, 44, 14, 14, 28, 28, 60, 16, 34, 16, 24]);
+    if (pendientes.length) add(pendientes, 'Pendiente asignar condensadora', [10, 44, 14, 14, 28, 28, 60, 16]);
+    if (pisoTecho.length) add(pisoTecho, 'Piso-techo autónomas', [10, 44, 14, 14, 28, 28, 60, 16]);
     XLSX.writeFile(wb, 'Sistemas_de_aire_condensadora_interiores.xlsx');
   };
 
@@ -773,7 +777,9 @@
     const m = getMaestro().find((e) => e.equipo === eq) || {};
     const f = (typeof AAC_DATA !== 'undefined' ? AAC_DATA : []).find((a) => a.equipo === eq) || {};
     const ubic = m.ubic || f.ubicacion || '';
-    return { sector: f.sector || '', ubic, corta: ubic.replace(/^AEP-/, '') };
+    const modelo = [f.fabricante, f.modelo].filter(Boolean).join(' ');
+    return { sector: f.sector || '', ubic, corta: ubic.replace(/^AEP-/, ''),
+      fabricante: f.fabricante || '', modelo: f.modelo || '', tipo: f.tipo || '', modeloTxt: modelo };
   }
 
   window.audSisFiltro = function (btn, k) {
@@ -807,7 +813,19 @@
       return filas.join('') || '<span style="color:#dc2626;font-weight:600">sin plan</span>';
     };
     const bucketsDe = (eqs) => new Set(eqs.flatMap((e) => (porEq[e] || []).map((p) => p.realBucket)));
-    const tag = (e, fondo) => `<span class="equipo-tag" style="background:${fondo};font-size:10.5px" title="${esc(((maestro[e] || {}).denom || '') + ' — ' + (ubicAire(e).sector ? ubicAire(e).sector + ' · ' : '') + ubicAire(e).corta)}">${esc(e)}</span>`;
+    const tag = (e, fondo) => {
+      const u = ubicAire(e);
+      const tit = [(maestro[e] || {}).denom || '', u.modeloTxt, u.sector ? u.sector + ' · ' + u.corta : u.corta].filter(Boolean).join(' — ');
+      return `<span class="equipo-tag" style="background:${fondo};font-size:10.5px" title="${esc(tit)}">${esc(e)}</span>`;
+    };
+    /* Modelos de un grupo de equipos: "Fabricante Modelo", con cuántos equipos lo tienen. */
+    const modelosDe = (eqs) => {
+      const c = {};
+      eqs.forEach((e) => { const k = ubicAire(e).modeloTxt || 'sin modelo cargado'; c[k] = (c[k] || 0) + 1; });
+      return Object.entries(c).sort((a, b) => b[1] - a[1])
+        .map(([k, n]) => `${k === 'sin modelo cargado' ? `<span style="color:#dc2626">${esc(k)}</span>` : esc(k)}${eqs.length > 1 ? ` <span style="color:var(--color-muted);font-size:11px">(${n})</span>` : ''}`)
+        .join(' &nbsp;·&nbsp; ');
+    };
 
     const sis = AAC_SISTEMAS.map((x) => {
       const bC = bucketsDe([x.cabeza]), bI = bucketsDe(x.miembros);
@@ -827,8 +845,8 @@
       </div>
       <div style="font-size:12px;margin:3px 0 8px">📍 <b>${esc(ubicAire(x.cabeza).sector || 'Sin sector en la ficha')}</b> <span style="color:var(--color-muted)">· ${esc(ubicAire(x.cabeza).corta)}</span></div>
       <div style="display:grid;grid-template-columns:96px 1fr;gap:4px 10px;font-size:12px">
-        <div style="color:var(--color-muted)">Condensadora</div><div>${planesDe([x.cabeza])}</div>
-        <div style="color:var(--color-muted)">${x.miembros.length} interior${x.miembros.length > 1 ? 'es' : ''}</div><div>${planesDe(x.miembros)}</div>
+        <div style="color:var(--color-muted)">Condensadora</div><div>${planesDe([x.cabeza])}<div style="margin-top:2px">🏷️ ${modelosDe([x.cabeza])}</div></div>
+        <div style="color:var(--color-muted)">${x.miembros.length} interior${x.miembros.length > 1 ? 'es' : ''}</div><div>${planesDe(x.miembros)}${x.miembros.length ? `<div style="margin-top:2px">🏷️ ${modelosDe(x.miembros)}</div>` : ''}</div>
       </div>
       ${distinta ? `<div style="margin-top:6px;font-size:11.5px;color:#b45309;font-weight:700">⚠ La frecuencia de los interiores no coincide con la de la condensadora</div>` : ''}
       <div style="margin-top:8px;font-size:11.5px;color:var(--color-muted)">${(() => {
