@@ -815,15 +815,15 @@
     const bucketsDe = (eqs) => new Set(eqs.flatMap((e) => (porEq[e] || []).map((p) => p.realBucket)));
     const tag = (e, fondo) => {
       const u = ubicAire(e);
-      const tit = [(maestro[e] || {}).denom || '', u.modeloTxt, u.sector ? u.sector + ' · ' + u.corta : u.corta].filter(Boolean).join(' — ');
+      const tit = [(maestro[e] || {}).denom || '', u.fabricante, u.sector ? u.sector + ' · ' + u.corta : u.corta].filter(Boolean).join(' — ');
       return `<span class="equipo-tag" style="background:${fondo};font-size:10.5px" title="${esc(tit)}">${esc(e)}</span>`;
     };
     /* Modelos de un grupo de equipos: "Fabricante Modelo", con cuántos equipos lo tienen. */
     const modelosDe = (eqs) => {
       const c = {};
-      eqs.forEach((e) => { const k = ubicAire(e).modeloTxt || 'sin modelo cargado'; c[k] = (c[k] || 0) + 1; });
+      eqs.forEach((e) => { const k = ubicAire(e).fabricante || 'sin fabricante cargado'; c[k] = (c[k] || 0) + 1; });
       return Object.entries(c).sort((a, b) => b[1] - a[1])
-        .map(([k, n]) => `${k === 'sin modelo cargado' ? `<span style="color:#dc2626">${esc(k)}</span>` : esc(k)}${eqs.length > 1 ? ` <span style="color:var(--color-muted);font-size:11px">(${n})</span>` : ''}`)
+        .map(([k, n]) => `${k === 'sin fabricante cargado' ? `<span style="color:#dc2626">${esc(k)}</span>` : esc(k)}${eqs.length > 1 ? ` <span style="color:var(--color-muted);font-size:11px">(${n})</span>` : ''}`)
         .join(' &nbsp;·&nbsp; ');
     };
 
