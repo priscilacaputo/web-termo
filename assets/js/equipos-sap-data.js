@@ -28,6 +28,9 @@
    contra el maestro: los 10 "MONT NOAC PTBO" ya excluidos siguen sin figurar (ok), y
    se detectó −AAC3907 (Split - Control PSA Bravo, status MONT) que no aparece en este
    export; decisión usuaria: eliminado por no estar de alta en SAP. Total: 1135 equipos.
+   2026-09-24: −AAC9300/AAC9298/AAC9299, trío entero duplicado de la misma condensadora
+   física que AAC9412 (mismo modelo Trane 4TVH0040B); sus interiores reales son
+   AAC9413/AAC9414, confirmado por la usuaria. Ver [[sistemas-de-aire-aac]]. Total: 1132.
    Regenerar con scratchpad/gen_equipos_termec.py. Es la fuente de verdad del
    INVENTARIO TER/MEC. Campos: equipo, denom, ubic, dim, fab, nParte, nSerie,
    equipoSup, status (MONT = montado/operativo), tipoDenom, serv. */
@@ -366,9 +369,6 @@ const EQUIPOS_SAP = [
   {"equipo": "AAC4130", "denom": "U.E Sist. 1 Multi V5 VRF Casst Sec MONIT", "ubic": "AEP-LAA-UBI225", "dim": "", "fab": "LG", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "ARNU15GTQB4", "serv": "", "abc": "B"},
   {"equipo": "AAC4131", "denom": "U.E Sist. 1 Multi V5 VRF Casset subJ ELE", "ubic": "AEP-LAA-UBI225", "dim": "", "fab": "LG", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "ARNU15GTQB4", "serv": "", "abc": "B"},
   {"equipo": "AAC4132", "denom": "Unidad Piso Techo 4 Comedor Aeroparque", "ubic": "AEP-ED1-NIVEL0-UBITEC001", "dim": "", "fab": "", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "", "serv": "", "abc": ""},
-  {"equipo": "AAC9298", "denom": "Unidad Interior Cassette UI-1 CUSTOMER", "ubic": "AEP-ED5-NIVEL0-UBITEC049", "dim": "", "fab": "Trane", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "4TVC00248", "serv": "", "abc": "C"},
-  {"equipo": "AAC9299", "denom": "Unidad Interior Cassette UI-2 CUSTOMER", "ubic": "AEP-ED5-NIVEL0-UBITEC049", "dim": "", "fab": "Trane", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "4TVC00158", "serv": "", "abc": "C"},
-  {"equipo": "AAC9300", "denom": "Unidad Exterior Condensadora UC-02 CUSTO", "ubic": "AEP-ED5-NIVEL0-UBITEC049", "dim": "", "fab": "Trane", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "4TVH0040B", "serv": "", "abc": "C"},
   {"equipo": "AAC9301", "denom": "Split N°1 - Sala Técnica Intercargo", "ubic": "AEP-LAA-UBI228", "dim": "", "fab": "LG", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "UV-H369KLA0", "serv": "", "abc": "C"},
   {"equipo": "AAC9302", "denom": "Split N°2 - Sala Técnica Intercargo", "ubic": "AEP-LAA-UBI228", "dim": "", "fab": "LG", "nParte": "", "nSerie": "", "equipoSup": "", "status": "MONT", "tipoDenom": "UV-H369KLA0", "serv": "", "abc": "C"},
   {"equipo": "AAC9313", "denom": "Acondicionador Toshiba Manga Pos N°4", "ubic": "AEP-LAA-UBI017-UBITEC001", "dim": "", "fab": "Toshiba", "nParte": "", "nSerie": "", "equipoSup": "MAN234", "status": "AEQS", "tipoDenom": "RAV-GP1601AT8-E", "serv": "", "abc": "A"},

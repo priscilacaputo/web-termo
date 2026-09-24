@@ -214,17 +214,6 @@ const AAC_SISTEMAS = [
   ]
  },
  {
-  "id": "SIS-AAC9300",
-  "nombre": "Unidad Exterior Condensadora UC-02 CUSTO",
-  "cabeza": "AAC9300",
-  "ubic": "AEP-ED5-NIVEL0-UBITEC049",
-  "conf": "alta",
-  "miembros": [
-   "AAC9298",
-   "AAC9299"
-  ]
- },
- {
   "id": "SIS-AAC9401",
   "nombre": "VRF Unidad Condensadora UC 01 SALA VIP",
   "cabeza": "AAC9401",
@@ -250,13 +239,14 @@ const AAC_SISTEMAS = [
   "ubic": "AEP-ED5-NIVEL0-UBITEC049",
   "conf": "alta",
   "miembros": [
-   "AAC9413"
+   "AAC9413",
+   "AAC9414"
   ]
  }
 ];
 
 /* Equipos sin condensadora asociada. motivo: "piso-techo" = equipo autónomo, nunca va a
    tener una (comedores/talleres); "pendiente-condensadora" = interior real cuya condensadora
-   todavía no está confirmada (AAC2089/AAC9414: la usuaria los sacó de un sistema erróneo el
-   2026-09-22 y pidió mantenerlos así hasta confirmar el real). */
-const AAC_SIN_EXTERIOR = [{"equipo": "AAC4107", "denom": "Unidad Piso Techo 1 Comedor Aeroparque", "motivo": "piso-techo"}, {"equipo": "AAC4108", "denom": "Unidad Piso Techo 2 Comedor Aeroparque", "motivo": "piso-techo"}, {"equipo": "AAC4109", "denom": "Unidad Piso Techo 3 Comedor Aeroparque", "motivo": "piso-techo"}, {"equipo": "AAC4110", "denom": "Unidad Piso Techo Taller Termomecanica", "motivo": "piso-techo"}, {"equipo": "AAC4111", "denom": "Unidad Piso Techo Taller Infraestructura", "motivo": "piso-techo"}, {"equipo": "AAC4116", "denom": "Unidad Piso Techo Comedor Mantenimiento", "motivo": "piso-techo"}, {"equipo": "AAC4117", "denom": "Unidad Piso Techo Comedor Mantenimiento", "motivo": "piso-techo"}, {"equipo": "AAC4132", "denom": "Unidad Piso Techo 4 Comedor Aeroparque", "motivo": "piso-techo"}, {"equipo": "AAC2089", "denom": "VRF Unidad Interior Pared UE 08.1", "motivo": "pendiente-condensadora"}, {"equipo": "AAC9414", "denom": "VRF Unidad Interior Cassette UE 2", "motivo": "pendiente-condensadora"}];
+   todavía no está confirmada (AAC2089: la usuaria lo sacó de un sistema erróneo el
+   2026-09-22 y pidió mantenerlo así hasta confirmar el real). Ver [[sistemas-de-aire-aac]]. */
+const AAC_SIN_EXTERIOR = [{"equipo": "AAC4107", "denom": "Unidad Piso Techo 1 Comedor Aeroparque", "motivo": "piso-techo"}, {"equipo": "AAC4108", "denom": "Unidad Piso Techo 2 Comedor Aeroparque", "motivo": "piso-techo"}, {"equipo": "AAC4109", "denom": "Unidad Piso Techo 3 Comedor Aeroparque", "motivo": "piso-techo"}, {"equipo": "AAC4110", "denom": "Unidad Piso Techo Taller Termomecanica", "motivo": "piso-techo"}, {"equipo": "AAC4111", "denom": "Unidad Piso Techo Taller Infraestructura", "motivo": "piso-techo"}, {"equipo": "AAC4116", "denom": "Unidad Piso Techo Comedor Mantenimiento", "motivo": "piso-techo"}, {"equipo": "AAC4117", "denom": "Unidad Piso Techo Comedor Mantenimiento", "motivo": "piso-techo"}, {"equipo": "AAC4132", "denom": "Unidad Piso Techo 4 Comedor Aeroparque", "motivo": "piso-techo"}, {"equipo": "AAC2089", "denom": "VRF Unidad Interior Pared UE 08.1", "motivo": "pendiente-condensadora"}];

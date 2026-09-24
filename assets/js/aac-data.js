@@ -338,10 +338,7 @@ const AAC_DATA = [
   { equipo:"AAC4129", denominacion:"U.E Sist. 1 Multi V5 VRF Casset subJ TER", capacidad:"", ubicacion:"AEP-LAA-UBI225", fabricante:"LG", modelo:"ARNU15GTQB4", sector:"Taller de Mantenimiento Jefes", tipo:"VRF" },
   { equipo:"AAC4130", denominacion:"U.E Sist. 1 Multi V5 VRF Casst Sec MONIT", capacidad:"", ubicacion:"AEP-LAA-UBI225", fabricante:"LG", modelo:"ARNU15GTQB4", sector:"Taller de Mantenimiento Jefes", tipo:"VRF" },
   { equipo:"AAC4131", denominacion:"U.E Sist. 1 Multi V5 VRF Casset subJ ELE", capacidad:"", ubicacion:"AEP-LAA-UBI225", fabricante:"LG", modelo:"ARNU15GTQB4", sector:"Taller de Mantenimiento Jefes", tipo:"VRF" },
-  { equipo:"AAC4132", denominacion:"Unidad Piso Techo 4 Comedor Aeroparque", capacidad:"", ubicacion:"AEP-ED1-NIVEL0-UBITEC001", fabricante:"", modelo:"", sector:"Comedor Aeropuertos 2000", tipo:"Split" },
-  { equipo:"AAC9298", denominacion:"Unidad Interior Cassette UI-1 CUSTOMER", capacidad:"", ubicacion:"AEP-ED5-NIVEL0-UBITEC049", fabricante:"Trane", modelo:"4TVC00248", sector:"Customer service AA2000", tipo:"VRF" },
-  { equipo:"AAC9299", denominacion:"Unidad Interior Cassette UI-2 CUSTOMER", capacidad:"", ubicacion:"AEP-ED5-NIVEL0-UBITEC049", fabricante:"Trane", modelo:"4TVC00158", sector:"Customer service AA2000", tipo:"VRF" },
-  { equipo:"AAC9300", denominacion:"Unidad Exterior Condensadora UC-02 CUSTO", capacidad:"", ubicacion:"AEP-ED5-NIVEL0-UBITEC049", fabricante:"Trane", modelo:"4TVH0040B", sector:"Customer service AA2000", tipo:"VRF" },
+  { equipo:"AAC4132", denominacion:"Unidad Piso Techo 4 Comedor Aeroparque", capacidad:"", ubicacion:"AEP-ED1-NIVEL0-UBITEC001", fabricante:"", modelo:"", sector:"Comedor Aeropuertos 2000", tipo:"Split" },
   { equipo:"AAC9301", denominacion:"Split N°1 - Sala Técnica Intercargo", capacidad:"", ubicacion:"AEP-LAA-UBI228", fabricante:"LG", modelo:"UV-H369KLA0", sector:"Intercargo", tipo:"Split" },
   { equipo:"AAC9302", denominacion:"Split N°2 - Sala Técnica Intercargo", capacidad:"", ubicacion:"AEP-LAA-UBI228", fabricante:"LG", modelo:"UV-H369KLA0", sector:"Intercargo", tipo:"Split" },
   { equipo:"AAC9313", denominacion:"Acondicionador Toshiba Manga Pos N°4", capacidad:"", ubicacion:"AEP-LAA-UBI017-UBITEC001", fabricante:"Toshiba", modelo:"RAV-GP1601AT8-E", sector:"Plataforma Comercial", tipo:"Split" },
@@ -363,7 +360,7 @@ const AAC_DATA = [
   { equipo:"AAC9411", denominacion:"VRF Unidad Evaporadora 001-10", capacidad:"", ubicacion:"AEP-ED5-NIVEL0-UBITEC492", fabricante:"LG", modelo:"ARNU09GSJC4", sector:"Oficina/Sala técnica/Cocina", tipo:"VRF" },
   { equipo:"AAC9412", denominacion:"VRF Unidad Exterior UC 02", capacidad:"", ubicacion:"AEP-ED5-NIVEL0-UBITEC049", fabricante:"Trane", modelo:"4TVH0040B", sector:"Customer service AA2000", tipo:"VRF" },
   { equipo:"AAC9413", denominacion:"VRF Unidad Interior Cassette UI 1", capacidad:"", ubicacion:"AEP-ED5-NIVEL0-UBITEC049", fabricante:"Trane", modelo:"4TVC024B", sector:"Customer service AA2000", tipo:"VRF" },
-  { equipo:"AAC9414", denominacion:"VRF Unidad Interior Cassette UE 2", capacidad:"", ubicacion:"AEP-ED5-NIVEL0-UBITEC049", fabricante:"Trane", modelo:"4TVC015B", sector:"Customer service AA2000", tipo:"VRF" },
+  { equipo:"AAC9414", denominacion:"VRF Unidad Interior Cassette UE 2", capacidad:"", ubicacion:"AEP-ED5-NIVEL0-UBITEC049", fabricante:"Trane", modelo:"4TVC015B", sector:"Customer service AA2000", tipo:"VRF" },
   { equipo:"AAC9415", denominacion:"Split N°1 Pañol BGH", capacidad:"", ubicacion:"AEP-LAA-UBI209", fabricante:"", modelo:"", sector:"Pañol AA2000", tipo:"Split" },
   { equipo:"AAC9416", denominacion:"Split N°2 Pañol BGH", capacidad:"", ubicacion:"AEP-LAA-UBI209", fabricante:"BGH", modelo:"", sector:"Pañol AA2000", tipo:"Split" },
   { equipo:"AAC9417", denominacion:"Split N°3 Pañol BGH", capacidad:"", ubicacion:"AEP-LAA-UBI209", fabricante:"BGH", modelo:"", sector:"Pañol AA2000", tipo:"Split" },

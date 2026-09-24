@@ -861,7 +861,7 @@
         <span style="font-size:12px;color:var(--color-muted);margin-left:auto">${nInt} interiores en total · pasá el mouse sobre un equipo para ver su denominación</span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:10px">${tarjetas}</div>
-      ${pendConf.length ? `<div style="font-size:12px;margin-top:10px;padding:8px 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px"><b>⏳ Pendiente de asignar condensadora (${pendConf.length}):</b> ${pendConf.map((z) => tag(z.equipo, '#f59e0b')).join(' ')} <span style="color:var(--color-muted)">— la usuaria confirmó que no son del sistema del que se sacaron (2026-09-22); falta saber a cuál pertenecen. No se agrupan hasta confirmarlo.</span></div>` : ''}
+      ${pendConf.length ? `<div style="font-size:12px;margin-top:10px;padding:8px 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px"><b>⏳ Pendiente de asignar condensadora (${pendConf.length}):</b> ${pendConf.map((z) => tag(z.equipo, '#f59e0b')).join(' ')} <span style="color:var(--color-muted)">— la usuaria confirmó que no pertenecen al sistema del que se sacaron; falta saber a cuál pertenecen. No se agrupan hasta confirmarlo.</span></div>` : ''}
       ${pisoTecho.length ? `<div style="font-size:12px;margin-top:8px"><b>Piso-techo autónomas (${pisoTecho.length}):</b> ${pisoTecho.map((z) => tag(z.equipo, '#94a3b8')).join(' ')} <span style="color:var(--color-muted)">— equipos sin condensadora aparte (comedores/talleres); no se agrupan.</span></div>` : ''}
     </div>`;
   }
