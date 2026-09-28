@@ -489,5 +489,16 @@ const UTA_SPECS = {
   "AAC3815": {"Equipo": "AAC3815", "Codigo": "Split N°3 - Sala Técnica 7", "Filtros aire": "620X400X20 (4)"},
   "AAC3816": {"Equipo": "AAC3816", "Codigo": "Split N°4 - Sala Técnica 7", "Filtros aire": "620X400X20 (4)"},
   "AAC9314": {"Equipo": "AAC9314", "Codigo": "Keyter Manga Pos 4", "Filtros aire": "570x550x20 (2)"},
-  "AAC9316": {"Equipo": "AAC9316", "Codigo": "Keyter Manga Pos 5", "Filtros aire": "570x550x20 (2)"}
+  "AAC9316": {"Equipo": "AAC9316", "Codigo": "Keyter Manga Pos 5", "Filtros aire": "570x550x20 (2)"},
+
+  /* ── Relevamiento de medidas de filtros de aire, equipos de Edificio 7
+     (arribos internacional/aduana), 2026-09-28 ── */
+  "AAC9431": {"Equipo": "AAC9431", "Codigo": "AC-01", "Filtros aire": "600x600 (3)"},
+  "AAC9430": {"Equipo": "AAC9430", "Codigo": "AC-02", "Filtros aire": "600x600 (3)"},
+  "AAC9429": {"Equipo": "AAC9429", "Codigo": "AC-03", "Filtros aire": "600x600 (3)"},
+  "AAC9428": {"Equipo": "AAC9428", "Codigo": "AC-04", "Filtros aire": "600x500 (4)"},
+  "AAC9427": {"Equipo": "AAC9427", "Codigo": "AC-05", "Filtros aire": "600x500 (2)"},
+  "AAC9426": {"Equipo": "AAC9426", "Codigo": "AC-06", "Filtros aire": "600x600 (1); 600x290 (1)"},
+  "AAC9425": {"Equipo": "AAC9425", "Codigo": "AC-07", "Filtros aire": "600x500 (4)"},
+  "AAC9424": {"Equipo": "AAC9424", "Codigo": "AC-08", "Filtros aire": "600x600 (3)"}
 };
