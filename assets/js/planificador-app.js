@@ -4,7 +4,8 @@
      · Turnos de 12 h: Mañana 06:00–18:00 · Tarde 18:00–06:00 (clave
        interna del turno Tarde = `noche`).
      · Reglas de turno: MEQ → tarde · AVO → mañana · Roof Top → mañana ·
-       Sala VIP → tarde (regla nueva de este planificador).
+       Sala VIP → tarde · AAC de oficina/taller de mantenimiento → mañana
+       (reglas nuevas de este planificador).
      · Rotación de guardias del mes (editor de calendario propio).
      · Altura repartida lo más pareja posible entre las 4 guardias.
      · Cercanía física: las OTs de una misma guardia-día se agrupan por
@@ -231,6 +232,7 @@ function planFamilia(equipo) { return String(equipo || '').toUpperCase().slice(0
 
 function planClasificarTurno(equipo, textoOT) {
   if (planEsSalaVIP(equipo, textoOT)) return { regla: 'Sala VIP', turno: 'noche' };
+  if (planEsOficinaTaller(equipo, textoOT)) return { regla: 'AAC Oficina/Taller', turno: 'manana' };
   if (typeof progClasificar === 'function') {
     const c = progClasificar(equipo, textoOT, '');
     if (c.turno) return { regla: c.regla, turno: c.turno === 'mañana' ? 'manana' : 'noche' };

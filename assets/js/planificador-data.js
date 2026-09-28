@@ -75,6 +75,21 @@ function planEsSalaVIP(equipo, denomOT) {
   return !!rec && (hay(rec.denominacion) || hay(rec.sector) || hay(rec.local) || hay(rec.ubi_desc));
 }
 
+/* ─── ¿El equipo es un AAC (Aire) de oficina o taller de mantenimiento?
+   → regla nueva: siempre Turno Mañana. Mismo mecanismo que Sala VIP:
+   mira denominación/sector de la OT y, si hay registro del equipo en
+   el índice de programacion-app.js, sus campos denominacion / sector /
+   local / ubi_desc. Solo aplica a la familia AAC. ── */
+function planEsOficinaTaller(equipo, denomOT) {
+  if (!String(equipo || '').toUpperCase().startsWith('AAC')) return false;
+  const hay = s => /oficina|taller/i.test(String(s || ''));
+  if (hay(denomOT)) return true;
+  const rec = (typeof progGetEquipoIndex === 'function')
+    ? progGetEquipoIndex()[String(equipo || '').toUpperCase()]
+    : null;
+  return !!rec && (hay(rec.denominacion) || hay(rec.sector) || hay(rec.local) || hay(rec.ubi_desc));
+}
+
 /* Nivel de compatibilidad que informa la app del patio (Plan Maestro BHS). */
 const PLAN_NIVEL_PATIO = {
   'hueco recomendado': 'recomendado',

@@ -14,6 +14,8 @@
      - Equipos de Sala VIP → siempre Turno Noche (lista PROG_EQUIPOS_VIP)
      - Equipos Roof Top    → siempre Turno Mañana
      - Equipos AVO*        → siempre Turno Mañana
+     - Equipos AAC* de oficina o taller de mantenimiento (por denominación
+       o sector) → siempre Turno Mañana
 
    Cómo reparte (progAsignarPendientes), cada gremio (Aire / Mecánicos) por
    separado:
@@ -464,6 +466,13 @@ function progClasificar(equipo, denominacionExcel, tipoExcel) {
 
   const esRoofTop = tipo.includes('roof top') || denom.includes('roof top') || (rec && rec.tipo === 'Roof Top');
   if (esRoofTop) return { regla: 'Roof Top', turno: 'mañana' };
+
+  if (eq.startsWith('AAC')) {
+    const sector = String((rec && rec.sector) || '').toLowerCase();
+    if (/oficina|taller/.test(denom) || /oficina|taller/.test(sector)) {
+      return { regla: 'AAC Oficina/Taller', turno: 'mañana' };
+    }
+  }
 
   return { regla: null, turno: null };
 }
