@@ -173,6 +173,16 @@ function renderPuertas() {
   if (isPlanes) renderPuertasPlanes();
 }
 
+/* ─── Guía: alternar entre el manual del selector Optima+ (códigos de
+   falla) y el manual general Manusa (uso, seguridad, mantenimiento) ── */
+function puertasGuiaManual(cual) {
+  document.getElementById('pguia-manual-optima').classList.toggle('hidden', cual !== 'optima');
+  document.getElementById('pguia-manual-une').classList.toggle('hidden', cual !== 'une');
+  document.querySelectorAll('.pguia-manual-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.manual === cual);
+  });
+}
+
 /* ─── Planes preventivos ─────────────────────────────────── */
 function renderPuertasPlanes() {
   const container = document.getElementById("puertas-plan-content");

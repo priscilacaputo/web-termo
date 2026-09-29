@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Termomecánica — Portal Interno</title>
-  <link rel="stylesheet" href="assets/css/main.css?v=7" />
+  <link rel="stylesheet" href="assets/css/main.css?v=8" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -1061,6 +1061,14 @@
       <!-- Vista: Guía técnica -->
       <div id="puertas-guia-wrap" class="hidden puertas-guia">
 
+        <!-- Selector de manual: cuál usar según lo que se necesite -->
+        <div class="pguia-manual-switch">
+          <button type="button" class="pguia-manual-btn active" data-manual="optima" onclick="puertasGuiaManual('optima')">📘 Guía rápida — Selector Optima+</button>
+          <button type="button" class="pguia-manual-btn" data-manual="une" onclick="puertasGuiaManual('une')">📗 Manual general Manusa (UNE 85121 EX)</button>
+        </div>
+
+      <div id="pguia-manual-optima" class="puertas-guia">
+
         <!-- Intro -->
         <div class="pguia-intro-card">
           <div class="pguia-intro-logo">M</div>
@@ -1207,6 +1215,116 @@
             <div class="pguia-step"><span class="pguia-step-num pguia-step-warn">7</span><span>Ante fallas críticas, <strong>no forzar el equipo</strong> y dar aviso al servicio técnico correspondiente.</span></div>
           </div>
         </div>
+
+      </div>
+
+      <!-- ── Manual general del fabricante (Manusa, norma UNE 85121 EX) ──
+           Uso previsto/prohibido, seguridad, emergencia sin alimentación y
+           mantenimiento, válido para VISIO/BRAVO/ACTIVA con selector ÓPTIMA
+           o SMART. Para el detalle de causa/corrección por código de falla
+           del selector Optima+, usar la otra pestaña (ya cubierto ahí). -->
+      <div id="pguia-manual-une" class="hidden puertas-guia">
+
+        <div class="pguia-intro-card">
+          <div class="pguia-intro-logo">M</div>
+          <div>
+            <div class="pguia-intro-title">Manual general — Puertas automáticas peatonales (Manusa)</div>
+            <div class="pguia-intro-sub">
+              Manual de instrucciones de uso y mantenimiento del fabricante (conforme a <strong>UNE-EN-ISO 12100</strong> y
+              <strong>pr UNE 85121 EX</strong>), válido para los operadores <strong>VISIO</strong>, <strong>BRAVO</strong> y <strong>ACTIVA</strong>,
+              con ambos selectores de mando (<strong>ÓPTIMA</strong> y <strong>SMART</strong>). Cubre identificación del equipo, seguridad,
+              procedimientos de emergencia y mantenimiento. Para el detalle de <strong>códigos de falla del selector Optima+</strong>
+              (causa y corrección puntual), usar la guía rápida de la otra pestaña.
+            </div>
+          </div>
+        </div>
+
+        <div class="pguia-section-title">Selector de mando: ÓPTIMA vs. SMART</div>
+        <div class="pguia-two-col">
+          <div class="pguia-card">
+            <div class="pguia-card-title">🔘 Selector ÓPTIMA</div>
+            <p class="pguia-card-text">Visualizador de 2 dígitos de 7 segmentos que indica el modo de operación seleccionado (idioma configurable). Ante una anomalía, muestra de forma intermitente un valor numérico. 4 pulsadores para seleccionar el modo; 2 reservados para el servicio técnico. Incluye receptor de infrarrojos de serie para mando a distancia (opcional).</p>
+          </div>
+          <div class="pguia-card">
+            <div class="pguia-card-title">📱 Selector SMART</div>
+            <p class="pguia-card-text">Pantalla LCD de 3" (idioma configurable: español, catalán, francés, inglés); permite ver también la hora o el número de ciclos realizados. Ante una anomalía, muestra un mensaje y un código numérico. Se maneja con 2 pulsadores de selección + 1 de confirmación.</p>
+          </div>
+        </div>
+
+        <div class="pguia-section-title">Cambio de modo de operación</div>
+        <div class="table-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Modo</th><th>Selector ÓPTIMA</th><th>Selector SMART</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Abierta</strong></td><td>Pulsar el botón del selector hasta que el display muestre <span class="pguia-code">Ab</span></td><td>Pulsar 2 ó 4 hasta que el ícono parpadee y confirmar con 3 — display: ABIERTO</td></tr>
+                <tr><td><strong>Cerrada</strong></td><td>Pulsar el botón del selector hasta <span class="pguia-code">CE</span></td><td>Pulsar 2 ó 4 hasta el ícono y confirmar con 3 — display: CERRADO</td></tr>
+                <tr><td><strong>Automática</strong></td><td>Pulsar el botón del selector hasta <span class="pguia-code">AU</span></td><td>Pulsar 2 ó 4 hasta el ícono y confirmar con 3 — display: AUTOMÁTICO</td></tr>
+                <tr><td><strong>Sólo salir</strong></td><td>Pulsar el botón del selector (display <span class="pguia-code">Ab</span>; abre solo con detector interior)</td><td>Pulsar 2 ó 4 hasta el ícono y confirmar con 3 — display: SÓLO SALIR</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="pguia-two-col">
+          <div class="pguia-card">
+            <div class="pguia-card-title">🔒 Bloqueo / desbloqueo del selector</div>
+            <div class="pguia-steps">
+              <div class="pguia-step"><span class="pguia-step-num">1</span><span><strong>Óptima</strong> — Bloquear: mantener pulsado el botón 2 y pulsar el botón de cerrado. Desbloquear: repetir la misma combinación.</span></div>
+              <div class="pguia-step"><span class="pguia-step-num">2</span><span><strong>Smart</strong> — Bloquear: mantener pulsado 2 (◄) y pulsar 4 (►); aparece el ícono de candado en pantalla.</span></div>
+              <div class="pguia-step"><span class="pguia-step-num">3</span><span><strong>Smart</strong> — Desbloquear: mantener pulsado 4 (►) y pulsar 2 (◄); ingresar el PIN de 4 dígitos con 2/4 y confirmar con 3.</span></div>
+            </div>
+          </div>
+          <div class="pguia-card">
+            <div class="pguia-card-title">🔑 Apertura exterior con llave / Paro de emergencia</div>
+            <p class="pguia-card-text">Con la puerta en modo <strong>Cerrada</strong>, la llave exterior Manusa la abre igual; después de usarla, retirarla siempre del bombín (si queda puesta, el selector señala anomalía). Con <strong>paro de emergencia</strong> instalado (opcional), activarlo detiene la puerta de inmediato estando en modo Automática o Sólo salir; para recuperar el funcionamiento normal hay que desbloquearlo tirando de él.</p>
+          </div>
+        </div>
+
+        <div class="pguia-card">
+          <div class="pguia-card-title">🚪 Hojas con antipánico integral (SOS / Easy SOS)</div>
+          <p class="pguia-card-text">En emergencia, las hojas (móviles y fijas) se abaten empujando hacia el exterior, liberando la vía de evacuación; se detienen de inmediato si estaban en movimiento. Para reponer el funcionamiento normal alcanza con volver las hojas a su posición.</p>
+          <ul class="pguia-list">
+            <li><strong>S-44 (SOS):</strong> falleba de 2 posiciones — posición A bloquea el abatimiento desde el exterior (solo permitido con la puerta en modo Cerrada); posición B libera el abatimiento.</li>
+            <li><strong>S-40 (Easy SOS):</strong> mismo principio con bombín; en posición A además bloquea las hojas fijas, solo si las móviles están cerradas del todo.</li>
+          </ul>
+        </div>
+
+        <div class="pguia-section-title">Apertura/cierre manual ante corte de alimentación</div>
+        <div class="pguia-two-col">
+          <div class="pguia-card">
+            <div class="pguia-card-title">⚙️ Operador VISIO</div>
+            <p class="pguia-card-text"><strong>Sin cerrojo:</strong> accionar las hojas a mano directamente. <strong>Con cerrojo:</strong> accionar el selector del cerrojo (o la llave exterior) y luego mover las hojas a mano, tanto para abrir como para cerrar. Al volver la tensión, si el cerrojo quedó bloqueando las hojas la puerta pasa a modo Cerrada; si no, retoma el último modo seleccionado.</p>
+          </div>
+          <div class="pguia-card">
+            <div class="pguia-card-title">⚙️ Operador BRAVO / ACTIVA</div>
+            <p class="pguia-card-text">Accionar el tirador del cerrojo (lateral o central) o la llave exterior, y mover las hojas a mano. En el primer ciclo tras volver la tensión, la puerta hace un movimiento lento de reconocimiento de posición antes de retomar el funcionamiento normal.</p>
+          </div>
+        </div>
+
+        <div class="pguia-section-title">Mantenimiento</div>
+        <div class="pguia-two-col">
+          <div class="pguia-card">
+            <div class="pguia-card-title">🧴 Limpieza por material</div>
+            <ul class="pguia-list">
+              <li><strong>Vidrio:</strong> agua caliente jabonosa o limpiavidrios comercial; un poco de vinagre o amoníaco si está muy sucio. No aplicar químicos sobre las juntas de goma.</li>
+              <li><strong>Aluminio:</strong> productos específicos para anodizado/lacado; evitar ácidos, básicos, abrasivos o calientes. Interior: paño con agua fría jabonosa; exterior: productos sintéticos neutros.</li>
+              <li><strong>Acero inoxidable:</strong> paño o esponja con agua jabonosa, o microfibra húmeda; secar bien. No usar abrasivos, disolventes, lana de acero ni lavandina/cloruros.</li>
+              <li><strong>Accesorios (mando/detección):</strong> paño ligeramente humedecido, sin verter líquido sobre ellos.</li>
+            </ul>
+          </div>
+          <div class="pguia-card">
+            <div class="pguia-card-title">🛠️ Recambios y baja de servicio</div>
+            <p class="pguia-card-text">Usar siempre repuestos originales Manusa instalados por técnico autorizado. Para limpiar, poner la puerta en modo <strong>Abierta</strong> (hojas liberadas) y al terminar volver a <strong>Automática</strong>. La puesta fuera de servicio/desmantelamiento se hace desmontando por elementos, con gestión correcta de residuos.</p>
+          </div>
+        </div>
+
+        <div class="pguia-card">
+          <div class="pguia-card-title">⚠️ Indicación de anomalías (ambos selectores)</div>
+          <p class="pguia-card-text">Ante una falla, el selector Óptima muestra un código numérico intermitente y el Smart un código + ícono de anomalía. En la mayoría de los casos alcanza con pasar a modo <strong>Abierta</strong> y luego a <strong>Automática</strong> para reponer el funcionamiento; si la anomalía persiste, avisar al servicio técnico autorizado. Para el detalle de causa y corrección por código, ver la tabla de la guía rápida del Selector Optima+ (pestaña anterior).</p>
+        </div>
+
+      </div>
 
       </div>
 
@@ -2176,7 +2294,7 @@
   <script src="assets/js/patio-app.js?v=7"></script>
   <script src="assets/js/personal-app.js?v=2"></script>
   <script src="assets/js/puertas-data.js?v=6"></script>
-  <script src="assets/js/puertas-app.js?v=7"></script>
+  <script src="assets/js/puertas-app.js?v=8"></script>
   <script src="assets/js/aac-data.js?v=8"></script>
   <script src="assets/js/uta-specs.js?v=4"></script>
   <script src="assets/js/aac-fichas.js?v=1"></script>
