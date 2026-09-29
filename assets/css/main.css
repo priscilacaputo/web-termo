@@ -1810,6 +1810,11 @@ a.mant-tab:hover {
   font-size: 11px; color: var(--color-muted);
   margin-top: 6px;
 }
+.pguia-fig-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
 
 /* Intro banner */
 .pguia-intro-card {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Termomecánica — Portal Interno</title>
-  <link rel="stylesheet" href="assets/css/main.css?v=9" />
+  <link rel="stylesheet" href="assets/css/main.css?v=10" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -1082,6 +1082,11 @@
           </div>
         </div>
 
+        <figure class="pguia-fig" style="max-width:280px;margin-left:auto;margin-right:auto">
+          <img src="assets/img/puertas-manual-optima/selector-optima-plus.png" alt="Selector Optima+ de Manusa, vista frontal con pantalla LCD y 5 teclas táctiles" loading="lazy">
+          <figcaption>Selector Optima+ (electrónica Visio+)</figcaption>
+        </figure>
+
         <!-- Modos de funcionamiento -->
         <div class="pguia-section-title">Modos de funcionamiento</div>
         <div class="pguia-modos-grid">
@@ -1115,6 +1120,16 @@
             <div class="pguia-modo-desc">Abre sólo un porcentaje del recorrido total (configurable desde funciones avanzadas).</div>
             <div class="pguia-modo-uso">Ahorro energético · Condiciones climáticas adversas</div>
           </div>
+        </div>
+        <div class="pguia-two-col">
+          <figure class="pguia-fig">
+            <img src="assets/img/puertas-manual-optima/teclado-iconos.png" alt="Las 5 teclas del selector Optima+: favoritos/apertura reducida, inicio, atrás, OK y automático" loading="lazy">
+            <figcaption>Teclado: T1 favoritos, T2 inicio, T3 automático, T4 atrás, T0 OK</figcaption>
+          </figure>
+          <figure class="pguia-fig">
+            <img src="assets/img/puertas-manual-optima/pantalla-iconos.png" alt="Íconos de la pantalla LCD del selector Optima+: reset/setup/user, señal, modo automático y dígitos" loading="lazy">
+            <figcaption>Pantalla LCD: iconos de menú, señal, modo y estado</figcaption>
+          </figure>
         </div>
 
         <div class="pguia-two-col">
@@ -1158,8 +1173,72 @@
               <li>Selector Optima+</li>
               <li>Selector Smart (si aplica)</li>
             </ul>
+            <figure class="pguia-fig">
+              <img src="assets/img/puertas-manual-optima/conexionado-general.png" alt="Diagrama general de conexionado de la puerta: alimentación, fusible, alarma de incendio, fotocélulas y selector" loading="lazy">
+              <figcaption>Conexionado general de la puerta</figcaption>
+            </figure>
           </div>
 
+        </div>
+
+        <!-- Diagramas de conexión detallados por accesorio -->
+        <div class="pguia-card">
+          <div class="pguia-card-title">🔌 Diagramas de conexión por accesorio (electrónica Visio+)</div>
+          <p class="pguia-card-text">Detalle de los bornes de la placa para cada accesorio, del manual de instalación del Optima+. Útil para verificar cableado durante una intervención.</p>
+          <div class="pguia-fig-grid">
+            <figure class="pguia-fig">
+              <img src="assets/img/puertas-manual-optima/conexionado-bus-manusa.png" alt="Conexión de Bus Manusa: cerrojo eléctrico, selector Optima+ y sensor de manos" loading="lazy">
+              <figcaption>Bus Manusa: cerrojo, selector y sensor de manos</figcaption>
+            </figure>
+            <figure class="pguia-fig">
+              <img src="assets/img/puertas-manual-optima/conexionado-motores.png" alt="Conexión de los motores M1 y M2 con sus encoders ENC1 y ENC2" loading="lazy">
+              <figcaption>Motores M1/M2 y encoders</figcaption>
+            </figure>
+            <figure class="pguia-fig">
+              <img src="assets/img/puertas-manual-optima/conexionado-emergencia-cerrojo.png" alt="Conexión del paro de emergencia (CO48) y del cerrojo de accionamiento manual (Bman)" loading="lazy">
+              <figcaption>Paro de emergencia (CO48) y cerrojo manual (Bman)</figcaption>
+            </figure>
+            <figure class="pguia-fig">
+              <img src="assets/img/puertas-manual-optima/conexionado-llave-alarma-sos.png" alt="Conexión de llave exterior, alarma de incendio, sensor SOS y bus RS-485" loading="lazy">
+              <figcaption>Llave exterior, alarma, SOS y bus RS-485</figcaption>
+            </figure>
+            <figure class="pguia-fig">
+              <img src="assets/img/puertas-manual-optima/conexionado-alimentacion.png" alt="Conexión de la alimentación eléctrica y el fusible de línea" loading="lazy">
+              <figcaption>Alimentación eléctrica y fusible</figcaption>
+            </figure>
+            <figure class="pguia-fig">
+              <img src="assets/img/puertas-manual-optima/conexionado-barreras-infrarrojos.png" alt="Conexión de dos barreras de infrarrojos con emisor y receptor" loading="lazy">
+              <figcaption>Barreras de infrarrojos (emisor/receptor, doble)</figcaption>
+            </figure>
+            <figure class="pguia-fig">
+              <img src="assets/img/puertas-manual-optima/conexionado-sensores-dual.png" alt="Conexión de dos sensores de detección adicionales" loading="lazy">
+              <figcaption>Sensores de detección (dual)</figcaption>
+            </figure>
+            <figure class="pguia-fig">
+              <img src="assets/img/puertas-manual-optima/conexionado-lector-proximidad.png" alt="Conexión del lector de proximidad SOLD" loading="lazy">
+              <figcaption>Lector de proximidad (SOLD)</figcaption>
+            </figure>
+            <figure class="pguia-fig">
+              <img src="assets/img/puertas-manual-optima/conexionado-radar-dds-dual.png" alt="Conexión de dos radares DDS-A y DDS-B en modo dual" loading="lazy">
+              <figcaption>Radares DDS-A + DDS-B (dual)</figcaption>
+            </figure>
+            <figure class="pguia-fig">
+              <img src="assets/img/puertas-manual-optima/conexionado-radar-dds-a.png" alt="Conexión individual del radar DDS-A" loading="lazy">
+              <figcaption>Radar DDS-A (individual)</figcaption>
+            </figure>
+            <figure class="pguia-fig">
+              <img src="assets/img/puertas-manual-optima/conexionado-radar-dds-b.png" alt="Conexión individual del radar DDS-B" loading="lazy">
+              <figcaption>Radar DDS-B (individual)</figcaption>
+            </figure>
+            <figure class="pguia-fig">
+              <img src="assets/img/puertas-manual-optima/conexionado-radar-dds-s.png" alt="Conexión individual del radar DDS-S" loading="lazy">
+              <figcaption>Radar DDS-S (individual)</figcaption>
+            </figure>
+            <figure class="pguia-fig">
+              <img src="assets/img/puertas-manual-optima/conexionado-radar-dds-s-dual.png" alt="Conexión de dos radares DDS-S con polaridad positiva y negativa" loading="lazy">
+              <figcaption>Radar DDS-S (dual, polaridad +/−)</figcaption>
+            </figure>
+          </div>
         </div>
 
         <!-- Tabla de códigos de error -->
