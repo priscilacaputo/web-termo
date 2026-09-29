@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Termomecánica — Portal Interno</title>
-  <link rel="stylesheet" href="assets/css/main.css?v=10" />
+  <link rel="stylesheet" href="assets/css/main.css?v=11" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -2353,6 +2353,15 @@
     </div>
   </div>
 
+  <!-- Lightbox genérico: abre en grande cualquier imagen de figura (manuales,
+       diagramas). Click en la imagen = zoom a tamaño real con scroll. -->
+  <div class="img-lightbox-overlay" id="img-lightbox-overlay">
+    <button class="img-lightbox-close" id="img-lightbox-close">✕</button>
+    <img id="img-lightbox-img" src="" alt="">
+    <div class="img-lightbox-caption" id="img-lightbox-caption"></div>
+    <div class="img-lightbox-hint">Click en la imagen para ampliar al 100% · Esc para cerrar</div>
+  </div>
+
   <!-- Modal material de pañol -->
   <div class="modal-overlay" id="panol-modal-overlay">
     <div class="modal" id="panol-modal">
@@ -2420,7 +2429,7 @@
   <script src="assets/js/mm60-data.js?v=1"></script>
   <script src="assets/js/mb51-data.js?v=1"></script>
   <script src="assets/js/sap-ficha.js?v=3"></script>
-  <script src="assets/js/app.js?v=21"></script>
+  <script src="assets/js/app.js?v=22"></script>
   <script src="assets/js/mant-app.js?v=15"></script>
   <script src="assets/js/planes-integrados-app.js?v=9"></script>
   <script src="assets/js/mangas-app.js?v=18"></script>

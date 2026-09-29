@@ -1815,6 +1815,55 @@ a.mant-tab:hover {
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 14px;
 }
+.pguia-fig img { cursor: zoom-in; }
+.pguia-fig img:hover { box-shadow: 0 0 0 2px var(--color-primary); }
+
+/* Lightbox genérico de imágenes (figuras de manuales/diagramas) */
+.img-lightbox-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.85);
+  z-index: 300;
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px;
+}
+.img-lightbox-overlay.open { display: flex; }
+.img-lightbox-overlay.zoomed-active {
+  align-items: flex-start;
+  overflow: auto;
+  padding: 60px 24px 24px;
+}
+.img-lightbox-overlay img {
+  max-width: 95vw; max-height: 80vh;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+  cursor: zoom-in;
+}
+.img-lightbox-overlay img.zoomed {
+  max-width: none; max-height: none;
+  width: auto;
+  cursor: zoom-out;
+  margin: auto;
+}
+.img-lightbox-caption {
+  color: #fff; font-size: 13px;
+  margin-top: 14px; text-align: center; max-width: 90vw;
+}
+.img-lightbox-hint {
+  color: rgba(255,255,255,.55); font-size: 11px;
+  margin-top: 6px;
+}
+.img-lightbox-close {
+  position: fixed; top: 16px; right: 20px;
+  background: rgba(255,255,255,.15); border: none; color: #fff;
+  width: 36px; height: 36px; border-radius: 50%;
+  font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.img-lightbox-close:hover { background: rgba(255,255,255,.3); }
 
 /* Intro banner */
 .pguia-intro-card {

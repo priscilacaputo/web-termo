@@ -389,3 +389,46 @@ btnExport.addEventListener("click", () => {
   a.click();
   URL.revokeObjectURL(url);
 });
+
+/* ─── Lightbox genérico de imágenes (figuras de manuales/diagramas,
+   clase .pguia-fig) ─── delegado en document, funciona en cualquier
+   página sin wiring extra: click en la miniatura abre en grande, click
+   en la imagen grande alterna a tamaño real (scrolleable). ────────── */
+(function () {
+  function openImgLightbox(src, caption) {
+    const overlay = document.getElementById('img-lightbox-overlay');
+    if (!overlay) return;
+    const img = document.getElementById('img-lightbox-img');
+    img.src = src;
+    img.classList.remove('zoomed');
+    overlay.classList.remove('zoomed-active');
+    document.getElementById('img-lightbox-caption').textContent = caption || '';
+    overlay.classList.add('open');
+  }
+  function closeImgLightbox() {
+    const overlay = document.getElementById('img-lightbox-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('open');
+    document.getElementById('img-lightbox-img').src = '';
+  }
+  document.addEventListener('click', (e) => {
+    const thumb = e.target.closest('.pguia-fig img');
+    if (thumb) {
+      const fig = thumb.closest('figure');
+      const capEl = fig && fig.querySelector('figcaption');
+      openImgLightbox(thumb.src, capEl ? capEl.textContent : (thumb.alt || ''));
+      return;
+    }
+    if (e.target.id === 'img-lightbox-close' || e.target.id === 'img-lightbox-overlay') {
+      closeImgLightbox();
+      return;
+    }
+    if (e.target.id === 'img-lightbox-img') {
+      e.target.classList.toggle('zoomed');
+      e.target.closest('.img-lightbox-overlay').classList.toggle('zoomed-active');
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeImgLightbox();
+  });
+})();
