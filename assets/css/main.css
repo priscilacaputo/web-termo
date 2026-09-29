@@ -1797,6 +1797,20 @@ a.mant-tab:hover {
   color: #fff;
 }
 
+/* Figuras del manual (diagramas/imágenes del PDF) dentro de la Guía */
+.pguia-fig { margin: 4px 0 0; text-align: center; }
+.pguia-fig img {
+  max-width: 100%; height: auto;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px;
+}
+.pguia-fig figcaption {
+  font-size: 11px; color: var(--color-muted);
+  margin-top: 6px;
+}
+
 /* Intro banner */
 .pguia-intro-card {
   display: flex; align-items: flex-start; gap: 16px;
