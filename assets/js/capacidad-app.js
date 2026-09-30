@@ -45,6 +45,7 @@ function capParamsDefault() {
     persDefault: 2,
     reservaAire: null,   // horas/mes a reservar para reclamos; null = promedio histórico
     reservaMec: null,
+    hidrolavado: false,   // Roof Top sin manga cuentan como altura solo si se hidrolavan
     ausentismo: 0,        // % de turnos que se pierden por vacaciones/licencias (sobre la dotación nominal)
     usarGrilla: false,
   };
@@ -213,13 +214,21 @@ function capTurnoObligatorio(equipo, texto) {
   try { const r = progClasificar(equipo, texto, ''); return r && r.turno ? (r.turno === 'noche' ? 'noche' : 'dia') : null; }
   catch (e) { return null; }
 }
+/* ¿Esta OT es trabajo en altura? Mismo criterio que Programación (ALTURA_EQUIPOS; los Roof Top sin manga
+   de ALTURA_HIDROLAVADO solo cuentan si se activa "Hidrolavados"). */
+function capEsAltura(equipo) {
+  const eq = String(equipo || '').trim().toUpperCase();
+  if (typeof ALTURA_EQUIPOS === 'undefined' || !ALTURA_EQUIPOS.has(eq)) return false;
+  if (!capState.params.hidrolavado && typeof ALTURA_HIDROLAVADO !== 'undefined' && ALTURA_HIDROLAVADO.has(eq)) return false;
+  return true;
+}
 /* Proyección desde los planes (PLANES_SAP) — se usa cuando SAP todavía no generó las OTs de ese mes. */
 function capDemandaProy(mes) {
   capIndices();
   const p = capState.params;
   const res = {
-    aire: { ots: 0, horas: 0, horasSap: 0, horasEstim: 0, otsSap: 0, otsEstim: 0, dia: 0, noche: 0, libre: 0, porFamilia: {} },
-    mecanico: { ots: 0, horas: 0, horasSap: 0, horasEstim: 0, otsSap: 0, otsEstim: 0, dia: 0, noche: 0, libre: 0, porFamilia: {} },
+    aire: { ots: 0, horas: 0, horasSap: 0, horasEstim: 0, otsSap: 0, otsEstim: 0, dia: 0, noche: 0, libre: 0, altura: 0, alturaH: 0, porFamilia: {} },
+    mecanico: { ots: 0, horas: 0, horasSap: 0, horasEstim: 0, otsSap: 0, otsEstim: 0, dia: 0, noche: 0, libre: 0, altura: 0, alturaH: 0, porFamilia: {} },
     externo: { ots: 0 }, otro: { ots: 0 }, detalle: [], origen: 'proyeccion',
   };
   PLANES_SAP.forEach(pl => {
@@ -246,6 +255,7 @@ function capDemandaProy(mes) {
     if (fuente === 'sap') { g.horasSap += horas; g.otsSap += n; } else { g.horasEstim += horas; g.otsEstim += n; }
     const t = capTurnoObligatorio(pl.equipo, pl.denomOT || pl.desc) || 'libre';
     g[t] += horas;
+    if (capEsAltura(pl.equipo)) { g.altura += n; g.alturaH += horas; }
     const fam = capFamilia(pl.equipo) || '—';
     const f = g.porFamilia[fam] || (g.porFamilia[fam] = { ots: 0, horas: 0 });
     f.ots += n; f.horas += horas;
@@ -322,7 +332,7 @@ function capDemandaReal(mes) {
   if (!filas.length) return null;
   capIndices();
   const pe = capPlanesPorEquipo();
-  const mk = () => ({ ots: 0, horas: 0, horasSap: 0, horasEstim: 0, otsSap: 0, otsEstim: 0, dia: 0, noche: 0, libre: 0, porFamilia: {} });
+  const mk = () => ({ ots: 0, horas: 0, horasSap: 0, horasEstim: 0, otsSap: 0, otsEstim: 0, dia: 0, noche: 0, libre: 0, altura: 0, alturaH: 0, porFamilia: {} });
   const res = { aire: mk(), mecanico: mk(), externo: { ots: 0 }, otro: { ots: 0 }, detalle: [], origen: 'real', total: filas.length, cerradas: 0 };
   filas.forEach(o => {
     if (o[5]) res.cerradas++;
@@ -338,6 +348,7 @@ function capDemandaReal(mes) {
     if (c.fuente === 'estim') { g.horasEstim += horas; g.otsEstim++; } else { g.horasSap += horas; g.otsSap++; }
     const t = capTurnoObligatorio(o[1], texto) || 'libre';
     g[t] += horas;
+    if (capEsAltura(o[1])) { g.altura++; g.alturaH += horas; }
     const fam = capFamilia(o[1]) || '—';
     const f = g.porFamilia[fam] || (g.porFamilia[fam] = { ots: 0, horas: 0 });
     f.ots++; f.horas += horas;
@@ -349,7 +360,7 @@ function capDemandaReal(mes) {
 /* Mes real si SAP ya generó (casi) todas sus OTs; si no, proyección desde los planes. */
 const _capMemo = {};
 function capDemanda(mes) {
-  const k = mes + '|' + capState.params.persDefault;
+  const k = mes + '|' + capState.params.persDefault + '|' + (capState.params.hidrolavado ? 1 : 0);
   return _capMemo[k] || (_capMemo[k] = capDemandaSinCache(mes));
 }
 function capDemandaSinCache(mes) {
@@ -534,13 +545,20 @@ function capacidadHTML() {
   const conclusionHTML = `<div class="table-card" style="margin-top:16px;padding:16px"><b style="font-size:15px">¿Hace falta sumar técnicos?</b>
     <div style="font-size:12px;color:var(--color-muted);margin:2px 0 10px">Técnicos necesarios = (horas preventivas + reserva para reclamos) ÷ horas netas que rinde un técnico en el mes (${p.diasMes} turnos × ${(A.of.minNetosTurno / 60).toFixed(1)} h${p.ausentismo ? ', con ' + p.ausentismo + '% de ausencias' : ''}).</div>
     <div style="display:flex;flex-wrap:wrap;gap:12px">${concl('aire')}${concl('mecanico')}</div></div>`;
+  const altTot = g => meses.reduce((z, m) => z + capAnalisis(m).dem[g].altura, 0);
+  const altPico = meses.map(m => { const d = capAnalisis(m).dem; return { m, n: d.aire.altura + d.mecanico.altura }; }).reduce((a, b) => (b.n > a.n ? b : a));
+  const altResumen = `En el año: <b>${Math.round(altTot('aire'))}</b> de Aire y <b>${Math.round(altTot('mecanico'))}</b> de Mecánicos; el mes con más altura es <b>${capMesLbl(altPico.m)}</b> (${Math.round(altPico.n)} OTs). ${p.hidrolavado ? 'Incluye los Roof Top con hidrolavado.' : 'No incluye los Roof Top sin manga (solo cuentan con hidrolavado).'}`;
   const graficos = `<div class="table-card" style="margin-top:16px;padding:16px">
     <b>Disponibilidad de horas por mes</b>
     <div style="font-size:11.5px;color:var(--color-muted);margin-bottom:8px">Cada barra es la carga del mes (preventivos + reserva de reclamos + lo que queda libre); la línea es la capacidad neta. Si la barra pasa la línea, ese mes no alcanza.</div>
     <div style="display:flex;flex-wrap:wrap;gap:16px">
       <div style="flex:1;min-width:320px;height:290px;position:relative"><canvas id="cap-ch-aire"></canvas></div>
       <div style="flex:1;min-width:320px;height:290px;position:relative"><canvas id="cap-ch-mec"></canvas></div></div>
-    <div style="margin-top:18px;height:280px;position:relative"><canvas id="cap-ch-tec"></canvas></div></div>`;
+    <div style="margin-top:18px;height:280px;position:relative"><canvas id="cap-ch-tec"></canvas></div></div>
+    <div class="table-card" style="margin-top:16px;padding:16px">
+      <b>OTs de altura por mes</b>
+      <div style="font-size:11.5px;color:var(--color-muted);margin-bottom:8px">Equipos de la lista de trabajo en altura (Excel de Altura). ${altResumen}</div>
+      <div style="height:280px;position:relative"><canvas id="cap-ch-altura"></canvas></div></div>`;
 
   /* turnos */
   const t = g => {
@@ -580,6 +598,7 @@ function capacidadHTML() {
         ${capInput('tecAire', 'Técnicos Aire')}${capInput('tecMec', 'Técnicos Mecánicos')}${capInput('diasMes', 'Días trabajados/mes')}${capInput('turnoHs', 'Horas por turno')}
         ${capInput('almuerzoMin', 'Almuerzo/cena (min)')}${capInput('descansoMin', 'Descansos (min)')}${capInput('recorridasMin', 'Recorridas (min)')}${capInput('eficiencia', 'Eficiencia (%)')}
         ${capInput('persDefault', 'Personas por OT sin dato')}${capInput('ausentismo', 'Ausencias (% vacac./licencias)')}
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding-bottom:6px"><input type="checkbox" ${p.hidrolavado ? 'checked' : ''} onchange="capSetHidro(this.checked)"> Hidrolavados ON (Roof Top cuentan como altura)</label>
         ${capInput('reservaAire', 'Reserva Aire (h/mes)', { ph: rh ? Math.round(rh.aire) : '' })}${capInput('reservaMec', 'Reserva Mec. (h/mes)', { ph: rh ? Math.round(rh.mecanico) : '' })}
         <div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:11.5px;color:var(--color-muted)">Dotación</span>
           <button class="mant-tab${p.usarGrilla && grillaLista ? ' active' : ''}" ${capState.cargandoGrilla ? 'disabled' : ''} onclick="capUsarGrilla()">${capState.cargandoGrilla ? 'Consultando…' : (p.usarGrilla && grillaLista ? '✓ Grilla real del mes' : '🔄 Usar grilla real del mes')}</button></div>
@@ -649,7 +668,21 @@ function capDibujar() {
     { label: 'Mecánicos necesarios', data: serie('mecanico'), borderColor: '#6366f1', backgroundColor: '#6366f1', borderWidth: 2.5, tension: .2 },
     { label: 'Mecánicos: hoy', data: meses.map(() => p.tecMec), borderColor: '#6366f1', borderDash: [6, 4], borderWidth: 1.5, pointRadius: 0 },
   ] }, options: o2 }));
+  capDibujarAltura(an, lbl, base, txt);
 }
+function capDibujarAltura(an, lbl, base, txt) {
+  const el = document.getElementById('cap-ch-altura');
+  if (!el) return;
+  const o = base();
+  o.scales.x.stacked = true; o.scales.y.stacked = true;
+  o.scales.y.title = { display: true, text: 'OTs en altura / mes', color: txt };
+  o.plugins.tooltip = { callbacks: { afterLabel: c => { const a = an[c.dataIndex].dem[c.datasetIndex === 0 ? 'aire' : 'mecanico']; return `${Math.round(a.alturaH)} h-persona`; } } };
+  _capCharts.push(new Chart(el, { type: 'bar', data: { labels: lbl, datasets: [
+    { label: 'Aire', data: an.map(a => Math.round(a.dem.aire.altura)), backgroundColor: '#0096d6', stack: 'a' },
+    { label: 'Mecánicos', data: an.map(a => Math.round(a.dem.mecanico.altura)), backgroundColor: '#6366f1', stack: 'a' },
+  ] }, options: o }));
+}
+function capSetHidro(v) { capState.params.hidrolavado = !!v; capSaveParams(); capRender(); }
 function capRender() {
   const host = document.querySelector('#auditoria-content [data-pane="capacidad"]');
   if (host) { host.innerHTML = capacidadHTML(); capDibujar(); }
