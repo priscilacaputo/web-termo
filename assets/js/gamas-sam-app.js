@@ -143,21 +143,79 @@
     return r;
   }
 
+  /* ════════ Diagnóstico: ¿qué hojas de ruta hay que mejorar? ════════
+     Mejorar = tiene equipos vinculados (HDR_PLAN) y el texto se ve mal en SAM (texto corrido en suboperaciones,
+     renglones cortados, palabras pegadas o frecuencias sin encabezado). Revisar = tiene equipos y la estructura
+     ya es aceptable. Sin equipos = ningún plan la usa (baja prioridad). */
+  const PRIO = { mejorar: ['Mejorar', 0], revisar: ['Revisar', 1], baja: ['Sin equipos', 2], nousar: ['NO USAR', 3] };
+  const GLUE = /[a-záéíóúñ]{2,}\.[A-ZÁÉÍÓÚ]|\b(?:de|del|y|en|con|por)(?:drenaje|retorno|condensado|valores|funcionamiento|evaporador|termostato)\b/;
+  const noUsar = {};
+  if (typeof HDR_DATA !== 'undefined') HDR_DATA.forEach(h => { if (h.noUsar) noUsar[h.ruta + '/' + h.cont] = 1; });
+  const hechas = (() => { try { return JSON.parse(localStorage.getItem('gamasSamHechas') || '{}'); } catch (e) { return {}; } })();
+  const guardarHechas = () => { try { localStorage.setItem('gamasSamHechas', JSON.stringify(hechas)); } catch (e) { /* sin storage */ } };
+  const diagCache = {};
+  function diagnostico(k) {
+    if (diagCache[k]) return diagCache[k];
+    const h = HDR_GAMAS[k]; let ga = 0, li = 0, sb = 0, pasos = 0, sinEnc = 0, pegs = 0, conTexto = 0;
+    h.o.forEach(o => {
+      if (/log[ií]stica/i.test(o.d)) return;
+      if (o.ga || o.sb || o.li) conTexto++;
+      if (o.ga) { ga++; if ((o.pq || []).length > 1 && o.ga.length <= 1 && !o.ga[0].h) sinEnc++; }
+      if (o.li) li++; if (o.sb) sb++;
+      if (!o.ga && !o.sb && !o.li && o.pq && o.pq.length && o.t > 0) pasos++;
+      if (GLUE.test(JSON.stringify([o.ga, o.sb, o.li, o.d]))) pegs++;
+    });
+    const tipo = pasos >= 4 && conTexto <= 2 ? 'Un paso por operación (SAP Mobile)' : ga && !li && !sb ? 'Texto largo por frecuencia'
+      : sb ? 'Suboperaciones con texto corrido' : li ? 'Texto libre con renglones cortados' : pasos ? 'Pasos sueltos como operaciones' : 'Sin texto de tareas';
+    const ne = (equiposPorKey[k] || []).length, nu = !!noUsar[k] || /NO USAR/i.test(h.d), motivos = [];
+    if (nu) motivos.push('Marcada NO USAR: confirmar y dejarla fuera.');
+    if (tipo.startsWith('Sub')) motivos.push('El texto de las tareas está corrido dentro de suboperaciones (SAM lo une sin espacios).');
+    if (tipo.startsWith('Texto libre')) motivos.push('Gama en texto libre con renglones cortados: reescribir una tarea por línea.');
+    if (sinEnc) motivos.push(`${sinEnc} operación(es) mezclan frecuencias sin encabezado (mensual / trimestral…).`);
+    if (pegs) motivos.push(`${pegs} operación(es) con palabras o frases pegadas.`);
+    if (tipo.startsWith('Un paso') || tipo.startsWith('Pasos')) motivos.push('Estructura correcta (un paso por operación); verificar que el texto breve (40 caracteres) quede completo.');
+    if (tipo.startsWith('Sin texto')) motivos.push('No tiene texto de tareas en el export.');
+    const grave = pegs || sinEnc || tipo.startsWith('Sub') || tipo.startsWith('Texto libre');
+    const prio = nu ? 'nousar' : !ne ? 'baja' : grave ? 'mejorar' : 'revisar';
+    return (diagCache[k] = { prio, tipo, ne, motivos });
+  }
+
   /* ════════ UI ════════ */
+  function resumen() {
+    const c = { mejorar: 0, revisar: 0, baja: 0, nousar: 0 }; let eq = 0, hec = 0;
+    Object.keys(HDR_GAMAS).forEach(k => { const d = diagnostico(k); c[d.prio]++; if (d.prio === 'mejorar') { eq += d.ne; if (hechas[k]) hec++; } });
+    $('gsm-resumen').innerHTML = `<b>${c.mejorar}</b> para <b style="color:#b42318">mejorar</b> (${eq} equipos afectados · ${hec} ya marcadas como hechas) · ` +
+      `<b>${c.revisar}</b> para revisar · ${c.baja} sin equipos vinculados · ${c.nousar} NO USAR`;
+  }
   function listar() {
-    const q = norm($('gsm-buscar').value).trim();
-    const items = Object.keys(HDR_GAMAS).filter(k => opsConTexto(k).length).filter(k => {
+    const q = norm($('gsm-buscar').value).trim(), f = $('gsm-filtro').value;
+    const items = Object.keys(HDR_GAMAS).filter(k => {
+      const d = diagnostico(k);
+      if (f === 'mejorar' && !(d.prio === 'mejorar' && !hechas[k])) return false;
+      if (f === 'aprox' && !(d.prio === 'mejorar' || d.prio === 'revisar')) return false;
+      if (['revisar', 'baja', 'nousar'].includes(f) && d.prio !== f) return false;
+      if (f === 'hechas' && !hechas[k]) return false;
       if (!q) return true;
       const h = HDR_GAMAS[k];
       return norm(k + ' ' + h.d).includes(q) || (equiposPorKey[k] || []).some(e => norm(e).includes(q));
-    }).sort();
+    }).sort((a, b) => { const da = diagnostico(a), db = diagnostico(b);
+      return (hechas[a] ? 1 : 0) - (hechas[b] ? 1 : 0) || PRIO[da.prio][1] - PRIO[db.prio][1] || db.ne - da.ne || a.localeCompare(b, undefined, { numeric: true }); });
     $('gsm-lista').innerHTML = items.map(k => {
-      const h = HDR_GAMAS[k], n = opsConTexto(k).length, ne = (equiposPorKey[k] || []).length;
-      return `<button class="gsm-item${k === st.key ? ' on' : ''}" data-k="${esc(k)}"><b>${esc(k)}</b><span>${esc(h.d)}</span>` +
-        `<em>${n} oper.${ne ? ' · ' + ne + ' equipos' : ''}</em></button>`;
+      const h = HDR_GAMAS[k], n = opsConTexto(k).length, d = diagnostico(k);
+      return `<button class="gsm-item${k === st.key ? ' on' : ''}" data-k="${esc(k)}"><b>${esc(k)} <i class="gsm-tag gsm-${hechas[k] ? 'hecha' : d.prio}">${hechas[k] ? '✓ Hecha' : PRIO[d.prio][0]}</i></b><span>${esc(h.d)}</span>` +
+        `<em>${n} oper.${d.ne ? ' · ' + d.ne + ' equipos' : ''}</em></button>`;
     }).join('') || '<div class="gsm-vacio">Sin resultados.</div>';
     $('gsm-lista').querySelectorAll('.gsm-item').forEach(b => b.onclick = () => elegir(b.dataset.k));
     $('gsm-cuenta').textContent = items.length + ' hojas de ruta / contadores';
+    resumen();
+  }
+  function pintarDiag() {
+    if (!st.key) { $('gsm-diag').innerHTML = ''; return; }
+    const d = diagnostico(st.key), h = !!hechas[st.key];
+    $('gsm-diag').innerHTML = `<div class="gsm-diagbox gsm-b-${h ? 'hecha' : d.prio}"><b>${h ? '✓ Marcada como mejorada' : d.prio === 'mejorar' ? '⚠ Hay que mejorarla' : d.prio === 'revisar' ? 'Para revisar' : PRIO[d.prio][0]}</b> · ${esc(d.tipo)}` +
+      `${d.ne ? ` · ${d.ne} equipos la usan` : ' · ningún plan la usa'}<ul>${d.motivos.map(m => '<li>' + esc(m) + '</li>').join('')}</ul>` +
+      `<button class="prog-btn" id="gsm-hecha">${h ? 'Desmarcar' : '✓ Marcar como mejorada en SAP'}</button></div>`;
+    $('gsm-hecha').onclick = () => { if (hechas[st.key]) delete hechas[st.key]; else hechas[st.key] = 1; guardarHechas(); listar(); pintarDiag(); };
   }
   function elegir(k) {
     st.key = k; st.sel = null;
@@ -170,7 +228,7 @@
     st.ops = ops; st.sel = 0;
     const eq = equiposPorKey[k] || [];
     $('gsm-eq').innerHTML = eq.length ? 'Equipos con esta hoja de ruta: ' + esc(eq.slice(0, 14).join(', ')) + (eq.length > 14 ? ` … (+${eq.length - 14})` : '') : '';
-    listar(); render();
+    listar(); pintarDiag(); render();
   }
   function problemas(txt) {
     const P = [];
@@ -223,6 +281,7 @@
   function init() {
     if (!$('gsm-buscar')) return;
     $('gsm-buscar').oninput = listar;
+    $('gsm-filtro').onchange = listar;
     ['gsm-estilo', 'gsm-ancho', 'gsm-seg', 'gsm-auto', 'gsm-frec', 'gsm-titulo', 'gsm-blank'].forEach(id => $(id).onchange = render);
     $('gsm-sim').onchange = actualizar;
     $('gsm-salida').oninput = actualizar;

@@ -2075,6 +2075,15 @@
         .gsm-item,.gsm-op{text-align:left;border:1px solid var(--color-border);background:var(--color-surface);border-radius:8px;padding:7px 9px;cursor:pointer;font-size:12px;color:var(--color-text);display:flex;flex-direction:column;gap:1px}
         .gsm-item:hover,.gsm-op:hover{border-color:var(--color-sky)}
         .gsm-item.on,.gsm-op.on{background:var(--color-sky-light);border-color:var(--color-sky)}
+        .gsm-tag{font-style:normal;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;vertical-align:middle}
+        .gsm-mejorar{background:#fde2e2;color:#b42318} .gsm-revisar{background:#fff3cd;color:#8a5a00} .gsm-baja{background:#e8eef5;color:#5c7592}
+        .gsm-nousar{background:#3b3b3b;color:#fff} .gsm-hecha{background:#d9f5e6;color:#0b7a55}
+        .gsm-diagbox{border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;border:1px solid var(--color-border)}
+        .gsm-diagbox ul{margin:6px 0 8px 18px;padding:0} .gsm-diagbox li{margin:2px 0}
+        .gsm-b-mejorar{background:#fff4f4;border-color:#f3b5b5} .gsm-b-revisar{background:#fffbea;border-color:#f0dc99}
+        .gsm-b-hecha{background:#effaf4;border-color:#9fdcbb} .gsm-b-baja,.gsm-b-nousar{background:var(--color-surface)}
+        #gsm-filtro{width:100%;margin-top:6px;padding:6px;border:1px solid var(--color-border);border-radius:8px;font-size:12px}
+        #gsm-resumen{font-size:12px;margin-top:10px;padding:8px 10px;background:var(--color-surface);border-radius:8px;line-height:1.5}
         .gsm-item span{color:var(--color-muted)} .gsm-item em,.gsm-op em{font-style:normal;color:var(--color-muted);font-size:11px}
         #gsm-ops{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px} .gsm-op{flex-direction:row;gap:6px;align-items:baseline}
         .gsm-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}
@@ -2103,11 +2112,22 @@
         <div class="gsm-card">
           <h3>Hoja de ruta / contador</h3>
           <input id="gsm-buscar" type="search" placeholder="Buscar: ruta, descripción o equipo (AAC2083…)" />
+          <select id="gsm-filtro">
+            <option value="mejorar" selected>A mejorar (pendientes)</option>
+            <option value="aprox">A mejorar + a revisar</option>
+            <option value="revisar">Solo a revisar</option>
+            <option value="todas">Todas</option>
+            <option value="baja">Sin equipos vinculados</option>
+            <option value="nousar">NO USAR</option>
+            <option value="hechas">Ya mejoradas</option>
+          </select>
           <div class="gsm-meta" id="gsm-cuenta" style="margin-top:6px"></div>
           <div id="gsm-lista"></div>
         </div>
         <div class="gsm-card">
-          <h3>Operación</h3>
+          <div id="gsm-resumen"></div>
+          <div id="gsm-diag" style="margin-top:10px"></div>
+          <h3 style="margin-top:12px">Operación</h3>
           <div class="gsm-meta" id="gsm-eq" style="margin-bottom:8px"></div>
           <div id="gsm-ops"><span class="gsm-vacio">Elegí una hoja de ruta de la izquierda.</span></div>
           <div class="gsm-opts">
@@ -2615,6 +2635,6 @@
   <script src="assets/js/capacidad-app.js?v=10"></script>
   <script src="assets/js/nivelacion-app.js?v=11"></script>
   <script src="assets/js/hdr-gamas-data.js?v=4"></script>
-  <script src="assets/js/gamas-sam-app.js?v=4"></script>
+  <script src="assets/js/gamas-sam-app.js?v=5"></script>
 </body>
 </html>
