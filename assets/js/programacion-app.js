@@ -292,6 +292,7 @@ let progFiltroTurno  = '';
 let progFiltroRegla  = '';
 let progFiltroZona   = '';
 let progFiltroAltura = false;
+let progFiltroPrio = '';
 
 /* ─── Índice global equipo → registro (ubicación, denominación, tipo) ──
    Las demás secciones declaran sus datos con `const NOMBRE_DATA = [...]`
@@ -504,18 +505,38 @@ function progCompararClaves(a, b) {
   }
   return 0;
 }
+/* Prioridad SAP de la OT ("Muy alto (1)", "Alto (2)", "Medio (3)", "Bajo (4)") → 1..4; 0 si no viene. */
+function progParsePrioridad(v) {
+  const t = String(v == null ? '' : v).trim();
+  const m = t.match(/\((\d)\)\s*$/) || t.match(/^(\d)$/);
+  if (m) { const n = parseInt(m[1], 10); return n >= 1 && n <= 4 ? n : 0; }
+  const l = t.toLowerCase();
+  if (/muy alt/.test(l)) return 1;
+  if (/alt/.test(l)) return 2;
+  if (/medi/.test(l)) return 3;
+  if (/baj/.test(l)) return 4;
+  return 0;
+}
+const PROG_PRIO_NOMBRE = { 0: 'Sin prioridad', 1: 'Muy alta', 2: 'Alta', 3: 'Media', 4: 'Baja' };
+/* Peso de cada prioridad en el reparto: las poco frecuentes / más urgentes pesan más para que
+   ninguna guardia se quede con todas las OTs críticas (la Alta, que es la mayoría, pesa poco
+   porque ya está cubierta por el balance de carga total). */
+const PROG_PRIO_PESO = { 0: 0, 1: 6, 2: 1, 3: 4, 4: 4 };
+
 function progAsignarPendientes(pendientes, yaAsignados, fijasExtra) {
   if (!pendientes.length) return pendientes;
   const total = { 1: 0, 2: 0, 3: 0, 4: 0 };
   const altura = { 1: 0, 2: 0, 3: 0, 4: 0 };
   const zonaCount = { 1: {}, 2: {}, 3: {}, 4: {} };
   const ubicCount = { 1: {}, 2: {}, 3: {}, 4: {} };
+  const prioCnt = { 1: [0, 0, 0, 0, 0], 2: [0, 0, 0, 0, 0], 3: [0, 0, 0, 0, 0], 4: [0, 0, 0, 0, 0] };   // OTs por prioridad y guardia
   const sisEq = { 1: 0, 2: 0, 3: 0, 4: 0 };                 // equipos de sistemas de aire por guardia
   const sisIds = { 1: new Set(), 2: new Set(), 3: new Set(), 4: new Set() };   // sistemas por guardia
   const registrar = o => {
     const sis = progSistemaDeEquipo(o.equipo);
     if (sis) { sisEq[o.guardia]++; sisIds[o.guardia].add(sis.id); }
     total[o.guardia]++;
+    prioCnt[o.guardia][o.prio || 0]++;
     if (o.esAltura) altura[o.guardia]++;
     zonaCount[o.guardia][o.zona] = (zonaCount[o.guardia][o.zona] || 0) + 1;
     ubicCount[o.guardia][o.ubicacionTecnica] = (ubicCount[o.guardia][o.ubicacionTecnica] || 0) + 1;
@@ -616,6 +637,8 @@ function progAsignarPendientes(pendientes, yaAsignados, fijasExtra) {
     b.alt = b.items.filter(o => o.esAltura).length;
     b.sisIds = [...new Set(b.items.map(o => { const x = progSistemaDeEquipo(o.equipo); return x && x.id; }).filter(Boolean))];
     b.sisEq = b.items.filter(o => progSistemaDeEquipo(o.equipo)).length;
+    b.pr = [0, 0, 0, 0, 0];
+    b.items.forEach(o => b.pr[o.prio || 0]++);
   });
   /* Primero los sistemas de aire (de mayor a menor): se reparten buscando la misma
      cantidad de sistemas y de equipos de sistema por guardia. Después el resto de los
@@ -637,10 +660,12 @@ function progAsignarPendientes(pendientes, yaAsignados, fijasExtra) {
         sisEq[x] * b.sisEq                     // equipos de sistema parejos
         + 4 * sisIds[x].size * b.sisIds.length // cantidad de sistemas pareja
         + 0.8 * repeticion(b.items, x) * b.sisEq;   // rotar respecto de meses anteriores
+      const prioPen = x => { let c = 0; for (let p = 1; p <= 4; p++) if (b.pr[p]) c += PROG_PRIO_PESO[p] * prioCnt[x][p] * b.pr[p]; return c; };
       const costo = b.sisEq ? costoSistema : x => {
         const prox = Math.min(10, (zonaCount[x][o0.zona] || 0) + 0.5 * (ubicCount[x][o0.ubicacionTecnica] || 0));
         return 6 * altura[x] * b.alt          // a) altura pareja
           + total[x] * b.n                     // b) carga pareja
+          + prioPen(x)                         // b2) reparto parejo por prioridad de la OT
           + repeticion(b.items, x) * b.n       // c) rotar respecto de meses anteriores
           - 0.2 * prox * b.n;                  // d) cercanía
       };
@@ -683,6 +708,7 @@ function progHandleFile(file) {
         'texto breve': 'texto_ot', 'texto breve de la orden': 'texto_ot', 'texto breve orden': 'texto_ot',
         'hoja de ruta para mantenimiento': 'hoja_ruta', 'posición mantenim.': 'pos', 'posicion mantenim.': 'pos',
         'posición de mantenimiento': 'pos', 'fecha de inicio': 'fecha_inicio', 'inicio extremo': 'fecha_inicio',
+        'prioridad': 'prioridad',
         'puesto de trabajo principal': 'puesto_trabajo', 'puesto de trabajo': 'puesto_trabajo',
       };
 
@@ -715,6 +741,7 @@ function progHandleFile(file) {
         obj.hr = mHR ? `${mHR[1].toUpperCase()}/${mHR[2]}` : '';
         const mPos = String(obj.pos || '').match(/(\d+)\)?\s*$/);
         obj.posNum = mPos ? mPos[1] : '';
+        obj.prio = progParsePrioridad(obj.prioridad);
         return obj;
       }).filter(o => String(o.equipo || '').trim() !== '');
 
@@ -758,17 +785,17 @@ function progHandleFile(file) {
            una regla nueva como Sala VIP), se vuelve a repartir. */
         const guardiaValida = prev && (prev.guardia == null || !turno || PROG_POOL_TURNO[turno].includes(prev.guardia));
         if (prev && guardiaValida) {
-          const item = { ...prev, equipo, denominacion, ot_num: otNum, textoOT: r.texto_ot || prev.textoOT || '', hr: r.hr || prev.hr || '', pos: r.posNum || prev.pos || '', fechaInicio: r.fecha_inicio || prev.fechaInicio || '', regla, turno, esAltura, zona, ubicacionTecnica, puesto, grupo };
+          const item = { ...prev, equipo, denominacion, ot_num: otNum, textoOT: r.texto_ot || prev.textoOT || '', hr: r.hr || prev.hr || '', pos: r.posNum || prev.pos || '', fechaInicio: r.fecha_inicio || prev.fechaInicio || '', prio: r.prio || 0, regla, turno, esAltura, zona, ubicacionTecnica, puesto, grupo };
           merged.push(item);
           yaAsignados.push(item);
         } else if (prev) {
-          const item = { ...prev, equipo, denominacion, ot_num: otNum, textoOT: r.texto_ot || prev.textoOT || '', hr: r.hr || prev.hr || '', pos: r.posNum || prev.pos || '', fechaInicio: r.fecha_inicio || prev.fechaInicio || '', regla, turno, esAltura, zona, ubicacionTecnica, puesto, grupo, guardia: null };
+          const item = { ...prev, equipo, denominacion, ot_num: otNum, textoOT: r.texto_ot || prev.textoOT || '', hr: r.hr || prev.hr || '', pos: r.posNum || prev.pos || '', fechaInicio: r.fecha_inicio || prev.fechaInicio || '', prio: r.prio || 0, regla, turno, esAltura, zona, ubicacionTecnica, puesto, grupo, guardia: null };
           merged.push(item);
           pendientes.push(item);
         } else {
           const item = {
             id: equipo + '#' + i + '#' + Date.now(),
-            equipo, denominacion, ot_num: otNum, textoOT: r.texto_ot || '', hr: r.hr || '', pos: r.posNum || '', fechaInicio: r.fecha_inicio || '',
+            equipo, denominacion, ot_num: otNum, textoOT: r.texto_ot || '', hr: r.hr || '', pos: r.posNum || '', fechaInicio: r.fecha_inicio || '', prio: r.prio || 0,
             regla, turno, esAltura, zona, ubicacionTecnica, puesto, grupo,
             guardia: null,
           };
@@ -827,6 +854,7 @@ function progFiltered() {
     if (progFiltroRegla && progFiltroRegla !== '__sin_regla__' && o.regla !== progFiltroRegla) return false;
     if (progFiltroZona && o.zona !== progFiltroZona) return false;
     if (progFiltroAltura && !o.esAltura) return false;
+    if (progFiltroPrio !== '' && (o.prio || 0) !== Number(progFiltroPrio)) return false;
     if (progSearch) {
       const hay = (o.equipo + ' ' + o.denominacion).toLowerCase();
       if (!hay.includes(progSearch)) return false;
@@ -972,6 +1000,7 @@ function renderProgStats() {
     { label: '⛰️ Pagan altura', value: altura, icon: '⛰️', color: '#92400e' },
     { label: '⛰️ Altura Aire', value: alturaAire, icon: '💨', color: '#0369a1' },
     { label: '⛰️ Altura Mecánicos', value: alturaMecanico, icon: '🔧', color: '#b45309' },
+    ...(progState.ots.some(o => o.prio) ? [{ label: '🚩 Prioridad (P1 · P2 · P3+)', value: `${progState.ots.filter(o => o.prio === 1).length} · ${progState.ots.filter(o => o.prio === 2).length} · ${progState.ots.filter(o => o.prio >= 3).length}`, icon: '🚩', color: '#dc2626' }] : []),
     { label: '🔗 Sistemas de aire (paquete)', value: sistemasEsteMes, icon: '🔗', color: '#6366f1' },
     { label: `📅 Gama segura${progState.ots.some(o => o.gamaDudosa || !o.gama) ? ' · ' + progState.ots.filter(o => o.gamaDudosa || !o.gama).length + ' a confirmar' : ''}`, value: `${progState.ots.filter(o => o.gama && !o.gamaDudosa).length} / ${total}`, icon: '📅', color: '#8b5cf6' },
   ];
@@ -1001,7 +1030,7 @@ function renderProgGuardias() {
     const sis = progSistemaDeEquipo(o.equipo);
     if (sis) (sisMiembrosEsteMes[sis.id] = sisMiembrosEsteMes[sis.id] || new Set()).add(o.equipo);
   });
-  const hayFiltrosActivos = !!(progSearch || progFiltroTurno || progFiltroRegla || progFiltroZona || progFiltroAltura);
+  const hayFiltrosActivos = !!(progSearch || progFiltroTurno || progFiltroRegla || progFiltroZona || progFiltroAltura || progFiltroPrio !== '');
 
   const mesOts = progState.otsMes || progState.mes;
   const mesAnt = progMesesAnteriores(mesOts, 1)[0];
@@ -1017,6 +1046,7 @@ function renderProgGuardias() {
     const alturaAireEnGuardia = items.filter(o => o.esAltura && o.grupo === 'aire').length;
     const alturaMecEnGuardia  = items.filter(o => o.esAltura && o.grupo === 'mecanico').length;
     const sisEnGuardia = new Set(items.map(o => { const s = progSistemaDeEquipo(o.equipo); return s && s.id; }).filter(Boolean));
+    const prioTxt = [1, 2, 3, 4].map(p => [p, items.filter(o => o.prio === p).length]).filter(([, n]) => n).map(([p, n]) => `P${p}: ${n}`).join(' · ');
     const eqSisEnGuardia = items.filter(o => progSistemaDeEquipo(o.equipo)).length;
 
     const rows = items.length
@@ -1028,6 +1058,7 @@ function renderProgGuardias() {
               <span class="prog-ot-zona">📍 ${o.zona}</span>
             </div>
             ${progGamaBadge(o)}
+            ${o.prio ? `<span class="prog-regla-badge ${o.prio === 1 ? 'noche' : o.prio === 2 ? 'manana' : 'libre'}" title="Prioridad SAP: ${PROG_PRIO_NOMBRE[o.prio]} (${o.prio})">P${o.prio}</span>` : ''}
             ${o.esAltura ? `<span class="prog-altura-badge" title="Paga altura">⛰️</span>` : ''}
             ${(() => {
               const sis = progSistemaDeEquipo(o.equipo);
@@ -1050,7 +1081,7 @@ function renderProgGuardias() {
         <div class="prog-guardia-header">
           <span class="prog-guardia-name">${progGuardiaLabel(gid)}</span>
           <span class="turno-badge ${turno === 'noche' ? 'noche' : 'manana'}">${turno === 'noche' ? '🌙 Noche' : '☀️ Mañana'}</span>
-          <span class="prog-guardia-count"><b>${items.length} OT${items.length === 1 ? '' : 's'}</b>: 💨 ${aireEnGuardia} aire · 🔧 ${mecEnGuardia} mec${alturaEnGuardia ? ` &nbsp;|&nbsp; ⛰️ <b>${alturaEnGuardia}</b> altura: 💨 ${alturaAireEnGuardia} · 🔧 ${alturaMecEnGuardia}` : ''}${sisEnGuardia.size ? ` &nbsp;|&nbsp; 🔗 ${sisEnGuardia.size} sistema${sisEnGuardia.size === 1 ? '' : 's'} (${eqSisEnGuardia} eq.)` : ''}${Object.keys(histAnt).length ? ` &nbsp;|&nbsp; <span title="Equipos que esta guardia ya tuvo en ${progMesLegible(mesAnt)}">🔄 ${repiten} repiten de ${progMesLegible(mesAnt)}</span>` : ''}</span>
+          <span class="prog-guardia-count"><b>${items.length} OT${items.length === 1 ? '' : 's'}</b>: 💨 ${aireEnGuardia} aire · 🔧 ${mecEnGuardia} mec${prioTxt ? ` &nbsp;|&nbsp; <span title="OTs por prioridad SAP">🚩 ${prioTxt}</span>` : ''}${alturaEnGuardia ? ` &nbsp;|&nbsp; ⛰️ <b>${alturaEnGuardia}</b> altura: 💨 ${alturaAireEnGuardia} · 🔧 ${alturaMecEnGuardia}` : ''}${sisEnGuardia.size ? ` &nbsp;|&nbsp; 🔗 ${sisEnGuardia.size} sistema${sisEnGuardia.size === 1 ? '' : 's'} (${eqSisEnGuardia} eq.)` : ''}${Object.keys(histAnt).length ? ` &nbsp;|&nbsp; <span title="Equipos que esta guardia ya tuvo en ${progMesLegible(mesAnt)}">🔄 ${repiten} repiten de ${progMesLegible(mesAnt)}</span>` : ''}</span>
         </div>
         <div class="prog-guardia-list">${rows}</div>
       </div>
@@ -1555,6 +1586,7 @@ function progExportExcel() {
       'Tareas adicionales al básico': progAdicionalDe(o),
       'Gama según': o.gamaFuente || '',
       'Hoja de ruta': o.hr || '',
+      'Prioridad': o.prio ? `${PROG_PRIO_NOMBRE[o.prio]} (${o.prio})` : '',
       'Zona': o.zona,
       'Ubicación técnica': o.ubicacionTecnica || '',
       'Sistema de aire': (progSistemaDeEquipo(o.equipo) || {}).nombre || '',
@@ -1654,6 +1686,10 @@ function progToast(msg, type = 'success') {
   });
   document.getElementById('prog-filter-zona').addEventListener('change', function () {
     progFiltroZona = this.value;
+    renderProgGuardias();
+  });
+  document.getElementById('prog-filter-prio').addEventListener('change', function () {
+    progFiltroPrio = this.value;
     renderProgGuardias();
   });
   document.getElementById('prog-filter-altura').addEventListener('click', function () {
