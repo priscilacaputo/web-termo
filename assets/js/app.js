@@ -395,6 +395,7 @@ btnExport.addEventListener("click", () => {
    página sin wiring extra: click en la miniatura abre en grande, click
    en la imagen grande alterna a tamaño real (scrolleable). ────────── */
 (function () {
+  let historyPushed = false;
   function openImgLightbox(src, caption) {
     const overlay = document.getElementById('img-lightbox-overlay');
     if (!overlay) return;
@@ -404,12 +405,23 @@ btnExport.addEventListener("click", () => {
     overlay.classList.remove('zoomed-active');
     document.getElementById('img-lightbox-caption').textContent = caption || '';
     overlay.classList.add('open');
+    // Empuja un estado de historial para que el botón/gesto "atrás" del
+    // celular cierre la imagen en vez de salir de la página.
+    history.pushState({ imgLightboxOpen: true }, '');
+    historyPushed = true;
   }
-  function closeImgLightbox() {
+  function closeImgLightbox(fromPopstate) {
     const overlay = document.getElementById('img-lightbox-overlay');
-    if (!overlay) return;
+    if (!overlay || !overlay.classList.contains('open')) return;
     overlay.classList.remove('open');
     document.getElementById('img-lightbox-img').src = '';
+    if (historyPushed) {
+      historyPushed = false;
+      // Si el cierre vino de "atrás" el estado ya se consumió solo;
+      // si fue por X/fondo/Esc, lo sacamos nosotros para no dejar un
+      // paso fantasma en el historial.
+      if (!fromPopstate) history.back();
+    }
   }
   document.addEventListener('click', (e) => {
     const thumb = e.target.closest('.pguia-fig img');
@@ -420,7 +432,7 @@ btnExport.addEventListener("click", () => {
       return;
     }
     if (e.target.id === 'img-lightbox-close' || e.target.id === 'img-lightbox-overlay') {
-      closeImgLightbox();
+      closeImgLightbox(false);
       return;
     }
     if (e.target.id === 'img-lightbox-img') {
@@ -429,6 +441,9 @@ btnExport.addEventListener("click", () => {
     }
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeImgLightbox();
+    if (e.key === 'Escape') closeImgLightbox(false);
+  });
+  window.addEventListener('popstate', () => {
+    closeImgLightbox(true);
   });
 })();
