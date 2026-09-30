@@ -1108,7 +1108,7 @@ function renderProgGuardias() {
    Top…"). El texto de la OT en cambio es el del plan ("MP 1M-3M-1A Roof Top"),
    que no dice cuál toca. Por eso, en orden de confianza:
      1. Operaciones de la OT: primero lo que se haya cargado a mano este mes
-        (progState.opsOT, botón "Actualizar operaciones"); si no, el maestro
+        (progState.opsOT, ya sin botón de carga); si no, el maestro
         OPS_SAP_POR_ORDEN (ops-por-orden-data.js) — la MISMA "lista de
         operaciones" (IW49) que ya usa Auditoría SAP para OPS_SAP_RESUMEN.
         SAP crea las OTs preventivas con antelación, así que la mayoría de
@@ -1184,7 +1184,7 @@ function progGamaPorHojaDeRuta(o) {
       return { gama: progCicloNombre([...mayores][0] * 30), incluye: [], fuente: `ciclo del plan (hoja de ruta ${mixto}, toma ${n}, deducido del historial)` };
     }
   }
-  return { gama: null, incluye: [], mixto, fuente: `hoja de ruta de varios paquetes (${mixto}) y SAP todavía no le asignó operaciones: revisar en SAP o cargar un export de operaciones más nuevo` };
+  return { gama: null, incluye: [], mixto, fuente: `hoja de ruta de varios paquetes (${mixto}) y SAP todavía no le asignó operaciones: revisar en SAP` };
 }
 function progGamaDe(o) {
   const orden = PROG_FRECUENCIAS.map(([k]) => k);
@@ -1210,7 +1210,7 @@ function progGamaDe(o) {
   const bs = [...new Set(pl.map(p => p.realBucket))];
   if (bs.length === 1) return { gama: bs[0], incluye: [], dudosa: ft.length > 1, fuente: 'periodicidad real del plan (IP24)' + (ft.length > 1 ? ` · el plan combina ${ft.join('-')}: esta OT puede ser de un paquete mayor, confirmá con las operaciones` : '') };
   if (porHR) return porHR;
-  if (ft.length > 1) return { gama: null, incluye: [], fuente: `plan mixto (${ft.join('-')}) y SAP todavía no le asignó operaciones: revisar en SAP o cargar un export de operaciones más nuevo` };
+  if (ft.length > 1) return { gama: null, incluye: [], fuente: `plan mixto (${ft.join('-')}) y SAP todavía no le asignó operaciones: revisar en SAP` };
   return { gama: null, incluye: [], fuente: 'sin dato: ni el texto de la OT ni el plan dicen la frecuencia; SAP todavía no le asignó operaciones' };
 }
 function progCalcGamas() {
@@ -1222,44 +1222,6 @@ function progGamaBadge(o) {
   const tit = `Gama ${o.gama}${o.gamaIncluye && o.gamaIncluye.length ? ' (incluye ' + o.gamaIncluye.join(', ') + ')' : ''} — según ${o.gamaFuente}`;
   return `<span class="prog-regla-badge" style="background:${c}1f;color:${c};border:1px ${o.gamaDudosa ? 'dashed' : 'solid'} ${c}${o.gamaDudosa ? '' : '55'}" title="${tit.replace(/"/g, '&quot;')}">📅 ${o.gama}${o.gamaIncluye && o.gamaIncluye.length ? ' +' : ''}${o.gamaDudosa ? '?' : ''}</span>`;
 }
-/* Botón "Actualizar operaciones" (opcional): normalmente no hace falta — OPS_SAP_POR_ORDEN
-   (gama-ciclos-data.js / ops-por-orden-data.js) ya trae las operaciones de casi todas las OTs,
-   porque SAP las crea con antelación. Sirve solo si una OT es tan nueva que SAP recién le asignó
-   la orden y todavía no está en ese maestro: acá se pega un export fresco de "lista de
-   operaciones" (IW49 / IW37N, columnas Orden + Texto breve operación) y se prioriza sobre el
-   maestro para las OTs de este mes. */
-function progHandleOps(file) {
-  if (typeof XLSX === 'undefined') { progToast('❌ La librería para leer Excel no está disponible.', 'error'); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const wb = XLSX.read(e.target.result, { type: 'array' });
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
-      const hs = Object.keys(rows[0] || {});
-      const norm = h => String(h).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const cOrden = hs.find(h => norm(h) === 'orden');
-      const cTexto = hs.find(h => /texto breve operacion|descripcion operacion|texto breve op/.test(norm(h))) || hs.find(h => norm(h) === 'texto breve');
-      if (!cOrden || !cTexto) { progToast('❌ No encontré las columnas "Orden" y "Texto breve operación".\nColumnas: ' + hs.join(', '), 'error'); return; }
-      const cargadas = new Set(progState.ots.map(o => progNormOT(o.ot_num)).filter(Boolean));
-      const mapa = {};
-      rows.forEach(r => {
-        const k = progNormOT(r[cOrden]);
-        if (!k || (cargadas.size && !cargadas.has(k))) return;
-        (mapa[k] = mapa[k] || []).push(String(r[cTexto] || '').trim());
-      });
-      progState.opsOT = Object.assign({}, progState.opsOT || {}, mapa);
-      progCalcGamas();
-      progSave();
-      renderProgramacion();
-      const con = progState.ots.filter(o => o.gama && !o.gamaDudosa).length;
-      progToast(`✓ Operaciones de ${Object.keys(mapa).length} OTs leídas. Gama segura en ${con} de ${progState.ots.length} OTs.`, 'success');
-    } catch (err) {
-      progToast('❌ Error al leer el archivo: ' + err.message, 'error');
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
 /* Mantenimiento básico de una OT = el paquete de MENOR frecuencia de su hoja de ruta (o del
    texto del plan). Si la gama de la OT es mayor, esa toma agrega tareas adicionales. */
 function progBasicoDe(o) {
@@ -1650,17 +1612,6 @@ function progToast(msg, type = 'success') {
   });
 
   document.getElementById('prog-export-btn').addEventListener('click', progExportExcel);
-  const opsBtn = document.getElementById('prog-ops-btn');
-  if (opsBtn) {
-    opsBtn.addEventListener('click', () => {
-      if (!progState.ots.length) { progToast('Primero cargá el Excel del mes.', 'error'); return; }
-      document.getElementById('prog-ops-input').click();
-    });
-    document.getElementById('prog-ops-input').addEventListener('change', function () {
-      const file = this.files[0]; this.value = '';
-      if (file) progHandleOps(file);
-    });
-  }
   document.getElementById('prog-reset-btn').addEventListener('click', progReset);
   const reBtn = document.getElementById('prog-reprogramar-btn');
   if (reBtn) reBtn.addEventListener('click', () => progReprogramar(false));
