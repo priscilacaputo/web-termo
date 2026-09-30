@@ -622,6 +622,7 @@ function capacidadHTML() {
         <li>Si la hoja de ruta no trae horas confiables se usa la regla del Planificador (${Math.round(A.dem.aire.otsEstim + A.dem.mecanico.otsEstim)} OTs) — es la parte menos firme del estudio.</li>
         <li>No se descuenta el ahorro de tocar un sistema completo de aire en una sola visita, ni se suma el traslado entre equipos: la eficiencia (${p.eficiencia}%) es el único colchón para eso.</li>
         <li>Los supervisores no cuentan como mano de obra. Las tareas pendientes de meses anteriores no se arrastran al mes siguiente.</li></ul></div>
+    ${typeof nivHTML === 'function' ? nivHTML() : ''}
   </div>`;
 }
 
@@ -669,6 +670,7 @@ function capDibujar() {
     { label: 'Mecánicos: hoy', data: meses.map(() => p.tecMec), borderColor: '#6366f1', borderDash: [6, 4], borderWidth: 1.5, pointRadius: 0 },
   ] }, options: o2 }));
   capDibujarAltura(an, lbl, base, txt);
+  if (typeof nivDibujar === 'function') nivDibujar(txt, base);
 }
 function capDibujarAltura(an, lbl, base, txt) {
   const el = document.getElementById('cap-ch-altura');
