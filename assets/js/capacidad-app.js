@@ -211,14 +211,14 @@ function capTurnoObligatorio(equipo, texto) {
   try { const r = progClasificar(equipo, texto, ''); return r && r.turno ? (r.turno === 'noche' ? 'noche' : 'dia') : null; }
   catch (e) { return null; }
 }
-/* Demanda de un mes: {aire:{ots,horas,...}, mecanico:{...}, externo:{ots}, otro:{ots}, detalle:[…]} */
-function capDemanda(mes) {
+/* Proyección desde los planes (PLANES_SAP) — se usa cuando SAP todavía no generó las OTs de ese mes. */
+function capDemandaProy(mes) {
   capIndices();
   const p = capState.params;
   const res = {
     aire: { ots: 0, horas: 0, horasSap: 0, horasEstim: 0, otsSap: 0, otsEstim: 0, dia: 0, noche: 0, libre: 0, porFamilia: {} },
     mecanico: { ots: 0, horas: 0, horasSap: 0, horasEstim: 0, otsSap: 0, otsEstim: 0, dia: 0, noche: 0, libre: 0, porFamilia: {} },
-    externo: { ots: 0 }, otro: { ots: 0 }, detalle: [],
+    externo: { ots: 0 }, otro: { ots: 0 }, detalle: [], origen: 'proyeccion',
   };
   PLANES_SAP.forEach(pl => {
     if (pl.equipoBaja || pl.sinEquipo) return;
@@ -251,6 +251,112 @@ function capDemanda(mes) {
       hhPorToma: Math.round(minPersona / 6) / 10, personas: nPers, horas: Math.round(horas * 10) / 10, fuente, ruta: hp ? hp.ruta + '/' + hp.cont : '', turno: t });
   });
   return res;
+}
+
+
+/* ─── Demanda REAL: las OTs que SAP ya programó (PROG_ANUAL, export "Órdenes de mantenimiento") ─── */
+const CAP_TOPE_VISITA_MIN = 8 * 60;
+function capFrecsDeOT(orden, texto) {
+  const key = String(orden);
+  const ops = (typeof OPS_SAP_POR_ORDEN !== 'undefined') ? OPS_SAP_POR_ORDEN[key] : null;
+  if (ops && ops.length && typeof progFrecuenciasDeTexto === 'function') {
+    const fs = [...new Set(ops.flatMap(progFrecuenciasDeTexto))];
+    if (fs.length) return { fs, fuente: 'ops' };
+  }
+  if (typeof progFrecuenciasDeTexto === 'function') {
+    const ft = [...new Set(progFrecuenciasDeTexto(texto))];
+    if (!ft.length && /(^|[^0-9])1\s*d([^a-z]|$)|diari/i.test(texto)) ft.push('Diaria');   // "MP 1D Mangas…": ronda diaria
+    if (ft.length === 1) return { fs: ft, fuente: 'texto' };
+  }
+  return null;
+}
+function capCostoConBuckets(entry, buckets) {
+  const pf = entry.porFrec || {};
+  const base = pf._base || { trab: 0, np: 0 };
+  let min = base.trab || 0, np = Math.max(1, entry.nPers || 1, base.np || 0), algo = min > 0;
+  buckets.forEach(b => { const x = pf[b]; if (x && x.trab > 0) { min += x.trab; np = Math.max(np, x.np || 0); algo = true; } });
+  if (!algo || min / np > CAP_TOPE_VISITA_MIN) return { ok: false, nPers: np };
+  return { ok: true, min, nPers: np };
+}
+/* Costo (min-persona) de una OT real: 1) operaciones de la OT en SAP, 2) texto con una sola frecuencia,
+   3) costo promedio del ciclo del plan que apunta a esa hoja de ruta, 4) estimación por regla. */
+function capCostoOT(o, texto, planesPorEquipo) {
+  const entry = _capHdrEntry.get(o[4]);
+  if (entry) {
+    const f = capFrecsDeOT(o[0], texto);
+    if (f) { const c = capCostoConBuckets(entry, f.fs); if (c.ok) return { min: c.min, nPers: c.nPers, fuente: f.fuente }; }
+    /* ronda diaria sin horas en la hoja de ruta: 30 min-persona (estimado), no el costo de otros paquetes del plan */
+    if (f && f.fs.length === 1 && f.fs[0] === 'Diaria') return { min: 30, nPers: 1, fuente: 'estim' };
+    const pl = (planesPorEquipo.get(o[1]) || []).find(x => { const hp = _capHdrPorPlan.get(x.plan); return hp && hp.ruta + '/' + hp.cont === o[4]; });
+    if (pl) { const c = capCostoToma(entry, capFrecuencias(pl)); if (c.ok) return { min: c.min, nPers: c.nPers, fuente: 'ciclo' }; }
+  }
+  /* La hoja de ruta de la OT es vieja/agrupada: se usa la del plan vigente del equipo que más se parece al texto */
+  const tOT = (typeof hdrTokens === 'function') ? hdrTokens(texto) : new Set();
+  let mejor = null;
+  (planesPorEquipo.get(o[1]) || []).forEach(x => {
+    const hp = _capHdrPorPlan.get(x.plan);
+    if (!hp || !hp.entry) return;
+    const c = capCostoToma(hp.entry, capFrecuencias(x));
+    if (!c.ok) return;
+    const sc = tOT.size && typeof hdrJaccard === 'function' ? hdrJaccard(tOT, hdrTokens(x.desc)) : 0;
+    if (!mejor || sc > mejor.sc) mejor = { sc, c };
+  });
+  if (mejor) return { min: mejor.c.min, nPers: mejor.c.nPers, fuente: 'ciclo' };
+  const base = (typeof planDuracionEstimada === 'function') ? planDuracionEstimada(texto, o[1]) : 90;
+  return { min: base, nPers: capState.params.persDefault, fuente: 'estim' };
+}
+let _capPlanesEq = null;
+function capPlanesPorEquipo() {
+  if (_capPlanesEq) return _capPlanesEq;
+  _capPlanesEq = new Map();
+  PLANES_SAP.forEach(pl => { const a = _capPlanesEq.get(pl.equipo) || []; a.push(pl); _capPlanesEq.set(pl.equipo, a); });
+  return _capPlanesEq;
+}
+function capOtsRealesDelMes(mes) {
+  return (typeof PROG_ANUAL === 'undefined') ? [] : PROG_ANUAL.filas.filter(o => o[3].slice(0, 7) === mes);
+}
+function capDemandaReal(mes) {
+  const filas = capOtsRealesDelMes(mes);
+  if (!filas.length) return null;
+  capIndices();
+  const pe = capPlanesPorEquipo();
+  const mk = () => ({ ots: 0, horas: 0, horasSap: 0, horasEstim: 0, otsSap: 0, otsEstim: 0, dia: 0, noche: 0, libre: 0, porFamilia: {} });
+  const res = { aire: mk(), mecanico: mk(), externo: { ots: 0 }, otro: { ots: 0 }, detalle: [], origen: 'real', total: filas.length, cerradas: 0 };
+  filas.forEach(o => {
+    if (o[5]) res.cerradas++;
+    const texto = PROG_ANUAL.textos[o[6]];
+    const entry = _capHdrEntry.get(o[4]);
+    const moex = (entry && (entry.puesto === 'MOEX' || /moex/i.test(entry.desc))) || /moex/i.test(texto);
+    let gremio = o[2] === 'AUX_TER' || o[2] === 'AUA_TER' ? 'aire' : (o[2] === 'AUX_MEC' || o[2] === 'AUE_MEC' ? 'mecanico' : 'otro');
+    if (moex) gremio = 'externo';
+    if (gremio === 'externo' || gremio === 'otro') { res[gremio].ots++; return; }
+    const c = capCostoOT(o, texto, pe);
+    const horas = c.min / 60, g = res[gremio];
+    g.ots++; g.horas += horas;
+    if (c.fuente === 'estim') { g.horasEstim += horas; g.otsEstim++; } else { g.horasSap += horas; g.otsSap++; }
+    const t = capTurnoObligatorio(o[1], texto) || 'libre';
+    g[t] += horas;
+    const fam = capFamilia(o[1]) || '—';
+    const f = g.porFamilia[fam] || (g.porFamilia[fam] = { ots: 0, horas: 0 });
+    f.ots++; f.horas += horas;
+    res.detalle.push({ gremio, plan: '', pos: '', orden: o[0], fecha: o[3], cerrada: o[5], equipo: o[1], desc: texto, declara: c.fuente, tomas: 1,
+      hhPorToma: Math.round(c.min / 6) / 10, personas: c.nPers, horas: Math.round(horas * 10) / 10, fuente: c.fuente === 'estim' ? 'estim' : 'sap', ruta: o[4], turno: t });
+  });
+  return res;
+}
+/* Mes real si SAP ya generó (casi) todas sus OTs; si no, proyección desde los planes. */
+const _capMemo = {};
+function capDemanda(mes) {
+  const k = mes + '|' + capState.params.persDefault;
+  return _capMemo[k] || (_capMemo[k] = capDemandaSinCache(mes));
+}
+function capDemandaSinCache(mes) {
+  const real = capDemandaReal(mes);
+  const proy = capDemandaProy(mes);
+  const totProy = proy.aire.ots + proy.mecanico.ots + proy.externo.ots + proy.otro.ots;
+  if (real && real.total >= 0.6 * totProy) { real.proyOts = totProy; return real; }
+  proy.realOts = real ? real.total : 0;
+  return proy;
 }
 
 /* ═══════════ HISTÓRICO DE CORRECTIVOS (para dimensionar la reserva) ═══════════ */
@@ -309,6 +415,12 @@ function capMesesSiguientes(n) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
 }
+/* Los 12 meses del año de la programación (o los próximos 12 si no hay programación cargada). */
+function capMesesAnalisis() {
+  if (typeof PROG_ANUAL === 'undefined' || !PROG_ANUAL.filas.length) return capMesesSiguientes(12);
+  const y = PROG_ANUAL.filas[0][3].slice(0, 4);
+  return Array.from({ length: 12 }, (_, i) => `${y}-${String(i + 1).padStart(2, '0')}`);
+}
 function capMesLbl(m) { const [y, mo] = m.split('-'); return `${CAP_MESES_LBL[+mo - 1]} ${y}`; }
 const capFmtH = h => Math.round(h).toLocaleString('es-AR') + ' h';
 const capFmtPct = x => (isFinite(x) ? Math.round(x * 100) : 0) + '%';
@@ -350,11 +462,14 @@ function capacidadHTML() {
   if (typeof PLANES_SAP === 'undefined' || typeof HDR_DATA === 'undefined' || typeof HDR_PLAN === 'undefined') {
     return '<div class="empty-state"><p>Faltan los maestros de planes / hojas de ruta.</p></div>';
   }
-  if (!capState.mes) capState.mes = capMesesSiguientes(1)[0];
+  if (!capState.mes) {
+    const lista = capMesesAnalisis(), hoy = new Date().toISOString().slice(0, 7);
+    capState.mes = lista.includes(hoy) ? hoy : lista[0];
+  }
   if (!capState.hist) capCargarHist();
   const mes = capState.mes, p = capState.params;
   const A = capAnalisis(mes);
-  const meses = capMesesSiguientes(12);
+  const meses = capMesesAnalisis();
   const nominal = capOferta(mes);
   const rh = capReservaHistorica();
   const grillaLista = !!capGrillaDelMes(mes);
@@ -376,20 +491,24 @@ function capacidadHTML() {
         <tr><td style="color:var(--color-muted)">Reserva estimada necesaria${p[g === 'aire' ? 'reservaAire' : 'reservaMec'] != null ? '' : ' (histórico)'}</td><td style="text-align:right;color:var(--color-muted)">${capFmtH(x.reserva)}</td></tr>
         <tr><td style="color:var(--color-muted)">Margen por técnico y por mes</td><td style="text-align:right;color:var(--color-muted)">${(x.margen / (tec || 1)).toFixed(0)} h</td></tr>
       </table>
-      <div style="font-size:11px;color:var(--color-muted);margin-top:8px">${capFmtPct(sapPct)} de las horas salen de la hoja de ruta SAP; el resto está estimado por regla (${Math.round(d.otsEstim)} OTs).</div>
+      <div style="font-size:11px;color:var(--color-muted);margin-top:8px">${A.dem.origen === 'real' ? `Sobre las ${A.dem.total} OTs que SAP programó para el mes (${A.dem.cerradas} ya cerradas).` : 'Proyección desde los planes (SAP aún no generó todas las OTs del mes).'} ${capFmtPct(sapPct)} de las horas salen de la hoja de ruta SAP; el resto está estimado por regla (${Math.round(d.otsEstim)} OTs).</div>
     </div>`;
   };
 
   const filas = meses.map(m => {
     const a = capAnalisis(m);
     const c = g => { const x = a.gremios[g]; return `<td style="text-align:right">${capFmtH(x.carga)}</td><td style="text-align:right">${capFmtH(x.cap)}</td><td>${capBarra(x.uso, x.estado.color)}</td><td style="text-align:right;color:${x.estado.color};font-weight:600">${capFmtPct(x.uso)}</td><td style="text-align:right;color:${x.margen < 0 ? '#dc2626' : 'inherit'}">${capFmtH(x.margen)}</td>`; };
-    return `<tr class="${m === mes ? 'active' : ''}" style="cursor:pointer;${m === mes ? 'background:rgba(0,150,214,.08)' : ''}" onclick="capSetMes('${m}')"><td><b>${capMesLbl(m)}</b></td>${c('aire')}${c('mecanico')}</tr>`;
+    const real = a.dem.origen === 'real';
+    return `<tr class="${m === mes ? 'active' : ''}" style="cursor:pointer;${m === mes ? 'background:rgba(0,150,214,.08)' : ''}" onclick="capSetMes('${m}')"><td><b>${capMesLbl(m)}</b><div style="font-size:10px;color:var(--color-muted)" title="${real ? 'OTs que SAP ya programó' : 'SAP todavía no generó todas las OTs de este mes: se proyecta desde los planes'}">${real ? '✔ OTs de SAP' : '≈ proyección'}</div></td>${c('aire')}${c('mecanico')}</tr>`;
   }).join('');
+  const tot = g => meses.reduce((z, m) => { const x = capAnalisis(m).gremios[g]; z.carga += x.carga; z.cap += x.cap; return z; }, { carga: 0, cap: 0 });
+  const totFila = (() => { const c = g => { const t = tot(g); return `<td style="text-align:right"><b>${capFmtH(t.carga)}</b></td><td style="text-align:right"><b>${capFmtH(t.cap)}</b></td><td>${capBarra(t.carga / t.cap, '#0096d6')}</td><td style="text-align:right"><b>${capFmtPct(t.carga / t.cap)}</b></td><td style="text-align:right"><b>${capFmtH(t.cap - t.carga)}</b></td>`; };
+    return `<tr style="border-top:2px solid var(--color-border,#d1d5db)"><td><b>Total año</b></td>${c('aire')}${c('mecanico')}</tr>`; })();
 
-  const tabla = `<div class="table-card" style="margin-top:16px"><div style="padding:14px 16px 0"><b>Año móvil: carga preventiva vs. capacidad</b>
-    <div style="font-size:11.5px;color:var(--color-muted)">Tocá un mes para ver su detalle. La capacidad de los meses futuros es la nominal (sin francos compensatorios ni vacaciones).</div></div>
+  const tabla = `<div class="table-card" style="margin-top:16px"><div style="padding:14px 16px 0"><b>El año: carga preventiva vs. capacidad</b>
+    <div style="font-size:11.5px;color:var(--color-muted)">Tocá un mes para ver su detalle. La capacidad es la nominal (sin francos compensatorios ni vacaciones). Los meses con “✔ OTs de SAP” usan las órdenes reales de la programación anual; los otros se proyectan desde los planes porque SAP todavía no generó todas sus OTs.</div></div>
     <div class="table-wrap"><table><thead><tr><th rowspan="2">Mes</th><th colspan="5" style="text-align:center">❄️ Aire (AUX_TER)</th><th colspan="5" style="text-align:center">⚙️ Mecánicos (AUX_MEC)</th></tr>
-    <tr>${['Carga', 'Capacidad', '', 'Uso', 'Margen'].map(t => `<th style="text-align:right">${t}</th>`).join('').repeat(2)}</tr></thead><tbody>${filas}</tbody></table></div></div>`;
+    <tr>${['Carga', 'Capacidad', '', 'Uso', 'Margen'].map(t => `<th style="text-align:right">${t}</th>`).join('').repeat(2)}</tr></thead><tbody>${filas}${totFila}</tbody></table></div></div>`;
 
   /* turnos */
   const t = g => {
@@ -422,7 +541,7 @@ function capacidadHTML() {
   return `<div id="cap-root">
     <div class="table-card" style="padding:16px">
       <b style="font-size:15px">⏱️ ¿Alcanza el personal para las OTs preventivas del plan?</b>
-      <div style="font-size:12.5px;color:var(--color-muted);margin:4px 0 12px">Compara las horas-hombre que piden las hojas de ruta de SAP contra las horas netas que tienen los técnicos (turnos de 12 h, sin almuerzo, descansos ni recorridas). Lo que sobra es el tiempo para reclamos, correctivos, etc.</div>
+      <div style="font-size:12.5px;color:var(--color-muted);margin:4px 0 12px">Compara las horas-hombre de las OTs programadas en SAP (con su hoja de ruta) contra las horas netas que tienen los técnicos (turnos de 12 h, sin almuerzo, descansos ni recorridas). Lo que sobra es el tiempo para reclamos, correctivos, etc.</div>
       <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
         <label style="display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--color-muted)">Mes a analizar
           <select onchange="capSetMes(this.value)" style="padding:5px 7px;border:1px solid var(--color-border,#d1d5db);border-radius:6px;background:transparent;color:inherit">${meses.map(m => `<option value="${m}"${m === mes ? ' selected' : ''}>${capMesLbl(m)}</option>`).join('')}</select></label>
@@ -445,10 +564,11 @@ function capacidadHTML() {
     <div class="table-card" style="margin-top:16px;padding:14px 16px;font-size:12px;color:var(--color-muted);line-height:1.55">
       <b style="color:inherit">Cómo se calculó / límites</b><ul style="margin:6px 0 0 18px">
         <li>${Math.round(A.dem.externo.ots)} OTs del mes son de contratista (MOEX) y ${Math.round(A.dem.otro.ots)} de otro gremio (AUX_ELC / AUX_INF): no cuentan contra estos técnicos.</li>
-        <li>Horas-hombre = las de la hoja de ruta (IA17) por persona × tareas base + tareas de cada frecuencia que entra en esa toma. Cuando el plan mezcla frecuencias (2M-6M-12M) se usa el costo promedio del ciclo, porque no se sabe en qué vuelta va cada equipo: un mes puntual puede cargar más o menos.</li>
+        <li>Horas-hombre de cada OT = tareas base + tareas de las frecuencias que lleva, según su hoja de ruta (IA17). La frecuencia sale de las operaciones de la OT en SAP o de su texto; cuando no se puede saber en qué vuelta del ciclo está (plan 2M-6M-12M) se usa el costo promedio del ciclo, así que un mes puntual puede cargar más o menos.</li>
+        <li>Con OTs de SAP se cuentan todas las del mes, también las ya cerradas. Las OTs de la programación con puesto AUX_ELC/AUX_INF/AUX_BAL y las de hoja de ruta MOEX no cargan a estos técnicos.</li>
         <li>Si la hoja de ruta no trae horas confiables se usa la regla del Planificador (${Math.round(A.dem.aire.otsEstim + A.dem.mecanico.otsEstim)} OTs) — es la parte menos firme del estudio.</li>
         <li>No se descuenta el ahorro de tocar un sistema completo de aire en una sola visita, ni se suma el traslado entre equipos: la eficiencia (${p.eficiencia}%) es el único colchón para eso.</li>
-        <li>Los supervisores no cuentan como mano de obra. Las vencidas sin OT no están sumadas a la carga.</li></ul></div>
+        <li>Los supervisores no cuentan como mano de obra. Las tareas pendientes de meses anteriores no se arrastran al mes siguiente.</li></ul></div>
   </div>`;
 }
 
@@ -471,7 +591,7 @@ function capExport() {
   if (typeof XLSX === 'undefined') { alert('Falta la librería XLSX.'); return; }
   const wb = XLSX.utils.book_new();
   const rows = [];
-  capMesesSiguientes(12).forEach(m => {
+  capMesesAnalisis().forEach(m => {
     const a = capAnalisis(m);
     ['aire', 'mecanico'].forEach(g => { const x = a.gremios[g];
       rows.push({ Mes: m, Gremio: g === 'aire' ? 'Aire (AUX_TER)' : 'Mecánicos (AUX_MEC)', 'OTs del mes': Math.round(a.dem[g].ots), 'Carga preventiva (h)': Math.round(x.carga), 'Horas netas disponibles': Math.round(x.cap),
