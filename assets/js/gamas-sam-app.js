@@ -37,7 +37,7 @@
   }
   /* "operación.Limpieza de" → frases separadas; devuelve lista de tareas. */
   function partirFrases(t) {
-    t = arreglarPegadas(t).replace(/\s+/g, ' ').trim();
+    t = arreglarPegadas(t).replace(/\s*,,\s*/g, '\n').replace(/[ \t]+/g, ' ').trim();
     t = t.replace(/,(?=[A-Za-záéíóúñ])/g, ', ').replace(/([a-záéíóúñ]{3})(?=(?:Verificar|Verificación|Limpieza|Limpiar|Realizar|Efectuar|Controlar|Retirar|Garantizar|Energizado|Medir|Ajustar|Revisar|Inspeccionar|Lubricar|Cambiar)\b)/g, '$1\n');
     t = t.replace(/([a-záéíóúñ\)\d])\.(?=[A-ZÁÉÍÓÚ¿])/g, '$1.\n');
     return t.split('\n').map(x => x.trim()).filter(Boolean);
@@ -83,9 +83,30 @@
     return { estilo: $('gsm-estilo').value, ancho: +$('gsm-ancho').value || 0, seg: $('gsm-seg').value, auto: $('gsm-auto').value,
       frec: $('gsm-frec').value, titulo: $('gsm-titulo').checked, vacias: $('gsm-blank').checked };
   }
+  /* Rutas "SAP MOBILE": cada paso es una operación (sin texto largo). Se arma una lista agrupada por paquete de mantenimiento. */
+  function nombrePaq(pq) {
+    return (pq || []).map(p => { const m = /(\d+)\s*mes/i.exec(p), n = m ? +m[1] : 0;
+      return ({ 1: 'MENSUAL', 2: 'BIMESTRAL', 3: 'TRIMESTRAL', 4: 'CUATRIMESTRAL', 6: 'SEMESTRAL', 12: 'ANUAL', 24: 'BIENAL' })[n] || p.toUpperCase(); }).join(' + ');
+  }
+  function pasosDeRuta(k) {
+    const ops = HDR_GAMAS[k].o.filter(o => !o.ga && !o.sb && !o.li && o.pq && o.pq.length && !/log[ií]stica/i.test(o.d) && o.t !== undefined);
+    const tareas = ops.filter(o => !/^MP |^PD |^IP |^Preventivo /i.test(o.d) || o.t > 0);
+    return tareas.length >= 4 ? tareas : [];
+  }
+  function formatearPasos(o, op) {
+    const grupos = new Map();
+    o.pasos.forEach(p => { const h = nombrePaq(p.pq); (grupos.get(h) || grupos.set(h, []).get(h)).push(arreglarPegadas(p.d.trim())); });
+    const L = [];
+    if (op.titulo) L.push('GAMA DE TAREAS - ' + (o.d || '').toUpperCase());
+    grupos.forEach((arr, h) => { L.push(h + ':'); arr.forEach((t, i) => L.push(marca(i, op.estilo) + t)); });
+    const flat = []; L.forEach(l => partir(l, op.ancho).forEach(x => flat.push(x)));
+    return op.vacias ? flat.join('\n\n') : flat.join('\n');
+  }
   function formatearOp(o, op) {
+    if (o.pasos) return formatearPasos(o, op);
     const e = estructurar(o), L = [];
-    const tl = (o.d || '').trim();
+    let tl = (o.d || '').trim();
+    if (e.libre.length && e.libre.join(" ").length < 25) { tl += (/[a-záéíóúñ]$/i.test(tl) && /^[a-záéíóúñ]{1,4}(?![a-záéíóúñ])/.test(e.libre[0]) ? "" : " ") + e.libre.join(" "); e.libre = []; }
     if (op.titulo) L.push('GAMA DE TAREAS - ' + tl.toUpperCase());
     const seccion = (nombre, arr, modo) => {
       if (!arr.length || modo === 'omitir') return;
@@ -115,7 +136,12 @@
     const s = new Set(); HDR_GAMAS[k].o.forEach(o => (o.ga || []).forEach(g => { const f = fcOf(g.h); if (f) s.add(f); }));
     return FRECS.map(x => x[0]).filter(f => s.has(f));
   }
-  function opsConTexto(k) { return HDR_GAMAS[k].o.filter(o => o.ga || o.sb || o.li); }
+  function opsConTexto(k) {
+    const r = HDR_GAMAS[k].o.filter(o => o.ga || o.sb || o.li);
+    const pasos = pasosDeRuta(k);
+    if (pasos.length) r.unshift({ n: 'TODOS', d: HDR_GAMAS[k].d, pasos, pq: ['lista de pasos'] });
+    return r;
+  }
 
   /* ════════ UI ════════ */
   function listar() {

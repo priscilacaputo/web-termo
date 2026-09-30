@@ -2,7 +2,7 @@
 """Genera assets/js/hdr-gamas-data.js = HDR_GAMAS: texto completo de cada operación de las hojas de ruta
 (lista de impresión IA17 exportada a Excel: ia17.xlsx), estructurado para rearmarlo en formato legible en SAM.
 
-Uso: python gen_hdr_gamas.py "<ruta a ia17.xlsx>"
+Uso: python gen_hdr_gamas.py "<ia17.xlsx>" [otro_export.xlsx ...]  (se combinan; el último gana por RUTA/CONT)
 
 HDR_GAMAS["RUTA/CONT"] = {d: descripción, o: [ {n: Nº op, d: desc, p: puesto, np: personas, t: trabajo(min),
    du: duración(min), pq: [paquetes], S: id seguridad, A: id autocontrol,
@@ -11,7 +11,7 @@ HDR_GAMAS_TXT = listas de líneas de seguridad/autocontrol compartidas (S y A so
 import sys, re, json, os, unicodedata
 import openpyxl
 
-SRC = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser('~/Downloads/ia17.xlsx')
+SRCS = sys.argv[1:] or [os.path.expanduser('~/Downloads/ia17.xlsx')]   # varios exports: los últimos pisan a los primeros
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'js', 'hdr-gamas-data.js')
 
 
@@ -20,12 +20,15 @@ def norm(s):
     return ''.join(c for c in s if unicodedata.category(c) != 'Mn')
 
 
-FREQ_H = re.compile(r'^(tareas\s+(correspondientes|de)\b|(diaria|semanal|quincenal|mensual|bimestral|trimestral|cuatrimestral|semestral|anual|bienal)\b)', re.I)
-SEC = re.compile(r'^(\d)\s*-\s*(consignas de seguridad|gama de tareas|consignas de autocontrol)\s*$', re.I)
+FREQ_H = re.compile(r'^(tareas\s+(correspondientes?|de)\b|(diaria|semanal|quincenal|mensual|bimestral|trimestral|cuatrimestral|semestral|anual|bienal)\b)', re.I)
+SEC = re.compile(r'^(?:(\d)\s*-\s*)?(consignas de seguridad|gama de tareas|consignas de autocontrol)\s*$', re.I)
 GAMA_H = re.compile(r'^gama de tareas\b\s*(.*)$', re.I)
 ST = re.compile(r'^S-{3,}T-{3,}\}?$')
 ATTR = {'puesto de trabajo': 'p', 'número de personas': 'np', 'trabajo': 't', 'duración': 'du'}
 SKIP = ('clave de control', 'estrategia', 'utilización', 'centro', 'menú', 'finalizar')
+
+
+TAG = re.compile(r'^<\d+>\s*')   # marcas de formato de SAP (<1317> ...) en exports viejos
 
 
 def num(s):
@@ -33,6 +36,9 @@ def num(s):
         return float(str(s).replace('.', '').replace(',', '.'))
     except ValueError:
         return 0
+
+
+ARRANCA = re.compile(r'^(verific|limpi|realiz|med[ie]|control|lavad|tensad|retir|reinstal|hidrolav|lubric|reemplaz|cambi|ajust|revis|inspecc|efectu|agreg|engras|inyect|drenar|purg|comprob|registr|anotar|asegur|garantiz|confirm|senaliz|interrump|observ|energiz|lectur|chequ|reapret|tomar|mantener|inspecci|reapriet)')
 
 
 def nuevo_item(prev, txt):
@@ -43,12 +49,16 @@ def nuevo_item(prev, txt):
         return True
     if txt.startswith('R ___'):
         return False
-    if prev.rstrip().endswith(('.', ':', ';')) and txt[:1].isupper():
+    if prev.rstrip().endswith(('.', ':', ';', ')')) and txt[:1].isupper():
+        return True
+    # formato viejo: una tarea por renglón; si el renglón anterior quedó corto (no llegó a partirse) esta es otra tarea
+    if txt[:1].isupper() and len(prev.split('')[-1]) < 32 and ARRANCA.match(norm(txt)):
         return True
     return False
 
 
 def limpia(txt):
+    txt = txt.replace('', ' ')
     return re.sub(r'\s+', ' ', re.sub(r'^[-•·]\s*', '', txt)).strip()
 
 
@@ -63,27 +73,31 @@ def parse(path):
     sec = None
     gama_h = ''
     for r in ws.iter_rows(values_only=True):
-        c = [(i, ' '.join(str(x).split())) for i, x in enumerate(r) if x is not None and str(x).strip()]
+        c = [(i, TAG.sub('', ' '.join(str(x).split())).strip()) for i, x in enumerate(r) if x is not None and str(x).strip()]
+        c = [x for x in c if x[1]]
         if not c:
             continue
         col0, first = c[0]
         v = dict(c)
         text = ' '.join(x[1] for x in c)
         if col0 == 0 and first.startswith('Hoja de ruta') and len(c) >= 2:
-            cur = out.setdefault(v.get(3, '') + '/' + v.get(9, ''), {'d': v.get(15, ''), 'o': []})
+            vs = [x[1] for x in c]
+            cur = out.setdefault((vs[1] if len(vs) > 1 else '') + '/' + (vs[2] if len(vs) > 2 else ''), {'d': vs[3] if len(vs) > 3 else '', 'o': []})
             op = sub = None; sec = None
             continue
         if cur is None or 'Lista de impresión' in text:
             continue
         if col0 == 1 and first == 'Operación':
-            op = {'n': v.get(3, ''), 'd': v.get(15, ''), 'p': '', 'np': 0, 't': 0, 'du': 0, 'pq': [],
+            vs = [x[1] for x in c]
+            op = {'n': vs[1] if len(vs) > 1 else '', 'd': vs[2] if len(vs) > 2 else '', 'p': '', 'np': 0, 't': 0, 'du': 0, 'pq': [],
                   'seg': [], 'au': [], 'ga': [], 'li': [], 'sb': []}
             cur['o'].append(op); sub = None; sec = None; gama_h = ''
             continue
         if op is None:
             continue
         if col0 == 2 and first == 'Suboper.':
-            sub = {'n': v.get(3, ''), 'd': v.get(15, ''), 'x': [], 'p': ''}
+            vs = [x[1] for x in c]
+            sub = {'n': vs[1] if len(vs) > 1 else '', 'd': vs[2] if len(vs) > 2 else '', 'x': [], 'p': ''}
             op['sb'].append(sub)
             continue
         if col0 == 2 and first == 'Paq.mant.':
@@ -116,7 +130,7 @@ def parse(path):
             continue
         m = SEC.match(first)
         if m:
-            sec = {'1': 'seg', '2': 'ga', '3': 'au'}[m.group(1)]
+            sec = {'consignas de seguridad': 'seg', 'gama de tareas': 'ga', 'consignas de autocontrol': 'au'}[m.group(2).lower()]
             gama_h = ''
             if sec == 'ga':
                 op['ga'].append({'h': '', 'i': []})
@@ -132,7 +146,7 @@ def parse(path):
             if nuevo_item(it[-1] if it else None, first):
                 it.append(first)
             else:
-                it[-1] += ' ' + first
+                it[-1] += '' + first
             continue
         # sec == 'ga'
         blk = op['ga'][-1]
@@ -148,11 +162,13 @@ def parse(path):
         if nuevo_item(it[-1] if it else None, first):
             it.append(first)
         else:
-            it[-1] += ' ' + first
+            it[-1] += '' + first
     return out
 
 
-data = parse(SRC)
+data = {}
+for _f in SRCS:
+    data.update(parse(_f))
 TXT = []          # listas de seguridad/autocontrol compartidas
 idx = {}
 
@@ -179,6 +195,12 @@ for k, h in data.items():
         ga = [g for g in ga if g['i'] or g['h']]
         if ga: r['ga'] = ga
         li = cierra_items(o['li'])
+        if li and not (ga or o['sb'] or s or a):
+            # paso SAP MOBILE: la operación ES la tarea; el texto breve viene cortado a 40 caracteres y el resto en el texto largo
+            d = o['d']; resto = ' '.join(li)
+            pegado = len(d) >= 40 and re.match(r'^[a-záéíóúñ]{1,4}(?![a-záéíóúñ])', resto) and d[-1].isalpha()
+            r['d'] = d + ('' if pegado else ' ') + resto
+            li = []
         if li: r['li'] = li
         sb = [{'n': s_['n'], 'd': s_['d'], 'x': limpia(' '.join(s_['x'])), 'p': s_['p']} for s_ in o['sb']]
         if sb: r['sb'] = sb
