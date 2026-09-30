@@ -15,7 +15,9 @@
     deltermostato: 'del termostato', defuncionamiento: 'de funcionamiento', encaso: 'en caso', deaguapor: 'de agua por',
     'y/obandeja': 'y/o bandeja', ycarteles: 'y carteles', delárea: 'del área', nivelde: 'nivel de', convalores: 'con valores',
     pinturaen: 'pintura en', graly: 'gral. y', deretorno: 'de retorno', delcondensado: 'del condensado',
-    vibraciones: 'vibraciones', pantallassimatic: 'pantallas Simatic', ymecanismos: 'y mecanismos',
+    vibraciones: 'vibraciones', vibracionescon: 'vibraciones con', equipobackup: 'equipo backup', decalefacción: 'de calefacción', desala: 'de sala',
+    conchapa: 'con chapa', chapacaracterística: 'chapa característica', modomanual: 'modo manual', volvera: 'volver a',
+    alternarfuncionamiento: 'alternar funcionamiento', pantallassimatic: 'pantallas Simatic', ymecanismos: 'y mecanismos',
     delos: 'de los', delequipo: 'del equipo', delmotor: 'del motor', deequipo: 'de equipo'
   };
   const FRECS = [['DIARIA', /diari/], ['SEMANAL', /semanal/], ['QUINCENAL', /quincenal/], ['MENSUAL', /mensual/], ['BIMESTRAL', /bimestral/],
@@ -31,9 +33,59 @@
   if (typeof HDR_PLAN !== 'undefined') HDR_PLAN.forEach(r => { (equiposPorKey[r[3] + '/' + r[4]] = equiposPorKey[r[3] + '/' + r[4]] || []).push(r[0]); });
 
   /* ════════ Normalización del texto ════════ */
+  /* Frases rotas en el propio SAP (falta texto) */
+  const FRASES = [[/ruidos, ciones/gi, 'ruidos, vibraciones']];
+  /* Palabras pegadas no listadas: se separan solas cuando una palabra rara es "palabra de uso común + palabra funcional"
+     (de, del, la, con, por… o un verbo de tarea), p. ej. "funcionamientode" → "funcionamiento de". */
+  const FUNC = new Set(['de', 'del', 'la', 'las', 'los', 'el', 'en', 'con', 'por', 'para', 'que', 'se', 'si', 'sin', 'al', 'un', 'una', 'su', 'sus', 'ser', 'sea', 'hasta', 'cada', 'como', 'desde', 'sobre', 'entre', 'lo', 'no']);
+  const VERBO = new Set(['verificar', 'verificación', 'registrar', 'reemplazar', 'retirar', 'tomar', 'chequear', 'controlar', 'limpiar', 'limpieza', 'realizar', 'efectuar', 'medir', 'medición', 'ajustar', 'revisar', 'inspección', 'energizado', 'detectar', 'comprobar', 'alternar', 'lubricar', 'cambiar', 'hidrolavado', 'garantizar']);
+  let vocab = null;
+  function getVocab() {
+    if (vocab) return vocab; vocab = {};
+    const vistos = new Set();   // textos distintos: las hojas de ruta copian el mismo texto y eso inflaría la frecuencia de los errores
+    const add = t => { t = String(t || ''); if (vistos.has(t)) return; vistos.add(t); (t.toLowerCase().match(/[a-záéíóúñ]+/g) || []).forEach(w => { vocab[w] = (vocab[w] || 0) + 1; }); };
+    Object.values(HDR_GAMAS).forEach(h => { add(h.d); h.o.forEach(o => { add(o.d); (o.ga || []).forEach(g => g.i.forEach(add)); (o.li || []).forEach(add); (o.sb || []).forEach(s => { add(s.d); add(s.x); }); }); });
+    HDR_GAMAS_TXT.forEach(a => a.forEach(add));
+    return vocab;
+  }
+  const COLA_NO = new Set(['al', 'su', 'no', 'lo', 'se', 'si', 'un']);   // "Bienal", "ensual"… no son palabras pegadas
+  function segmentar(w, V) {                        // sólo 2 trozos: palabra de uso común + palabra funcional/verbo
+    for (let i = 2; i <= w.length - 2; i++) {
+      const a = w.slice(0, i), b = w.slice(i);
+      if (!(FUNC.has(a) || (V[a] >= 6 && a.length >= 3))) continue;
+      if (!(FUNC.has(b) || (V[b] >= 6 && b.length >= 3))) continue;
+      if (COLA_NO.has(b) || (/^(lo|la|los|las|se)$/.test(b) && /(ar|er|ir)$/.test(a))) continue;   // verbo + pronombre: palabra válida
+      return [a, b];
+    }
+    return null;
+  }
+  function separarPegadas(w) {
+    const V = getVocab(), lw = w.toLowerCase();
+    const cm = /^([a-záéíóúñ]{3,})([A-ZÁÉÍÓÚ][a-záéíóúñ]{2,})$/.exec(w);   // "adecuadosAlternar"
+    if (cm && (V[cm[1]] || 0) >= 6) {
+      const pk = PEGADAS[cm[2].toLowerCase()];
+      return cm[1] + ' ' + (pk ? pk.replace(/^./, c => c.toUpperCase()) : separarPegadas(cm[2]));
+    }
+    if (lw.length < 4 || (V[lw] || 0) > 2) return w;
+    let p = segmentar(lw, V);
+    if (lw.length < 6 && !(p && FUNC.has(p[0]) && FUNC.has(p[1]))) return w;   // "dela" → "de la"
+    if (!p && /^y./.test(lw) && (V[lw.slice(1)] || 0) >= 10 && lw.length >= 7) p = ['y', lw.slice(1)];
+    if (!p || !p.some(x => FUNC.has(x) || VERBO.has(x))) return w;
+    let i = 0; return p.map(x => { const s = w.slice(i, i + x.length); i += x.length; return s; }).join(' ');
+  }
   function arreglarPegadas(t) {
+    FRASES.forEach(([re, rep]) => { t = t.replace(re, rep); });
     return t.replace(/[A-Za-zÁÉÍÓÚáéíóúñÑ\/]+/g, w => PEGADAS[w.toLowerCase()] ? (w[0] === w[0].toUpperCase() && w[0] !== w[0].toLowerCase()
-      ? PEGADAS[w.toLowerCase()].replace(/^./, c => c.toUpperCase()) : PEGADAS[w.toLowerCase()]) : w);
+      ? PEGADAS[w.toLowerCase()].replace(/^./, c => c.toUpperCase()) : PEGADAS[w.toLowerCase()]) : separarPegadas(w));
+  }
+  /* Suboperación: el texto breve de SAP se corta a 40 caracteres; si el texto largo no lo repite, es la continuación. */
+  function textoSub(s) {
+    const d = (s.d || '').trim(), x = (s.x || '').trim();
+    if (!x) return d;
+    if (norm(x).startsWith(norm(d).slice(0, Math.min(d.length, 24)))) return x;
+    const V = getVocab(), ult = (d.match(/[a-záéíóúñ]+$/i) || [''])[0].toLowerCase(), pri = (x.match(/^[a-záéíóúñ]+/) || [''])[0];
+    const pega = d.length >= 38 && ult && pri && (V[ult + pri] || 0) >= 2 && (V[ult] || 0) <= 2;
+    return d + (pega ? '' : ' ') + x;
   }
   /* "operación.Limpieza de" → frases separadas; devuelve lista de tareas. */
   function partirFrases(t) {
@@ -52,18 +104,19 @@
     if (o.A != null) r.auto = HDR_GAMAS_TXT[o.A].slice();
     (o.ga || []).forEach(g => r.tareas.push({ h: g.h, i: g.i.flatMap(partirFrases) }));
     (o.li || []).forEach(x => r.libre.push(...partirFrases(x)));
+    /* Todas las suboperaciones sueltas van en UN solo bloque de tareas (numeración continua 1) 2) 3)…). */
+    let bloqueSubs = null;
+    const subs = () => bloqueSubs || (bloqueSubs = r.tareas[r.tareas.push({ h: '', i: [] }) - 1]);
     (o.sb || []).forEach(s => {
-      const x = (s.d + ' ' + s.x).trim(), n = norm(s.d);
+      const n = norm(s.d);
       if (/^1\s*-\s*consignas de seguridad/.test(n)) return;           // título, sin texto propio
       if (/^consignas de autocontrol/.test(n)) {                        // texto largo pegado en la suboperación
         partirFrases((s.x || '').replace(/^CONSIGNAS DE AUTOCONTROL\s*/i, '')).forEach(t => r.auto.push(t)); return;
       }
       if (/^gama de tareas/.test(n) || /^gama de tareas/.test(norm(s.x))) {
-        let tx = (s.x || s.d).replace(/^GAMA DE TAREAS\s*/i, '');
-        r.tareas.push({ h: '', i: partirFrases(tx) }); return;
+        subs().i.push(...partirFrases((s.x || s.d).replace(/^GAMA DE TAREAS\s*/i, ''))); return;
       }
-      const tx = (s.x || s.d).trim();
-      r.tareas.push({ h: '', i: partirFrases(tx) });                  // suboperación suelta = una tarea
+      subs().i.push(...partirFrases(textoSub(s)));                    // suboperación suelta = una tarea
     });
     const dupAuto = new Set(); r.auto = r.auto.filter(t => !dupAuto.has(t) && dupAuto.add(t));
     return r;
