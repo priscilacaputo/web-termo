@@ -20,7 +20,7 @@ const PLAN_SOURCES = (function() {
           return [];
         }
       },
-      renderPlan: (plan) => renderMangaPlan(plan)
+      renderPlan: (plan) => renderMangaPlanIntegrado(plan)
     });
   }
 
@@ -254,7 +254,7 @@ const PLAN_SOURCES = (function() {
           return [];
         }
       },
-      renderPlan: (plan) => renderMangaPlan(plan)
+      renderPlan: (plan) => renderMangaPlanIntegrado(plan)
     });
   }
 
@@ -375,7 +375,7 @@ function renderPlanesTab(tabIndex, container) {
   }
 }
 
-function renderMangaPlan(plan) {
+function renderMangaPlanIntegrado(plan) {
   if (!plan || !plan.frecuenciasDetalladas || plan.frecuenciasDetalladas.length === 0) {
     return '<div style="padding: 20px; color: #999;">No hay datos disponibles para este plan</div>';
   }

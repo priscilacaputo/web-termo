@@ -5,7 +5,6 @@ let puertasView       = "grid";   // "grid" | "table" | "plano" | "planes" | "gu
 let puertasFabFilter  = "";
 let puertasZonaFilter = "";
 let puertasSearch     = "";
-let puertasPlanoZoom  = 1.0;
 
 /* ─── Init ──────────────────────────────────────────────── */
 (function initPuertas() {
@@ -52,39 +51,7 @@ let puertasPlanoZoom  = 1.0;
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") closePuertaModal();
   });
-
-  // Zoom controls
-  document.getElementById("puertasPlanoZoomIn").addEventListener("click",  () => setPuertasZoom(puertasPlanoZoom + 0.2));
-  document.getElementById("puertasPlanoZoomOut").addEventListener("click", () => setPuertasZoom(puertasPlanoZoom - 0.2));
-  document.getElementById("puertasPlanoZoomFit").addEventListener("click", () => setPuertasZoom(1.0));
-
-  // Drag-to-pan on plano
-  (function initPlanoDrag() {
-    const wrap = document.getElementById("puertasPlanoContainer");
-    const img  = document.getElementById("puertasPlanoImg");
-    let dragging = false, startX, startY, scrollLeft, scrollTop;
-    wrap.addEventListener("mousedown", e => {
-      dragging = true; wrap.style.cursor = "grabbing";
-      startX = e.pageX - wrap.offsetLeft; startY = e.pageY - wrap.offsetTop;
-      scrollLeft = wrap.scrollLeft; scrollTop = wrap.scrollTop;
-    });
-    wrap.addEventListener("mouseleave", () => { dragging = false; wrap.style.cursor = "grab"; });
-    wrap.addEventListener("mouseup",    () => { dragging = false; wrap.style.cursor = "grab"; });
-    wrap.addEventListener("mousemove", e => {
-      if (!dragging) return; e.preventDefault();
-      wrap.scrollLeft = scrollLeft - (e.pageX - wrap.offsetLeft - startX);
-      wrap.scrollTop  = scrollTop  - (e.pageY - wrap.offsetTop  - startY);
-    });
-  })();
 })();
-
-function setPuertasZoom(z) {
-  puertasPlanoZoom = Math.max(0.4, Math.min(4.0, z));
-  const img = document.getElementById("puertasPlanoImg");
-  img.style.width  = (puertasPlanoZoom * 100) + "%";
-  img.style.height = "auto";
-  document.getElementById("puertasPlanoZoomLabel").textContent = Math.round(puertasPlanoZoom * 100) + "%";
-}
 
 /* ─── Stats ─────────────────────────────────────────────── */
 function renderPuertasStats() {

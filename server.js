@@ -48,6 +48,7 @@ http.createServer((req, res) => {
   }
 
   if (urlPath === '/') urlPath = '/index.html';
+  try { urlPath = decodeURIComponent(urlPath); } catch (e) { /* ruta mal codificada: se deja tal cual */ }
   const filePath = path.join(__dirname, urlPath);
 
   fs.readFile(filePath, (err, data) => {
