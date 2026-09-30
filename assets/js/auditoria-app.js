@@ -138,6 +138,7 @@
     document.querySelectorAll('#auditoria-content .aud-tabs .mant-tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === k));
     const st = $('auditoria-stats');
     if (st) st.style.display = k === 'equipos' ? '' : 'none';
+    if (k === 'capacidad' && typeof capDibujar === 'function') setTimeout(capDibujar, 0);
     const tabs = document.querySelector('#auditoria-content .aud-tabs');
     if (tabs) tabs.scrollIntoView({ block: 'nearest' });
   };

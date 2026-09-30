@@ -45,6 +45,7 @@ function capParamsDefault() {
     persDefault: 2,
     reservaAire: null,   // horas/mes a reservar para reclamos; null = promedio histórico
     reservaMec: null,
+    ausentismo: 0,        // % de turnos que se pierden por vacaciones/licencias (sobre la dotación nominal)
     usarGrilla: false,
   };
 }
@@ -89,10 +90,11 @@ function capOferta(mes) {
   const p = capState.params;
   const min = capMinNetosTurno(p);
   const g = p.usarGrilla ? capGrillaDelMes(mes) : null;
+  const k = 1 - (p.ausentismo || 0) / 100;
   const pt = g ? { aire: g.aire, mecanico: g.mecanico, dia: g.dia, noche: g.noche }
-    : { aire: p.tecAire * p.diasMes, mecanico: p.tecMec * p.diasMes,
-        dia: { aire: p.tecAire * p.diasMes / 2, mecanico: p.tecMec * p.diasMes / 2 },
-        noche: { aire: p.tecAire * p.diasMes / 2, mecanico: p.tecMec * p.diasMes / 2 } };
+    : { aire: p.tecAire * p.diasMes * k, mecanico: p.tecMec * p.diasMes * k,
+        dia: { aire: p.tecAire * p.diasMes * k / 2, mecanico: p.tecMec * p.diasMes * k / 2 },
+        noche: { aire: p.tecAire * p.diasMes * k / 2, mecanico: p.tecMec * p.diasMes * k / 2 } };
   const h = x => x * min / 60;
   return {
     fuente: g ? 'grilla' : 'nominal',
@@ -442,7 +444,9 @@ function capAnalisis(mes) {
     const reserva = (g === 'aire' ? p.reservaAire : p.reservaMec) != null ? (g === 'aire' ? p.reservaAire : p.reservaMec) : (rh ? rh[g] : 0);
     const margen = cap - carga;
     out.gremios[g] = { cap, carga, uso: cap ? carga / cap : 0, margen, reserva, estado: capEstado(carga / (cap || 1), margen, reserva),
-      personasNecesarias: of.minNetosTurno && p.diasMes ? carga * 60 / of.minNetosTurno / p.diasMes : 0 };
+      /* técnicos necesarios = horas a cubrir / horas netas que rinde un técnico en el mes */
+      tecPrev: of.minNetosTurno && p.diasMes ? carga * 60 / (of.minNetosTurno * p.diasMes * (1 - (p.ausentismo || 0) / 100)) : 0,
+      tecConReserva: of.minNetosTurno && p.diasMes ? (carga + reserva) * 60 / (of.minNetosTurno * p.diasMes * (1 - (p.ausentismo || 0) / 100)) : 0 };
   });
   return out;
 }
@@ -510,6 +514,34 @@ function capacidadHTML() {
     <div class="table-wrap"><table><thead><tr><th rowspan="2">Mes</th><th colspan="5" style="text-align:center">❄️ Aire (AUX_TER)</th><th colspan="5" style="text-align:center">⚙️ Mecánicos (AUX_MEC)</th></tr>
     <tr>${['Carga', 'Capacidad', '', 'Uso', 'Margen'].map(t => `<th style="text-align:right">${t}</th>`).join('').repeat(2)}</tr></thead><tbody>${filas}${totFila}</tbody></table></div></div>`;
 
+  /* conclusión: ¿hacen falta más técnicos? */
+  const an = meses.map(m => ({ m, a: capAnalisis(m) }));
+  const concl = g => {
+    const tec = g === 'aire' ? p.tecAire : p.tecMec;
+    const arr = an.map(x => ({ m: x.m, n: x.a.gremios[g].tecConReserva, np: x.a.gremios[g].tecPrev }));
+    const pico = arr.reduce((a, b) => (b.n > a.n ? b : a));
+    const prom = arr.reduce((z, x) => z + x.n, 0) / arr.length;
+    const deficit = arr.filter(x => x.n > tec);
+    const falta = Math.max(0, Math.ceil(pico.n - tec));
+    const color = deficit.length ? (deficit.length > 3 ? '#dc2626' : '#f59e0b') : '#10b981';
+    const msg = deficit.length
+      ? `Con la reserva para reclamos, <b>${deficit.length} mes${deficit.length > 1 ? 'es' : ''}</b> (${deficit.map(x => capMesLbl(x.m).split(' ')[0]).join(', ')}) necesitan más técnicos de los que hay. El pico (${capMesLbl(pico.m)}) pide <b>${pico.n.toFixed(1)}</b> → faltarían ~<b>${falta}</b>, o reforzar/redistribuir esos meses.`
+      : `Hoy alcanzan: el mes más exigente (${capMesLbl(pico.m)}) pide <b>${pico.n.toFixed(1)}</b> técnicos contra ${tec} disponibles (${(tec - pico.n).toFixed(1)} de holgura). Promedio del año: ${prom.toFixed(1)}.`;
+    return `<div style="flex:1;min-width:290px;padding:12px 14px;border-left:4px solid ${color};background:rgba(127,127,127,.06);border-radius:6px">
+      <b>${g === 'aire' ? '❄️ Aire' : '⚙️ Mecánicos'}</b> · hoy ${tec} técnicos<div style="font-size:12.5px;margin-top:4px">${msg}</div>
+      <div style="font-size:11.5px;color:var(--color-muted);margin-top:4px">Solo preventivos: pico ${Math.max(...arr.map(x => x.np)).toFixed(1)} técnicos · promedio ${(arr.reduce((z, x) => z + x.np, 0) / arr.length).toFixed(1)}.</div></div>`;
+  };
+  const conclusionHTML = `<div class="table-card" style="margin-top:16px;padding:16px"><b style="font-size:15px">¿Hace falta sumar técnicos?</b>
+    <div style="font-size:12px;color:var(--color-muted);margin:2px 0 10px">Técnicos necesarios = (horas preventivas + reserva para reclamos) ÷ horas netas que rinde un técnico en el mes (${p.diasMes} turnos × ${(A.of.minNetosTurno / 60).toFixed(1)} h${p.ausentismo ? ', con ' + p.ausentismo + '% de ausencias' : ''}).</div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px">${concl('aire')}${concl('mecanico')}</div></div>`;
+  const graficos = `<div class="table-card" style="margin-top:16px;padding:16px">
+    <b>Disponibilidad de horas por mes</b>
+    <div style="font-size:11.5px;color:var(--color-muted);margin-bottom:8px">Cada barra es la carga del mes (preventivos + reserva de reclamos + lo que queda libre); la línea es la capacidad neta. Si la barra pasa la línea, ese mes no alcanza.</div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px">
+      <div style="flex:1;min-width:320px;height:290px;position:relative"><canvas id="cap-ch-aire"></canvas></div>
+      <div style="flex:1;min-width:320px;height:290px;position:relative"><canvas id="cap-ch-mec"></canvas></div></div>
+    <div style="margin-top:18px;height:280px;position:relative"><canvas id="cap-ch-tec"></canvas></div></div>`;
+
   /* turnos */
   const t = g => {
     const d = A.dem[g], nh = A.of.netoHTurno;
@@ -547,7 +579,7 @@ function capacidadHTML() {
           <select onchange="capSetMes(this.value)" style="padding:5px 7px;border:1px solid var(--color-border,#d1d5db);border-radius:6px;background:transparent;color:inherit">${meses.map(m => `<option value="${m}"${m === mes ? ' selected' : ''}>${capMesLbl(m)}</option>`).join('')}</select></label>
         ${capInput('tecAire', 'Técnicos Aire')}${capInput('tecMec', 'Técnicos Mecánicos')}${capInput('diasMes', 'Días trabajados/mes')}${capInput('turnoHs', 'Horas por turno')}
         ${capInput('almuerzoMin', 'Almuerzo/cena (min)')}${capInput('descansoMin', 'Descansos (min)')}${capInput('recorridasMin', 'Recorridas (min)')}${capInput('eficiencia', 'Eficiencia (%)')}
-        ${capInput('persDefault', 'Personas por OT sin dato')}
+        ${capInput('persDefault', 'Personas por OT sin dato')}${capInput('ausentismo', 'Ausencias (% vacac./licencias)')}
         ${capInput('reservaAire', 'Reserva Aire (h/mes)', { ph: rh ? Math.round(rh.aire) : '' })}${capInput('reservaMec', 'Reserva Mec. (h/mes)', { ph: rh ? Math.round(rh.mecanico) : '' })}
         <div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:11.5px;color:var(--color-muted)">Dotación</span>
           <button class="mant-tab${p.usarGrilla && grillaLista ? ' active' : ''}" ${capState.cargandoGrilla ? 'disabled' : ''} onclick="capUsarGrilla()">${capState.cargandoGrilla ? 'Consultando…' : (p.usarGrilla && grillaLista ? '✓ Grilla real del mes' : '🔄 Usar grilla real del mes')}</button></div>
@@ -559,6 +591,8 @@ function capacidadHTML() {
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:16px">${card('aire', '❄️ Técnicos de Aire · AUX_TER', p.tecAire)}${card('mecanico', '⚙️ Técnicos Mecánicos · AUX_MEC', p.tecMec)}</div>
     ${progInfo}
+    ${conclusionHTML}
+    ${graficos}
     ${tabla}${turnos}
     <div class="table-card" style="margin-top:16px;padding:16px;display:flex;flex-wrap:wrap;gap:24px">${fam('aire')}${fam('mecanico')}</div>
     <div class="table-card" style="margin-top:16px;padding:14px 16px;font-size:12px;color:var(--color-muted);line-height:1.55">
@@ -572,9 +606,53 @@ function capacidadHTML() {
   </div>`;
 }
 
+/* ═══════════ Gráficos (Chart.js) ═══════════ */
+let _capCharts = [];
+function capDibujar() {
+  if (typeof Chart === 'undefined') return;
+  _capCharts.forEach(c => { try { c.destroy(); } catch (e) { /* ya destruido */ } });
+  _capCharts = [];
+  const cv = id => document.getElementById(id);
+  if (!cv('cap-ch-aire')) return;
+  const p = capState.params, meses = capMesesAnalisis();
+  const an = meses.map(m => capAnalisis(m));
+  const lbl = meses.map(m => capMesLbl(m).split(' ')[0]);
+  const txt = (getComputedStyle(document.body).getPropertyValue('--color-muted') || '').trim() || '#64748b';
+  const grid = 'rgba(127,127,127,.18)';
+  const base = () => ({ responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { labels: { color: txt, boxWidth: 12 } } },
+    scales: { x: { ticks: { color: txt }, grid: { display: false } }, y: { ticks: { color: txt }, grid: { color: grid } } } });
+  const horas = (g, titulo, color, id) => {
+    const G = a => a.gremios[g];
+    const o = base();
+    o.plugins.title = { display: true, text: titulo, color: txt };
+    o.scales.x.stacked = true; o.scales.y.stacked = true;
+    o.scales.y.title = { display: true, text: 'horas-persona / mes', color: txt };
+    _capCharts.push(new Chart(cv(id), {
+      data: { labels: lbl, datasets: [
+        { type: 'bar', label: 'Preventivos', data: an.map(a => Math.round(G(a).carga)), backgroundColor: color, stack: 's' },
+        { type: 'bar', label: 'Reserva reclamos/correctivos', data: an.map(a => Math.round(G(a).reserva)), backgroundColor: '#f59e0b', stack: 's' },
+        { type: 'bar', label: 'Libre', data: an.map(a => Math.max(0, Math.round(G(a).cap - G(a).carga - G(a).reserva))), backgroundColor: 'rgba(16,185,129,.35)', stack: 's' },
+        { type: 'line', label: 'Capacidad neta', data: an.map(a => Math.round(G(a).cap)), borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 2, pointRadius: 2, tension: 0 },
+      ] }, options: o }));
+  };
+  horas('aire', '❄️ Aire — horas por mes', '#0096d6', 'cap-ch-aire');
+  horas('mecanico', '⚙️ Mecánicos — horas por mes', '#6366f1', 'cap-ch-mec');
+  const o2 = base();
+  o2.plugins.title = { display: true, text: 'Técnicos necesarios por mes (con reserva de reclamos) vs. los que hay hoy', color: txt };
+  o2.scales.y.title = { display: true, text: 'técnicos', color: txt };
+  o2.scales.y.beginAtZero = true;
+  const serie = g => an.map(a => +a.gremios[g].tecConReserva.toFixed(1));
+  _capCharts.push(new Chart(cv('cap-ch-tec'), { type: 'line', data: { labels: lbl, datasets: [
+    { label: 'Aire necesarios', data: serie('aire'), borderColor: '#0096d6', backgroundColor: '#0096d6', borderWidth: 2.5, tension: .2 },
+    { label: 'Aire: hoy', data: meses.map(() => p.tecAire), borderColor: '#0096d6', borderDash: [6, 4], borderWidth: 1.5, pointRadius: 0 },
+    { label: 'Mecánicos necesarios', data: serie('mecanico'), borderColor: '#6366f1', backgroundColor: '#6366f1', borderWidth: 2.5, tension: .2 },
+    { label: 'Mecánicos: hoy', data: meses.map(() => p.tecMec), borderColor: '#6366f1', borderDash: [6, 4], borderWidth: 1.5, pointRadius: 0 },
+  ] }, options: o2 }));
+}
 function capRender() {
   const host = document.querySelector('#auditoria-content [data-pane="capacidad"]');
-  if (host) host.innerHTML = capacidadHTML();
+  if (host) { host.innerHTML = capacidadHTML(); capDibujar(); }
 }
 function capSet(k, v) {
   const n = v === '' || v == null ? null : Number(v);
