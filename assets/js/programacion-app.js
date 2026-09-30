@@ -922,6 +922,9 @@ function renderProgramacion() {
   renderProgResumenSistemas();
   renderProgResumenAltura();
   renderProgResumenAdicionales();
+  renderProgResumenMangas();
+  renderProgResumenPrioridad();
+  renderProgMailGuardias();
 }
 
 /* ─── Panel: guardia fija por Manga ─────────────────────────────────
@@ -1424,10 +1427,10 @@ function progAlturaPorGuardia() {
 function progAlturaLinea(o, lugar) {
   return `${o.ot_num ? 'OT ' + o.ot_num + ' · ' : ''}${o.equipo} ${o.denominacion || ''}${lugar ? ' — ' + lugar : ''} — ${progPeriodicidadCorta(o)}`;
 }
-function progAlturaTexto() {
+function progAlturaTexto(soloG) {
   const mes = progMesLegible(progState.otsMes || progState.mes);
   const L = [`OTs de altura por guardia — ${mes}`, ''];
-  progAlturaPorGuardia().forEach(r => {
+  progAlturaPorGuardia().filter(r => soloG == null || r.g === soloG).forEach(r => {
     L.push(`${PROG_GUARDIAS[r.g].toUpperCase()} — Turno ${r.turno === 'mañana' ? 'Mañana' : 'Noche'} (${r.aire.length + r.mec.length} OTs de altura)`);
     if (!r.aire.length && !r.mec.length) L.push('  · Sin OTs de altura este mes');
     if (r.aire.length) { L.push(`  Aire (${r.aire.length}):`); r.aire.forEach(o => L.push('    · ' + progAlturaLinea(o, r.lugar(o)))); }
@@ -1503,10 +1506,10 @@ function progOpsAdicionales(o) {
 function progAdicionalQue(o) {
   return `además del mantenimiento ${progBasicoDe(o).toLowerCase()} se agregan las tareas ${o.gama.toLowerCase()}${progPluralTareas(o.gama)}${o.gamaDudosa ? ' (a confirmar)' : ''}`;
 }
-function progAdicionalesTexto() {
+function progAdicionalesTexto(soloG) {
   const mes = progMesLegible(progState.otsMes || progState.mes);
   const L = [`OTs con tareas adicionales al mantenimiento básico — ${mes}`, ''];
-  progAdicionalesPorGuardia().forEach(r => {
+  progAdicionalesPorGuardia().filter(r => soloG == null || r.g === soloG).forEach(r => {
     L.push(`${PROG_GUARDIAS[r.g].toUpperCase()} — Turno ${r.turno === 'mañana' ? 'Mañana' : 'Noche'} (${r.ots.length} OT${r.ots.length === 1 ? '' : 's'})`);
     if (!r.ots.length) L.push('  · Todas sus OTs de este mes son el mantenimiento básico');
     r.ots.forEach(o => {
@@ -1549,6 +1552,204 @@ function renderProgResumenAdicionales() {
                 <div style="font-size:11px;color:var(--color-muted)">${r.lugar(o) ? '📍 ' + esc(r.lugar(o)) + ' · ' : ''}${o.textoOT ? 'plan: ' + esc(o.textoOT) : ''}</div>
                 ${progOpsAdicionales(o).map(t => `<div style="font-size:11px">🔧 ${esc(t)}</div>`).join('')}
               </div>`).join('') : '<div style="font-size:12px;color:var(--color-muted)">Todas sus OTs de este mes son el mantenimiento básico.</div>'}
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ─── Mangas de embarque por guardia ─── */
+function progMangasPorGuardia() {
+  const idx = progGetEquipoIndex();
+  const porManga = {};
+  progState.ots.forEach(o => {
+    const man = progMangaDeEquipo(o.equipo);
+    if (man && o.guardia != null) (porManga[man] = porManga[man] || []).push(o);
+  });
+  return progOrdenGuardias().map(g => ({
+    g, turno: PROG_GUARDIA_TURNO[g],
+    mangas: Object.keys(PROG_MANGA_LABELS).filter(man => {
+      const fija = progState.mangaGuardia && progState.mangaGuardia[man];
+      return (porManga[man] || []).length && (fija != null ? fija === g : porManga[man][0].guardia === g);
+    }).sort((a, b) => PROG_MANGA_LABELS[a].localeCompare(PROG_MANGA_LABELS[b], undefined, { numeric: true })).map(man => ({
+      man, label: PROG_MANGA_LABELS[man],
+      propia: porManga[man].filter(o => o.equipo === man),
+      aires: porManga[man].filter(o => o.equipo !== man),
+      denom: o => o.denominacion || (idx[o.equipo] && idx[o.equipo].denominacion) || '',
+    })),
+  }));
+}
+function progMangasTexto(soloG) {
+  const mes = progMesLegible(progState.otsMes || progState.mes);
+  const L = [`Mangas de embarque por guardia — ${mes}`, ''];
+  progMangasPorGuardia().filter(r => soloG == null || r.g === soloG).forEach(r => {
+    L.push(`${PROG_GUARDIAS[r.g].toUpperCase()} — Turno ${r.turno === 'mañana' ? 'Mañana' : 'Noche'} (${r.mangas.length} manga${r.mangas.length === 1 ? '' : 's'})`);
+    if (!r.mangas.length) L.push('  · Sin mangas este mes');
+    r.mangas.forEach(m => {
+      L.push(`  · ${m.label} (${m.man})${m.propia.length ? '' : ' — este mes solo sus equipos de aire'}`);
+      m.propia.forEach(o => L.push(`      Manga: ${o.ot_num ? 'OT ' + o.ot_num + ' · ' : ''}${o.equipo} ${m.denom(o)}`));
+      m.aires.forEach(o => L.push(`      Aire: ${o.ot_num ? 'OT ' + o.ot_num + ' · ' : ''}${o.equipo} ${m.denom(o)}${o.esAltura ? ' — ⛰️ altura' : ''}`));
+    });
+    L.push('');
+  });
+  if (soloG == null) L.push('Cada manga se mantiene junto con sus equipos de aire por la misma guardia.');
+  return L.join('\n');
+}
+function renderProgResumenMangas() {
+  const wrap = document.getElementById('prog-resumen-mangas');
+  if (!wrap) return;
+  const res = progState.ots.length ? progMangasPorGuardia() : [];
+  if (!res.some(r => r.mangas.length)) { wrap.innerHTML = ''; return; }
+  const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  wrap.innerHTML = `
+    <div class="table-card" style="margin-top:20px">
+      <div style="padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-bottom:1px solid var(--color-border)">
+        <div style="flex:1;min-width:240px">
+          <div style="font-weight:800;font-size:14px">🛬 Mangas de embarque por guardia · ${esc(progMesLegible(progState.otsMes || progState.mes))}</div>
+          <div style="font-size:12px;color:var(--color-muted)">Qué mangas (y sus equipos de aire) le tocan a cada guardia este mes.</div>
+        </div>
+        <button class="prog-btn prog-btn-primary" onclick="progCopiarTexto(progMangasTexto(), '📋 Mangas copiadas: pegalas en el mail.')">📋 Copiar mangas</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;padding:14px 16px">
+        ${res.map(r => `
+          <div style="border:1px solid var(--color-border);border-radius:10px;padding:10px 12px">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:4px">
+              <b style="font-size:13.5px;color:var(--color-primary);white-space:nowrap">${esc(PROG_GUARDIAS[r.g])}</b>
+              <span class="turno-badge ${r.turno === 'noche' ? 'noche' : 'manana'}">${r.turno === 'noche' ? '🌙 Noche' : '☀️ Mañana'}</span>
+              <span style="margin-left:auto;font-size:12px;color:var(--color-muted);font-weight:700">🛬 ${r.mangas.length} manga${r.mangas.length === 1 ? '' : 's'}</span>
+            </div>
+            ${r.mangas.length ? r.mangas.map(m => `
+              <div style="font-size:12.5px;padding:5px 0;border-top:1px solid var(--color-surface)">
+                <b>${esc(m.label)}</b> <span style="color:var(--color-muted)">${esc(m.man)}</span>
+                <div style="font-size:11.5px;color:var(--color-muted)">${m.propia.length ? '🔧 la manga' : ''}${m.propia.length && m.aires.length ? ' + ' : ''}${m.aires.length ? '💨 ' + m.aires.length + ' equipo' + (m.aires.length === 1 ? '' : 's') + ' de aire' : ''}</div>
+              </div>`).join('') : '<div style="font-size:12px;color:var(--color-muted)">Sin mangas este mes.</div>'}
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ─── OTs prioritarias a principio de mes (columna Prioridad de SAP) ───
+   Muestra las OTs de cada guardia hasta la prioridad elegida (progState.prioCorte: 1 = solo Muy
+   alta, 2 = Muy alta y Alta, 3 = hasta Media), ordenadas por prioridad y fecha de inicio. */
+function progPrioCorte() { return progState.prioCorte || 2; }
+function progPrioPorGuardia() {
+  const corte = progPrioCorte();
+  const idx = progGetEquipoIndex();
+  const fecha = o => { const f = progParseFecha(o.fechaInicio); return f ? f.getTime() : Infinity; };
+  return progOrdenGuardias().map(g => ({
+    g, turno: PROG_GUARDIA_TURNO[g],
+    ots: progState.ots.filter(o => o.guardia === g && o.prio && o.prio <= corte)
+      .sort((a, b) => a.prio - b.prio || fecha(a) - fecha(b) || a.equipo.localeCompare(b.equipo, 'es', { numeric: true })),
+    lugar: o => (idx[o.equipo] && idx[o.equipo].sector) || o.zona || '',
+  }));
+}
+function progFechaCorta(o) {
+  const f = progParseFecha(o.fechaInicio);
+  return f ? `${String(f.getDate()).padStart(2, '0')}/${String(f.getMonth() + 1).padStart(2, '0')}` : '';
+}
+function progPrioTexto(soloG) {
+  const mes = progMesLegible(progState.otsMes || progState.mes);
+  const L = [`OTs a priorizar a principio de mes (prioridad SAP hasta "${PROG_PRIO_NOMBRE[progPrioCorte()]}") — ${mes}`, ''];
+  progPrioPorGuardia().filter(r => soloG == null || r.g === soloG).forEach(r => {
+    L.push(`${PROG_GUARDIAS[r.g].toUpperCase()} — Turno ${r.turno === 'mañana' ? 'Mañana' : 'Noche'} (${r.ots.length} OT${r.ots.length === 1 ? '' : 's'})`);
+    if (!r.ots.length) L.push('  · Sin OTs con esa prioridad este mes');
+    let ult = null;
+    r.ots.forEach(o => {
+      if (o.prio !== ult) { L.push(`  Prioridad ${PROG_PRIO_NOMBRE[o.prio].toUpperCase()} (${o.prio}):`); ult = o.prio; }
+      L.push(`    · ${o.ot_num ? 'OT ' + o.ot_num + ' · ' : ''}${o.equipo} ${o.denominacion || ''}${r.lugar(o) ? ' — ' + r.lugar(o) : ''}${progFechaCorta(o) ? ' — inicio ' + progFechaCorta(o) : ''}${o.esAltura ? ' — ⛰️ altura' : ''}`);
+    });
+    L.push('');
+  });
+  return L.join('\n');
+}
+function progSetPrioCorte(v) { progState.prioCorte = +v; progSave(); renderProgResumenPrioridad(); renderProgMailGuardias(); }
+function renderProgResumenPrioridad() {
+  const wrap = document.getElementById('prog-resumen-prioridad');
+  if (!wrap) return;
+  if (!progState.ots.some(o => o.prio)) { wrap.innerHTML = ''; return; }
+  const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const corte = progPrioCorte();
+  const res = progPrioPorGuardia();
+  wrap.innerHTML = `
+    <div class="table-card" style="margin-top:20px">
+      <div style="padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-bottom:1px solid var(--color-border)">
+        <div style="flex:1;min-width:240px">
+          <div style="font-weight:800;font-size:14px">🚩 OTs a priorizar a principio de mes · ${esc(progMesLegible(progState.otsMes || progState.mes))}</div>
+          <div style="font-size:12px;color:var(--color-muted)">Según la columna Prioridad de SAP, ordenadas por prioridad y fecha de inicio.</div>
+        </div>
+        <select class="filter-select" onchange="progSetPrioCorte(this.value)" title="Hasta qué prioridad se incluye">
+          <option value="1" ${corte === 1 ? 'selected' : ''}>Solo Muy alta (1)</option>
+          <option value="2" ${corte === 2 ? 'selected' : ''}>Muy alta y Alta (1-2)</option>
+          <option value="3" ${corte === 3 ? 'selected' : ''}>Hasta Media (1-3)</option>
+          <option value="4" ${corte === 4 ? 'selected' : ''}>Todas (1-4)</option>
+        </select>
+        <button class="prog-btn prog-btn-primary" onclick="progCopiarTexto(progPrioTexto(), '📋 OTs prioritarias copiadas: pegalas en el mail.')">📋 Copiar OTs prioritarias</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;padding:14px 16px">
+        ${res.map(r => `
+          <div style="border:1px solid var(--color-border);border-radius:10px;padding:10px 12px">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:4px">
+              <b style="font-size:13.5px;color:var(--color-primary);white-space:nowrap">${esc(PROG_GUARDIAS[r.g])}</b>
+              <span class="turno-badge ${r.turno === 'noche' ? 'noche' : 'manana'}">${r.turno === 'noche' ? '🌙 Noche' : '☀️ Mañana'}</span>
+              <span style="margin-left:auto;font-size:12px;color:var(--color-muted);font-weight:700">🚩 ${r.ots.length} OT${r.ots.length === 1 ? '' : 's'}</span>
+            </div>
+            <div style="max-height:260px;overflow:auto">
+            ${r.ots.length ? r.ots.map(o => `
+              <div style="font-size:12px;padding:4px 0;border-top:1px solid var(--color-surface)">
+                <span class="prog-regla-badge ${o.prio === 1 ? 'noche' : 'manana'}">P${o.prio}</span>
+                ${o.ot_num ? `<span style="color:var(--color-muted)">OT ${esc(o.ot_num)}</span> · ` : ''}<b>${esc(o.equipo)}</b> ${esc(o.denominacion || '')}
+                <span style="color:var(--color-muted);font-size:11px">${progFechaCorta(o) ? ' · inicio ' + progFechaCorta(o) : ''}${o.esAltura ? ' · ⛰️' : ''}</span>
+              </div>`).join('') : '<div style="font-size:12px;color:var(--color-muted)">Sin OTs con esa prioridad este mes.</div>'}
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ─── Mail para cada guardia: mangas + altura + tareas adicionales + OTs prioritarias ─── */
+function progMailGuardiaTexto(g) {
+  const mes = progMesLegible(progState.otsMes || progState.mes);
+  const turno = PROG_GUARDIA_TURNO[g] === 'noche' ? 'Noche' : 'Mañana';
+  const cuerpo = f => f(g).split('\n').slice(2).join('\n').trim();   // sin el título, que ya va en el encabezado
+  return [
+    `Hola, equipo de ${PROG_GUARDIAS[g]}:`, '',
+    `Les paso lo que les toca en la programación de OTs de ${mes} (turno ${turno}).`, '',
+    '━━━ 🛬 MANGAS ━━━', cuerpo(progMangasTexto), '',
+    '━━━ ⛰️ OTs DE ALTURA ━━━', cuerpo(progAlturaTexto), '',
+    '━━━ ➕ OTs CON TAREAS ADICIONALES AL MANTENIMIENTO BÁSICO ━━━', cuerpo(progAdicionalesTexto), '',
+    '━━━ 🚩 OTs A PRIORIZAR A PRINCIPIO DE MES ━━━', cuerpo(progPrioTexto), '',
+    'Cualquier duda con alguna OT, avisen.', 'Saludos.',
+  ].join('\n');
+}
+function progCopiarMailGuardia(g) { progCopiarTexto(progMailGuardiaTexto(g), `📋 Mail de ${PROG_GUARDIAS[g]} copiado: pegalo en el correo.`); }
+function progAbrirMailGuardia(g) {
+  const mes = progMesLegible(progState.otsMes || progState.mes);
+  const asunto = encodeURIComponent(`Programación de OTs ${mes} — ${PROG_GUARDIAS[g]}`);
+  /* el mail es largo: los programas de correo cortan los links, así que se copia y se abre vacío para pegar */
+  progCopiarMailGuardia(g);
+  window.location.href = `mailto:?subject=${asunto}&body=${encodeURIComponent('Pegá acá el texto (ya está copiado al portapapeles).')}`;
+}
+function renderProgMailGuardias() {
+  const wrap = document.getElementById('prog-mail-guardias');
+  if (!wrap) return;
+  if (!progState.ots.length) { wrap.innerHTML = ''; return; }
+  const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const mg = progMangasPorGuardia(), al = progAlturaPorGuardia(), ad = progAdicionalesPorGuardia(), pr = progPrioPorGuardia();
+  wrap.innerHTML = `
+    <div class="table-card" style="margin-top:20px">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--color-border)">
+        <div style="font-weight:800;font-size:14px">✉ Mail para cada guardia · ${esc(progMesLegible(progState.otsMes || progState.mes))}</div>
+        <div style="font-size:12px;color:var(--color-muted)">Un mail por guardia con sus mangas, OTs de altura, OTs con tareas adicionales y OTs a priorizar a principio de mes. "Abrir en el mail" copia el texto y abre un correo nuevo para pegarlo.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;padding:14px 16px">
+        ${progOrdenGuardias().map((g, i) => `
+          <div style="border:1px solid var(--color-border);border-radius:10px;padding:10px 12px">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px">
+              <b style="font-size:13.5px;color:var(--color-primary)">${esc(PROG_GUARDIAS[g])}</b>
+              <span class="turno-badge ${PROG_GUARDIA_TURNO[g] === 'noche' ? 'noche' : 'manana'}">${PROG_GUARDIA_TURNO[g] === 'noche' ? '🌙 Noche' : '☀️ Mañana'}</span>
+            </div>
+            <div style="font-size:12px;color:var(--color-muted);margin-bottom:8px">🛬 ${mg[i].mangas.length} mangas · ⛰️ ${al[i].aire.length + al[i].mec.length} altura · ➕ ${ad[i].ots.length} adicionales · 🚩 ${pr[i].ots.length} prioritarias</div>
+            <button class="prog-btn" onclick="progCopiarMailGuardia(${g})">📋 Copiar mail</button>
+            <button class="prog-btn prog-btn-primary" onclick="progAbrirMailGuardia(${g})">✉ Abrir en el mail</button>
           </div>`).join('')}
       </div>
     </div>`;
