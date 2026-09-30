@@ -130,7 +130,7 @@
 
   /* ── Render ── */
   /* ── Pestañas de la auditoría ── */
-  const AUD_TABS = [['acciones', '✅ Qué corregir en SAP'], ['resumen', 'Diagnóstico'], ['equipos', 'Equipos'], ['planes', 'Planes'], ['hdr', 'Hojas de ruta'], ['ots', 'Órdenes de trabajo'], ['mat', 'Materiales']];
+  const AUD_TABS = [['acciones', '✅ Qué corregir en SAP'], ['resumen', 'Diagnóstico'], ['equipos', 'Equipos'], ['planes', 'Planes'], ['hdr', 'Hojas de ruta'], ['ots', 'Órdenes de trabajo'], ['mat', 'Materiales'], ['capacidad', '⏱️ Capacidad del personal']];
   let audTab = 'acciones';
   window.audGoTab = function (k) {
     audTab = k;
@@ -176,6 +176,7 @@
       <section class="aud-pane" data-pane="hdr">${(typeof hdrAuditCardHTML === 'function') ? hdrAuditCardHTML() : ''}</section>
       <section class="aud-pane" data-pane="ots">${otsHTML()}</section>
       <section class="aud-pane" data-pane="mat">${mm60HTML()}${mb51HTML()}</section>
+      <section class="aud-pane" data-pane="capacidad">${(typeof capacidadHTML === 'function') ? capacidadHTML() : ''}</section>
       <section class="aud-pane" data-pane="equipos">
       ${observacionesHTML()}
 
