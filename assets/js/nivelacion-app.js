@@ -316,6 +316,29 @@ function nivExport() {
   const res = nivOrd().map(i => ({ Mes: NIV_MES[i], 'Aire hoy (h)': Math.round(R.antes.aire[i]), 'Aire nivelado (h)': Math.round(R.despues.aire[i]), 'Mecánicos hoy (h)': Math.round(R.antes.mecanico[i]), 'Mecánicos nivelado (h)': Math.round(R.despues.mecanico[i]),
     'Altura Aire hoy': Math.round(R.altAntes.aire[i]), 'Altura Aire nivelada': Math.round(R.altDespues.aire[i]), 'Altura Mec. hoy': Math.round(R.altAntes.mecanico[i]), 'Altura Mec. nivelada': Math.round(R.altDespues.mecanico[i]) }));
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(res), 'Carga por mes');
+  /* Escenarios de ausencias (vacaciones/licencias) sobre la dotación nominal: mismos cambios, distinta capacidad */
+  const pr = capState.params, minNeto = capMinNetosTurno(pr);
+  const capH = (g, aus) => (g === 'aire' ? pr.tecAire : pr.tecMec) * pr.diasMes * (1 - aus / 100) * minNeto / 60;
+  const pct = x => Math.round(x * 100);
+  const esc = [];
+  [0, 10].forEach(aus => nivOrd().forEach(i => {
+    const fila = { Escenario: `${aus}% de ausencias`, Mes: NIV_MES[i] };
+    [['aire', 'Aire'], ['mecanico', 'Mecánicos']].forEach(([g, n]) => {
+      const c = capH(g, aus);
+      Object.assign(fila, { [`${n}: capacidad neta (h)`]: Math.round(c), [`${n}: carga hoy (h)`]: Math.round(R.antes[g][i]), [`${n}: carga nivelada (h)`]: Math.round(R.despues[g][i]),
+        [`${n}: uso hoy %`]: pct(R.antes[g][i] / c), [`${n}: uso nivelado %`]: pct(R.despues[g][i] / c) });
+    });
+    esc.push(fila);
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(esc), 'Ausencias 0% vs 10%');
+  const k = R.moves.length;
+  const resumen = [];
+  [0, 10].forEach(aus => ['aire', 'mecanico'].forEach(g => {
+    const c = capH(g, aus);
+    resumen.push({ Escenario: `${aus}% de ausencias`, Gremio: g === 'aire' ? 'Aire' : 'Mecánicos', 'Capacidad neta (h/mes)': Math.round(c), 'Pico hoy (h)': Math.round(R.pico[g][0]), 'Pico hoy (% cap.)': pct(R.pico[g][0] / c),
+      'Pico nivelado (h)': Math.round(R.pico[g][k]), 'Pico nivelado (% cap.)': pct(R.pico[g][k] / c), 'Meses sobre 85% hoy': R.antes[g].filter(x => x / c > 0.85).length, 'Meses sobre 85% nivelado': R.despues[g].filter(x => x / c > 0.85).length,
+      'Meses sobre 100% hoy': R.antes[g].filter(x => x / c > 1).length, 'Meses sobre 100% nivelado': R.despues[g].filter(x => x / c > 1).length, 'Cambios de plan': k }); }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumen), 'Resumen ausencias');
   XLSX.writeFile(wb, 'nivelacion-carga-sap.xlsx');
 }
 
