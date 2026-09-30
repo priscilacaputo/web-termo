@@ -11,7 +11,7 @@
    entera (todas sus tomas el mismo número de meses), así que mantiene su ciclo y su secuencia de paquetes. */
 
 const NIV_MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-let nivState = { maxShift: 3, maxMoves: 150, memo: null, memoKey: '', seriesMemo: null, seriesKey: '' };
+let nivState = { maxShift: 3, tol: 15, memo: null, memoKey: '', seriesMemo: null, seriesKey: '' };
 
 function nivFecha(s) { return new Date(s + 'T12:00:00'); }
 function nivAddMeses(d, k) { return new Date(d.getFullYear(), d.getMonth() + k, d.getDate(), 12); }
@@ -83,6 +83,18 @@ function nivSeries() {
     s.total = s.v.reduce((z, x) => z + x, 0);
     if (s.total > 0) out.push(s);
   });
+  /* un plan de SAP se reprograma entero: las series (equipo + hoja de ruta) del mismo plan se mueven juntas */
+  const unidades = new Map();
+  out.forEach(s => {
+    const k = (s.planes[0] ? 'P' + s.planes[0].plan : 'S' + s.key) + '|' + s.g;
+    const u = unidades.get(k);
+    if (!u) { unidades.set(k, s); return; }
+    u.v = u.v.map((x, m) => x + s.v[m]); u.a = u.a.map((x, m) => x + s.a[m]);
+    u.total += s.total; u.ots = u.ots.concat(s.ots);
+    if (s.proxima && (!u.proxima || s.proxima < u.proxima)) u.proxima = s.proxima;
+    u.pMeses = Math.min(u.pMeses, s.pMeses);
+  });
+  out.length = 0; unidades.forEach(u => out.push(u));
   nivState.seriesMemo = { series: out, year: y }; nivState.seriesKey = key;
   return nivState.seriesMemo;
 }
@@ -118,14 +130,12 @@ function capDemandaPatron(mes) {
 const nivShift = (v, sh) => { const r = Array(12).fill(0); for (let m = 0; m < 12; m++) r[(m + sh + 120) % 12] = v[m]; return r; };
 
 function nivCalcular() {
-  const key = [nivState.maxShift, nivState.maxMoves, capState.params.hidrolavado, capState.params.persDefault].join('|');
+  const key = [nivState.maxShift, nivState.tol, capState.params.hidrolavado, capState.params.persDefault].join('|');
   if (nivState.memo && nivState.memoKey === key) return nivState.memo;
   const { series, year } = nivSeries();
-  const L = { aire: Array(12).fill(0), mecanico: Array(12).fill(0) };
-  const A = { aire: Array(12).fill(0), mecanico: Array(12).fill(0) };
-  series.forEach(s => s.v.forEach((x, m) => { L[s.g][m] += x; A[s.g][m] += s.a[m]; }));
-  const antes = { aire: L.aire.slice(), mecanico: L.mecanico.slice() };
-  const altAntes = { aire: A.aire.slice(), mecanico: A.mecanico.slice() };
+  const L0 = { aire: Array(12).fill(0), mecanico: Array(12).fill(0) };
+  const A0 = { aire: Array(12).fill(0), mecanico: Array(12).fill(0) };
+  series.forEach(s => s.v.forEach((x, m) => { L0[s.g][m] += x; A0[s.g][m] += s.a[m]; }));
   /* candidatos por serie: desplazamientos distintos y que cambian el patrón */
   const manana = new Date(Date.now() + 86400000);
   series.forEach(s => {
@@ -136,31 +146,64 @@ function nivCalcular() {
       const w = nivShift(s.v, sh);
       if (w.some((x, m) => Math.abs(x - s.v[m]) > 0.01)) s.cands.push(sh);
     }
-    s.mov = 0;
   });
-  const moves = [];
-  const pico = { aire: [Math.max(...L.aire)], mecanico: [Math.max(...L.mecanico)] };
-  const ss = (arr) => arr.reduce((z, x) => z + x * x, 0);
-  for (let paso = 0; paso < nivState.maxMoves; paso++) {
+  const GR = ['aire', 'mecanico'];
+  const copia = o => ({ aire: o.aire.slice(), mecanico: o.mecanico.slice() });
+  /* objetivo: ningún mes pasa del promedio del año + tol % (por gremio). Se buscan los MENOS cambios que lo logren. */
+  const tgt = {}; GR.forEach(g => { tgt[g] = (L0[g].reduce((z, x) => z + x, 0) / 12) * (1 + nivState.tol / 100) + 0.5; });
+  const cumple = (L, g) => Math.max(...L[g]) <= tgt[g];
+  /* 1) voraz: el cambio que más baja Σ carga² entre los gremios que todavía no llegan al objetivo */
+  const L = copia(L0), elegidos = [], usada = new Set();
+  while (elegidos.length < 600 && !GR.every(g => cumple(L, g))) {
     let best = null;
     series.forEach(s => {
-      if (s.mov || !s.cands.length) return;
-      const l = L[s.g];
+      if (usada.has(s) || !s.cands.length || cumple(L, s.g)) return;
+      const l = L[s.g], T = tgt[s.g];
       s.cands.forEach(sh => {
         const w = nivShift(s.v, sh);
-        let d = 0;
-        for (let m = 0; m < 12; m++) { const n = l[m] - s.v[m] + w[m]; d += n * n - l[m] * l[m]; }
-        if (!best || d < best.d) best = { s, sh, d };
+        /* lo que importa es bajar lo que pasa del objetivo; Σ carga² solo desempata */
+        let d = 0, e = 0;
+        for (let m = 0; m < 12; m++) {
+          const n = l[m] - s.v[m] + w[m];
+          d += n * n - l[m] * l[m];
+          e += (Math.max(0, n - T) ** 2) - (Math.max(0, l[m] - T) ** 2);
+        }
+        const obj = e + d * 1e-4;
+        if (!best || obj < best.obj) best = { s, sh, d, obj, e };
       });
     });
-    if (!best || best.d > -50) break;
-    const { s, sh } = best, w = nivShift(s.v, sh), wa = nivShift(s.a, sh);
-    for (let m = 0; m < 12; m++) { L[s.g][m] += w[m] - s.v[m]; A[s.g][m] += wa[m] - s.a[m]; }
-    s.mov = sh;
-    moves.push({ s, sh, gain: -best.d });
-    pico.aire.push(Math.max(...L.aire)); pico.mecanico.push(Math.max(...L.mecanico));
+    if (!best || (best.e >= 0 && best.d > -50)) break;
+    const w = nivShift(best.s.v, best.sh);
+    for (let m = 0; m < 12; m++) L[best.s.g][m] += w[m] - best.s.v[m];
+    usada.add(best.s); elegidos.push({ s: best.s, sh: best.sh });
   }
-  const res = { year, series, moves, antes, despues: { aire: L.aire, mecanico: L.mecanico }, altAntes, altDespues: A, pico, sinMover: series.length - moves.length };
+  const alcanzado = GR.every(g => cumple(L, g));
+  /* 2) poda: si sacar un cambio (empezando por los últimos) sigue cumpliendo el objetivo, se saca */
+  if (alcanzado) {
+    for (let i = elegidos.length - 1; i >= 0; i--) {
+      const { s, sh } = elegidos[i], w = nivShift(s.v, sh);
+      const l2 = L[s.g].map((x, m) => x - w[m] + s.v[m]);
+      if (Math.max(...l2) <= tgt[s.g]) { L[s.g] = l2; elegidos.splice(i, 1); }
+    }
+  }
+  /* 3) orden final: de más a menos efecto, aplicándolos de a uno desde la situación de hoy */
+  const Lo = copia(L0), Ao = copia(A0), resto = elegidos.slice(), moves = [];
+  const pico = { aire: [Math.max(...L0.aire)], mecanico: [Math.max(...L0.mecanico)] };
+  while (resto.length) {
+    let bi = 0, bd = Infinity;
+    resto.forEach((e, i) => {
+      const w = nivShift(e.s.v, e.sh), l = Lo[e.s.g];
+      let d = 0;
+      for (let m = 0; m < 12; m++) { const n = l[m] - e.s.v[m] + w[m]; d += n * n - l[m] * l[m]; }
+      if (d < bd) { bd = d; bi = i; }
+    });
+    const e = resto.splice(bi, 1)[0], w = nivShift(e.s.v, e.sh), wa = nivShift(e.s.a, e.sh);
+    for (let m = 0; m < 12; m++) { Lo[e.s.g][m] += w[m] - e.s.v[m]; Ao[e.s.g][m] += wa[m] - e.s.a[m]; }
+    moves.push({ s: e.s, sh: e.sh, gain: -bd });
+    pico.aire.push(Math.max(...Lo.aire)); pico.mecanico.push(Math.max(...Lo.mecanico));
+  }
+  const res = { year, series, moves, antes: copia(L0), despues: Lo, altAntes: copia(A0), altDespues: Ao, pico, alcanzado,
+    objetivo: { aire: tgt.aire - 0.5, mecanico: tgt.mecanico - 0.5 }, sinMover: series.length - moves.length };
   nivState.memo = res; nivState.memoKey = key;
   return res;
 }
@@ -200,7 +243,8 @@ function nivHTML() {
       <div style="font-size:12px;color:var(--color-muted);margin-top:2px">Mes menos cargado: ${nivH(Math.min(...a))} → ${nivH(Math.min(...d))} · desparejo entre meses (coef. de variación): ${Math.round(cv(a) * 100)}% → ${Math.round(cv(d) * 100)}%</div></div>`;
   };
   const pk = (g, k) => R.pico[g][Math.min(k, R.pico[g].length - 1)];
-  const puntos = [10, 25, 50, 100, 150, 200, 300].filter(k => k <= nivState.maxMoves);
+  const nm = R.moves.length;
+  const puntos = [...new Set([...[5, 10, 25, 50, 100, 200].filter(k => k < nm), nm])].filter(k => k > 0);
   const tabPuntos = `<table style="font-size:12px;margin-top:8px"><thead><tr><th style="text-align:left;padding-right:14px">Si se hacen…</th>${puntos.map(k => `<th style="text-align:right;padding:0 10px">${k} cambios</th>`).join('')}</tr></thead><tbody>
     <tr><td>Pico Aire</td>${puntos.map(k => `<td style="text-align:right;padding:0 10px">${nivH(pk('aire', k))}</td>`).join('')}</tr>
     <tr><td>Pico Mecánicos</td>${puntos.map(k => `<td style="text-align:right;padding:0 10px">${nivH(pk('mecanico', k))}</td>`).join('')}</tr></tbody></table>
@@ -213,10 +257,13 @@ function nivHTML() {
 
   return `<div class="table-card" style="margin-top:16px;padding:16px" id="niv-root">
     <b style="font-size:15px">🧮 Cómo programar SAP para que la carga quede pareja</b>
-    <div style="font-size:12.5px;color:var(--color-muted);margin:4px 0 10px">Propone mover de mes la <b>fecha de las tomas</b> de algunos planes (cada plan se mueve entero, conserva su ciclo). Mira hacia adelante (desde octubre): parte de las ${R.series.length} series equipo + hoja de ruta de la programación ${R.year}, que se repite en los meses siguientes, y completa con el ciclo del plan lo que SAP todavía no generó. Lo que ya pasó no se toca.</div>
+    <div style="font-size:12.5px;color:var(--color-muted);margin:4px 0 10px">Propone mover de mes la <b>fecha de las tomas</b> de algunos planes (cada plan se mueve entero, conserva su ciclo). Mira hacia adelante (desde octubre): parte de los ${R.series.length} planes con OTs en la programación ${R.year}, que se repite en los meses siguientes, y completa con el ciclo del plan lo que SAP todavía no generó. Lo que ya pasó no se toca.</div>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
-      ${capInputNiv('maxShift', 'Mover hasta (meses)')}${capInputNiv('maxMoves', 'Máx. de cambios')}
+      ${capInputNiv('maxShift', 'Mover hasta (meses)')}${capInputNiv('tol', 'Mes más cargado hasta (% sobre el promedio)')}
       <button class="mant-tab" onclick="nivExport()">⬇ Excel para trabajar en SAP</button></div>
+    <div style="font-size:13px;margin-top:12px;padding:8px 12px;border-radius:6px;background:${R.alcanzado ? 'rgba(16,185,129,.12)' : 'rgba(245,158,11,.15)'}">${R.alcanzado
+      ? `✅ Bastan <b>${R.moves.length} cambios</b> (los mínimos que encontré) para que ningún mes pase un ${nivState.tol}% del promedio: Aire hasta ${nivH(R.objetivo.aire)} y Mecánicos hasta ${nivH(R.objetivo.mecanico)}.`
+      : `⚠️ Con hasta ${nivState.maxShift} meses de movimiento no se llega a que ningún mes pase un ${nivState.tol}% del promedio; estos ${R.moves.length} cambios son los que más ayudan. Subí los meses o la tolerancia.`}</div>
     <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px">${gr('aire')}${gr('mecanico')}</div>
     <div style="margin-top:10px">${tabPuntos}</div>
     <div style="font-size:12px;margin-top:8px">Trabajo en altura (mes con más OTs): Aire ${altPico('aire')} · Mecánicos ${altPico('mecanico')}.</div>
@@ -238,7 +285,7 @@ function capInputNiv(k, label) {
   return `<label style="display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--color-muted)">${label}
     <input type="number" min="1" value="${nivState[k]}" style="width:96px;padding:5px 7px;border:1px solid var(--color-border,#d1d5db);border-radius:6px;background:transparent;color:inherit" onchange="nivSet('${k}', this.value)"></label>`;
 }
-function nivSet(k, v) { const n = Math.max(1, Math.round(Number(v))); if (!isFinite(n)) return; nivState[k] = k === 'maxShift' ? Math.min(6, n) : Math.min(500, n); capRender(); }
+function nivSet(k, v) { const n = Math.max(k === 'tol' ? 0 : 1, Math.round(Number(v))); if (!isFinite(n)) return; nivState[k] = k === 'maxShift' ? Math.min(6, n) : Math.min(100, n); capRender(); }
 
 function nivDibujar(txt, base) {
   if (!document.getElementById('niv-ch-aire')) return;
@@ -291,7 +338,7 @@ function nivAccion() {
   const capA = capOferta(R.year + '-01').netoH.aire;
   return {
     prio: pa[0] / capA > 0.85 ? 'alta' : 'media',
-    que: `Hoy hay meses muy cargados (pico Aire ${Math.round(pa[0])} h, Mecánicos ${Math.round(pm[0])} h) y otros casi vacíos. Mover la próxima toma de los planes de esta lista (cada plan conserva su ciclo) baja el pico de Aire a ${Math.round(pa[k])} h y el de Mecánicos a ${Math.round(pm[k])} h. Empezá por los primeros: son los que más aportan. Detalle, gráficos y Excel en la pestaña "Capacidad del personal".`,
+    que: `Hoy hay meses muy cargados (pico Aire ${Math.round(pa[0])} h, Mecánicos ${Math.round(pm[0])} h) y otros casi vacíos. Mover la próxima toma de los planes de esta lista (cada plan conserva su ciclo) baja el pico de Aire a ${Math.round(pa[k])} h y el de Mecánicos a ${Math.round(pm[k])} h. Son los cambios mínimos para que ningún mes pase un ${nivState.tol}% del promedio; empezá por los primeros. Detalle, gráficos y Excel en la pestaña "Capacidad del personal".`,
     objetos: filas.map(f => ({ cod: f.equipo, det: `${f.accion} — plan ${f.plan || '?'}${f.pos ? ' pos. ' + f.pos : ''}${f.ciclo ? ' (' + f.ciclo + ')' : ''} · ${f.texto}` + (f.proxima ? ` · próxima toma ${f.proxima} → ${f.nueva}` : '') })),
   };
 }

@@ -45,6 +45,10 @@
         <span class="nav-icon">🗂️</span>
         <span class="nav-label">Planificador</span>
       </li>
+      <li class="nav-item" data-page="gamas-sam">
+        <span class="nav-icon">📱</span>
+        <span class="nav-label">Gamas para SAM</span>
+      </li>
       <li class="nav-item" data-page="estado">
         <span class="nav-icon">🚦</span>
         <span class="nav-label">Estado de Equipos</span>
@@ -2059,6 +2063,88 @@
 
     </div>
 
+    <!-- ─── PÁGINA: Gamas de tareas para SAP SAM ─── -->
+    <div class="page hidden" id="page-gamas-sam">
+      <style>
+        .gsm-wrap{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+        .gsm-card{background:var(--color-card);border:1px solid var(--color-border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+        .gsm-card h3{margin:0 0 8px;font-size:14px;color:var(--color-navy)}
+        .gsm-hint{font-size:12px;color:var(--color-muted);margin:0;line-height:1.5}
+        #gsm-buscar{width:100%;padding:8px 10px;border:1px solid var(--color-border);border-radius:8px;font-size:13px;box-sizing:border-box}
+        #gsm-lista{max-height:62vh;overflow:auto;margin-top:8px;display:flex;flex-direction:column;gap:4px}
+        .gsm-item,.gsm-op{text-align:left;border:1px solid var(--color-border);background:var(--color-surface);border-radius:8px;padding:7px 9px;cursor:pointer;font-size:12px;color:var(--color-text);display:flex;flex-direction:column;gap:1px}
+        .gsm-item:hover,.gsm-op:hover{border-color:var(--color-sky)}
+        .gsm-item.on,.gsm-op.on{background:var(--color-sky-light);border-color:var(--color-sky)}
+        .gsm-item span{color:var(--color-muted)} .gsm-item em,.gsm-op em{font-style:normal;color:var(--color-muted);font-size:11px}
+        #gsm-ops{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px} .gsm-op{flex-direction:row;gap:6px;align-items:baseline}
+        .gsm-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}
+        .gsm-opts label{font-size:11px;color:var(--color-muted);display:flex;flex-direction:column;gap:3px}
+        .gsm-opts select{padding:6px;border:1px solid var(--color-border);border-radius:6px;font-size:12px}
+        .gsm-chk{flex-direction:row!important;align-items:center;gap:6px!important}
+        .gsm-cols{display:grid;grid-template-columns:1fr 330px;gap:14px}
+        #gsm-salida{width:100%;min-height:380px;font-family:Consolas,monospace;font-size:13px;line-height:1.5;padding:10px;border:1px solid var(--color-border);border-radius:8px;box-sizing:border-box;resize:vertical}
+        .gsm-acc{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;align-items:center}
+        .gsm-meta{font-size:11px;color:var(--color-muted)}
+        .gsm-warn{font-size:12px;color:#92600a;background:#fff7e0;border-radius:6px;padding:5px 8px;margin-top:4px}
+        .gsm-ok{font-size:12px;color:#0b7a55;margin-top:4px}
+        .gsm-phone{border:8px solid #1c2b3d;border-radius:26px;background:#fff;padding:14px 14px 22px;min-height:380px}
+        .gsm-phone h4{margin:0 0 10px;font-size:15px;color:#1d2d3e;border-bottom:1px solid #e3e8ef;padding-bottom:8px}
+        #gsm-vista{font-family:Arial,sans-serif;font-size:14px;line-height:1.55;color:#1d2d3e;word-break:break-word}
+        .gsm-vacio{font-size:12px;color:var(--color-muted);padding:10px}
+        @media(max-width:1100px){.gsm-wrap,.gsm-cols{grid-template-columns:1fr}}
+      </style>
+      <div class="gsm-card" style="margin-bottom:14px">
+        <h3>Gama de tareas en formato legible para SAP SAM</h3>
+        <p class="gsm-hint">SAM muestra el texto largo de la operación <b>sin respetar los renglones</b> (los une y se pegan palabras). Elegí la hoja de ruta y la operación: se arma el texto
+        con una tarea por línea, numerada y con encabezado por frecuencia. Podés editarlo, copiarlo y pegarlo en el texto largo de la operación en <b>IA17 / IA05</b>.
+        Activá <b>"Simular SAM"</b> para ver cómo quedaría si SAM une los renglones. Datos: export IA17 (lista de impresión): sólo aparecen las hojas de ruta incluidas en ese export.</p>
+      </div>
+      <div class="gsm-wrap">
+        <div class="gsm-card">
+          <h3>Hoja de ruta / contador</h3>
+          <input id="gsm-buscar" type="search" placeholder="Buscar: ruta, descripción o equipo (AAC2083…)" />
+          <div class="gsm-meta" id="gsm-cuenta" style="margin-top:6px"></div>
+          <div id="gsm-lista"></div>
+        </div>
+        <div class="gsm-card">
+          <h3>Operación</h3>
+          <div class="gsm-meta" id="gsm-eq" style="margin-bottom:8px"></div>
+          <div id="gsm-ops"><span class="gsm-vacio">Elegí una hoja de ruta de la izquierda.</span></div>
+          <div class="gsm-opts">
+            <label>Numeración
+              <select id="gsm-estilo"><option value="num">1) 2) 3) — recomendado</option><option value="simbolo">▪ 1) — símbolo + número (probar en SAM)</option><option value="guion">Guion "-"</option></select></label>
+            <label>Ancho de línea
+              <select id="gsm-ancho"><option value="70">Partir a 70 (con sangría)</option><option value="0">No partir</option></select></label>
+            <label>Seguridad
+              <select id="gsm-seg"><option value="linea">En una línea</option><option value="lista">Lista completa</option><option value="omitir">Omitir</option></select></label>
+            <label>Autocontrol / cierre
+              <select id="gsm-auto"><option value="linea">En una línea</option><option value="lista">Lista completa</option><option value="omitir">Omitir</option></select></label>
+            <label>Frecuencia
+              <select id="gsm-frec"><option value="todas">Todas</option></select></label>
+            <label class="gsm-chk"><input type="checkbox" id="gsm-titulo" checked> Título "GAMA DE TAREAS - …"</label>
+            <label class="gsm-chk"><input type="checkbox" id="gsm-blank"> Línea en blanco entre tareas</label>
+          </div>
+          <div class="gsm-cols">
+            <div>
+              <textarea id="gsm-salida" spellcheck="false" placeholder="Acá aparece el texto listo para pegar en SAP…"></textarea>
+              <div class="gsm-acc">
+                <button class="prog-btn prog-btn-primary" id="gsm-copiar">📋 Copiar esta operación</button>
+                <button class="prog-btn" id="gsm-copiar-ruta">Copiar todas las operaciones de la ruta</button>
+                <button class="export-btn" id="gsm-descargar">⬇ Descargar todas (.txt)</button>
+                <span class="gsm-meta" id="gsm-contador"></span>
+              </div>
+              <div id="gsm-alertas"></div>
+            </div>
+            <div>
+              <div class="gsm-phone"><h4>Notas</h4><div id="gsm-vista"></div></div>
+              <div class="gsm-acc"><label class="gsm-chk gsm-meta"><input type="checkbox" id="gsm-sim"> Simular SAM (une los renglones)</label>
+                <button class="prog-btn" id="gsm-orig" title="Ver el texto original de SAP, sin ordenar">Ver original</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ─── PÁGINA: Planificador real de OTs ─── -->
     <div class="page hidden" id="page-planificador">
 
@@ -2527,6 +2613,8 @@
   <script src="assets/js/planificador-app.js?v=10"></script>
   <script src="assets/js/prog-anual-data.js?v=3"></script>
   <script src="assets/js/capacidad-app.js?v=10"></script>
-  <script src="assets/js/nivelacion-app.js?v=7"></script>
+  <script src="assets/js/nivelacion-app.js?v=10"></script>
+  <script src="assets/js/hdr-gamas-data.js?v=1"></script>
+  <script src="assets/js/gamas-sam-app.js?v=1"></script>
 </body>
 </html>
