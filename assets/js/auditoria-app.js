@@ -1251,9 +1251,22 @@
       tx: 'MM02 → vista MRP 1 → Indicador ABC', tab: 'mat',
       objetos: (M.bomSinABC || []).map((c) => ({ cod: c, det: '' })),
     });
+    /* ─── Programación de planes: nivelar la carga mensual (pestaña Capacidad del personal) ─── */
+    const N = (typeof nivAccion === 'function') ? nivAccion() : null;
+    if (N) add({
+      id: 'plan-nivelar', area: 'Planes', prio: N.prio,
+      titulo: 'Reprogramar la fecha de las tomas de algunos planes para nivelar la carga de los meses',
+      que: N.que,
+      tx: 'IP10 (reprogramar plan con nueva fecha) · IP02 (plan sin llamadas) · IW32 (OTs ya creadas)', tab: 'capacidad', n: N.objetos.length,
+      objetos: N.objetos,
+    });
     return A;
   }
 
+  window.audRefrescarAcciones = function () {
+    const host = document.querySelector('#auditoria-content .aud-pane[data-pane="acciones"]');
+    if (host) host.innerHTML = accionesHTML();
+  };
   window.audAccHecho = function (id, cb) {
     const m = accLeer();
     if (cb.checked) m[id] = new Date().toISOString().slice(0, 10); else delete m[id];

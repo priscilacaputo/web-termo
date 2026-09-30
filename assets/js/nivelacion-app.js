@@ -271,3 +271,27 @@ function nivExport() {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(res), 'Carga por mes');
   XLSX.writeFile(wb, 'nivelacion-carga-sap.xlsx');
 }
+
+/* Tarea para "Qué corregir en SAP": los cambios de fecha propuestos por la nivelación. El cálculo tarda ~1 s, así que
+   la primera vez se hace en segundo plano y se vuelve a pintar la pestaña cuando está listo. */
+function nivAccion() {
+  if (typeof PROG_ANUAL === 'undefined' || typeof capCostoOT !== 'function') return null;
+  if (!nivState.memo) {
+    if (!nivState.acc) {
+      nivState.acc = true;
+      setTimeout(() => { try { nivCalcular(); } catch (e) { /* sin datos */ } if (typeof audRefrescarAcciones === 'function') audRefrescarAcciones(); }, 50);
+    }
+    return null;
+  }
+  const R = nivCalcular();
+  const filas = nivFilasTabla(R, 9999).filter(f => f.accion !== 'sin cambio de fecha');
+  if (!filas.length) return null;
+  const pa = R.pico.aire, pm = R.pico.mecanico, k = R.moves.length;
+  const pAntes = Math.max(pa[0], pm[0]);
+  const capA = capOferta(R.year + '-01').netoH.aire;
+  return {
+    prio: pa[0] / capA > 0.85 ? 'alta' : 'media',
+    que: `Hoy hay meses muy cargados (pico Aire ${Math.round(pa[0])} h, Mecánicos ${Math.round(pm[0])} h) y otros casi vacíos. Mover la próxima toma de los planes de esta lista (cada plan conserva su ciclo) baja el pico de Aire a ${Math.round(pa[k])} h y el de Mecánicos a ${Math.round(pm[k])} h. Empezá por los primeros: son los que más aportan. Detalle, gráficos y Excel en la pestaña "Capacidad del personal".`,
+    objetos: filas.map(f => ({ cod: f.equipo, det: `${f.accion} — plan ${f.plan || '?'}${f.pos ? ' pos. ' + f.pos : ''}${f.ciclo ? ' (' + f.ciclo + ')' : ''} · ${f.texto}` + (f.proxima ? ` · próxima toma ${f.proxima} → ${f.nueva}` : '') })),
+  };
+}
