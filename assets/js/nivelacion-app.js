@@ -11,7 +11,7 @@
    entera (todas sus tomas el mismo número de meses), así que mantiene su ciclo y su secuencia de paquetes. */
 
 const NIV_MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-let nivState = { maxShift: 3, maxMoves: 150, memo: null, memoKey: '' };
+let nivState = { maxShift: 3, maxMoves: 150, memo: null, memoKey: '', seriesMemo: null, seriesKey: '' };
 
 function nivFecha(s) { return new Date(s + 'T12:00:00'); }
 function nivAddMeses(d, k) { return new Date(d.getFullYear(), d.getMonth() + k, d.getDate(), 12); }
@@ -20,9 +20,11 @@ function nivMediana(a) { const s = a.slice().sort((x, y) => x - y); const n = s.
 
 /* ─── Series del año ─── */
 function nivSeries() {
+  const key = (capState.params.hidrolavado ? 1 : 0) + '|' + capState.params.persDefault;
+  if (nivState.seriesMemo && nivState.seriesKey === key) return nivState.seriesMemo;
   capIndices();
   const pe = capPlanesPorEquipo();
-  const y = +PROG_ANUAL.filas[0][3].slice(0, 4);
+  const y = Math.min(...PROG_ANUAL.filas.map(o => +o[3].slice(0, 4)));
   const hoy = new Date();
   const fin = new Date(y, 11, 31, 12);
   const map = new Map();
@@ -37,7 +39,7 @@ function nivSeries() {
     const c = capCostoOT(o, texto, pe);
     const s = map.get(key) || map.set(key, { key, equipo: o[1], ruta: o[4], g, texto, ots: [], proxima: null }).get(key);
     const d = nivFecha(o[3]);
-    s.ots.push({ d, h: c.min / 60, alt: capEsAltura(o[1]) ? 1 : 0, sint: false });
+    s.ots.push({ d, h: c.min / 60, alt: capEsAltura(o[1]) ? 1 : 0, sint: false, fu: c.fuente });
     if (d > hoy && (!s.proxima || d < s.proxima)) s.proxima = d;
   });
   const out = [];
@@ -66,12 +68,12 @@ function nivSeries() {
       const sint = [];
       for (let i = 0; i < s.ots.length - 1; i++) {
         let cur = s.ots[i].d;
-        while ((s.ots[i + 1].d - cur) / 86400000 > 1.5 * pd) { cur = new Date(cur.getTime() + pd * 86400000); if (cur.getFullYear() === y) sint.push({ d: cur, h: hProm, alt: altF, sint: true }); }
+        while ((s.ots[i + 1].d - cur) / 86400000 > 1.5 * pd) { cur = new Date(cur.getTime() + pd * 86400000); if (cur.getFullYear() === y) sint.push({ d: cur, h: hProm, alt: altF, sint: true, fu: 'ciclo' }); }
       }
       const last = s.ots[s.ots.length - 1].d;
       if (last >= new Date(y, 8, 1)) {
         let cur = last;
-        for (;;) { cur = new Date(cur.getTime() + pd * 86400000); if (cur > fin) break; sint.push({ d: cur, h: hProm, alt: altF, sint: true }); }
+        for (;;) { cur = new Date(cur.getTime() + pd * 86400000); if (cur > fin) break; sint.push({ d: cur, h: hProm, alt: altF, sint: true, fu: 'ciclo' }); }
       }
       s.ots = s.ots.concat(sint);
     }
@@ -81,7 +83,36 @@ function nivSeries() {
     s.total = s.v.reduce((z, x) => z + x, 0);
     if (s.total > 0) out.push(s);
   });
-  return { series: out, year: y };
+  nivState.seriesMemo = { series: out, year: y }; nivState.seriesKey = key;
+  return nivState.seriesMemo;
+}
+
+/* Demanda estimada de un mes que SAP todavía no generó: las OTs de ese mes calendario en el año base
+   (reales + las completadas con el ciclo del plan). Mismo formato que capDemandaReal. */
+function capDemandaPatron(mes) {
+  const { series, year } = nivSeries();
+  const mi = +mes.slice(5, 7) - 1;
+  const mk = () => ({ ots: 0, horas: 0, horasSap: 0, horasEstim: 0, otsSap: 0, otsEstim: 0, dia: 0, noche: 0, libre: 0, altura: 0, alturaH: 0, porFamilia: {} });
+  const res = { aire: mk(), mecanico: mk(), externo: { ots: 0 }, otro: { ots: 0 }, detalle: [], origen: 'patron' };
+  series.forEach(s => {
+    const g = res[s.g];
+    s.ots.forEach(o => {
+      if (o.d.getFullYear() !== year || o.d.getMonth() !== mi) return;
+      g.ots++; g.horas += o.h;
+      if (o.fu === 'estim') { g.horasEstim += o.h; g.otsEstim++; } else { g.horasSap += o.h; g.otsSap++; }
+      g[capTurnoObligatorio(s.equipo, s.texto) || 'libre'] += o.h;
+      if (o.alt) { g.altura++; g.alturaH += o.h; }
+      const fam = capFamilia(s.equipo) || '—';
+      const f = g.porFamilia[fam] || (g.porFamilia[fam] = { ots: 0, horas: 0 });
+      f.ots++; f.horas += o.h;
+      res.detalle.push({ gremio: s.g, plan: s.planes[0] ? s.planes[0].plan : '', pos: s.planes[0] ? s.planes[0].pos : '', equipo: s.equipo, desc: s.texto, declara: s.planes[0] ? s.planes[0].declara : '',
+        tomas: 1, hhPorToma: Math.round(o.h * 60 / 6) / 10, personas: '', horas: Math.round(o.h * 10) / 10, fuente: o.fu === 'estim' ? 'estim' : 'sap', ruta: s.ruta, turno: capTurnoObligatorio(s.equipo, s.texto) || 'libre' });
+    });
+  });
+  /* contratistas y otros gremios: los del mismo mes del año base */
+  const base = capDemandaReal(`${year}-${String(mi + 1).padStart(2, '0')}`);
+  if (base) { res.externo.ots = base.externo.ots; res.otro.ots = base.otro.ots; }
+  return res;
 }
 
 const nivShift = (v, sh) => { const r = Array(12).fill(0); for (let m = 0; m < 12; m++) r[(m + sh + 120) % 12] = v[m]; return r; };
@@ -136,7 +167,9 @@ function nivCalcular() {
 
 /* ─── Vista ─── */
 const nivH = h => Math.round(h).toLocaleString('es-AR') + ' h';
-function nivMesesDe(v) { return v.map((x, m) => (x > 0.01 ? NIV_MES[m] : null)).filter(Boolean).join(' · '); }
+/* orden de los meses en pantalla: empieza en el primer mes del horizonte (oct, nov, … sep) */
+const nivOrd = () => capMesesAnalisis().map(m => +m.slice(5, 7) - 1);
+function nivMesesDe(v) { return nivOrd().filter(m => v[m] > 0.01).map(m => NIV_MES[m]).join(' · '); }
 function nivDesc(sh) { return sh > 0 ? `atrasar ${sh} mes${sh > 1 ? 'es' : ''}` : `adelantar ${-sh} mes${sh < -1 ? 'es' : ''}`; }
 
 function nivFilasTabla(R, max) {
@@ -180,7 +213,7 @@ function nivHTML() {
 
   return `<div class="table-card" style="margin-top:16px;padding:16px" id="niv-root">
     <b style="font-size:15px">🧮 Cómo programar SAP para que la carga quede pareja</b>
-    <div style="font-size:12.5px;color:var(--color-muted);margin:4px 0 10px">Propone mover de mes la <b>fecha de las tomas</b> de algunos planes (cada plan se mueve entero, conserva su ciclo). Parte de las ${R.series.length} series equipo + hoja de ruta con OTs en ${R.year}; donde SAP todavía no generó OTs se completó con el ciclo del plan.</div>
+    <div style="font-size:12.5px;color:var(--color-muted);margin:4px 0 10px">Propone mover de mes la <b>fecha de las tomas</b> de algunos planes (cada plan se mueve entero, conserva su ciclo). Mira hacia adelante (desde octubre): parte de las ${R.series.length} series equipo + hoja de ruta de la programación ${R.year}, que se repite en los meses siguientes, y completa con el ciclo del plan lo que SAP todavía no generó. Lo que ya pasó no se toca.</div>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
       ${capInputNiv('maxShift', 'Mover hasta (meses)')}${capInputNiv('maxMoves', 'Máx. de cambios')}
       <button class="mant-tab" onclick="nivExport()">⬇ Excel para trabajar en SAP</button></div>
@@ -215,10 +248,11 @@ function nivDibujar(txt, base) {
     o.plugins.title = { display: true, text: titulo, color: txt };
     o.scales.y.title = { display: true, text: 'horas-persona / mes', color: txt };
     const cap = Math.round(capOferta(R.year + '-01').netoH[g]);
-    _capCharts.push(new Chart(document.getElementById(id), { data: { labels: NIV_MES, datasets: [
-      { type: 'bar', label: 'Hoy', data: R.antes[g].map(Math.round), backgroundColor: 'rgba(127,127,127,.55)' },
-      { type: 'bar', label: 'Con los cambios', data: R.despues[g].map(Math.round), backgroundColor: color },
-      { type: 'line', label: 'Capacidad neta', data: NIV_MES.map(() => cap), borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 2, pointRadius: 0 },
+    const ord = nivOrd();
+    _capCharts.push(new Chart(document.getElementById(id), { data: { labels: ord.map(m => NIV_MES[m]), datasets: [
+      { type: 'bar', label: 'Hoy', data: ord.map(m => Math.round(R.antes[g][m])), backgroundColor: 'rgba(127,127,127,.55)' },
+      { type: 'bar', label: 'Con los cambios', data: ord.map(m => Math.round(R.despues[g][m])), backgroundColor: color },
+      { type: 'line', label: 'Capacidad neta', data: ord.map(() => cap), borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 2, pointRadius: 0 },
     ] }, options: o }));
   };
   dib('aire', 'niv-ch-aire', '❄️ Aire — carga por mes: hoy vs. nivelada', '#0096d6');
@@ -232,7 +266,7 @@ function nivExport() {
   const f = nivFilasTabla(R, 9999);
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(f.map(x => ({ '#': x.n, Gremio: x.g, Equipo: x.equipo, 'Plan SAP': x.plan, Posición: x.pos, 'Planes en el equipo con esa hoja de ruta': x.nPlanes, Denominación: x.texto,
     Ciclo: x.ciclo, 'Horas/año': Math.round(x.horasAnio), 'Hoy cae en': x.hoy, 'Qué hacer': x.accion, 'Quedaría en': x.nuevo, 'Próxima toma': x.proxima, 'Nueva fecha sugerida': x.nueva, 'Hoja de ruta': x.ruta }))), 'Cambios a hacer');
-  const res = NIV_MES.map((m, i) => ({ Mes: m, 'Aire hoy (h)': Math.round(R.antes.aire[i]), 'Aire nivelado (h)': Math.round(R.despues.aire[i]), 'Mecánicos hoy (h)': Math.round(R.antes.mecanico[i]), 'Mecánicos nivelado (h)': Math.round(R.despues.mecanico[i]),
+  const res = nivOrd().map(i => ({ Mes: NIV_MES[i], 'Aire hoy (h)': Math.round(R.antes.aire[i]), 'Aire nivelado (h)': Math.round(R.despues.aire[i]), 'Mecánicos hoy (h)': Math.round(R.antes.mecanico[i]), 'Mecánicos nivelado (h)': Math.round(R.despues.mecanico[i]),
     'Altura Aire hoy': Math.round(R.altAntes.aire[i]), 'Altura Aire nivelada': Math.round(R.altDespues.aire[i]), 'Altura Mec. hoy': Math.round(R.altAntes.mecanico[i]), 'Altura Mec. nivelada': Math.round(R.altDespues.mecanico[i]) }));
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(res), 'Carga por mes');
   XLSX.writeFile(wb, 'nivelacion-carga-sap.xlsx');

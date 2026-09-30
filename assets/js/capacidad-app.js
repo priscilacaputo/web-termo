@@ -365,11 +365,12 @@ function capDemanda(mes) {
 }
 function capDemandaSinCache(mes) {
   const real = capDemandaReal(mes);
-  const proy = capDemandaProy(mes);
-  const totProy = proy.aire.ots + proy.mecanico.ots + proy.externo.ots + proy.otro.ots;
-  if (real && real.total >= 0.6 * totProy) { real.proyOts = totProy; return real; }
-  proy.realOts = real ? real.total : 0;
-  return proy;
+  /* meses que SAP todavía no generó: se estima con el patrón de OTs del año (series equipo + hoja de ruta) */
+  const est = (typeof capDemandaPatron === 'function') ? capDemandaPatron(mes) : capDemandaProy(mes);
+  const totEst = est.aire.ots + est.mecanico.ots + est.externo.ots + est.otro.ots;
+  if (real && real.total >= 0.6 * totEst) { real.proyOts = totEst; return real; }
+  est.realOts = real ? real.total : 0;
+  return est;
 }
 
 /* ═══════════ HISTÓRICO DE CORRECTIVOS (para dimensionar la reserva) ═══════════ */
@@ -428,12 +429,8 @@ function capMesesSiguientes(n) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
 }
-/* Los 12 meses del año de la programación (o los próximos 12 si no hay programación cargada). */
-function capMesesAnalisis() {
-  if (typeof PROG_ANUAL === 'undefined' || !PROG_ANUAL.filas.length) return capMesesSiguientes(12);
-  const y = PROG_ANUAL.filas[0][3].slice(0, 4);
-  return Array.from({ length: 12 }, (_, i) => `${y}-${String(i + 1).padStart(2, '0')}`);
-}
+/* Horizonte del estudio: los 12 meses que vienen (lo que ya pasó no se analiza). */
+function capMesesAnalisis() { return capMesesSiguientes(12); }
 function capMesLbl(m) { const [y, mo] = m.split('-'); return `${CAP_MESES_LBL[+mo - 1]} ${y}`; }
 const capFmtH = h => Math.round(h).toLocaleString('es-AR') + ' h';
 const capFmtPct = x => (isFinite(x) ? Math.round(x * 100) : 0) + '%';
@@ -478,8 +475,7 @@ function capacidadHTML() {
     return '<div class="empty-state"><p>Faltan los maestros de planes / hojas de ruta.</p></div>';
   }
   if (!capState.mes) {
-    const lista = capMesesAnalisis(), hoy = new Date().toISOString().slice(0, 7);
-    capState.mes = lista.includes(hoy) ? hoy : lista[0];
+    capState.mes = capMesesAnalisis()[0];
   }
   if (!capState.hist) capCargarHist();
   const mes = capState.mes, p = capState.params;
@@ -506,7 +502,7 @@ function capacidadHTML() {
         <tr><td style="color:var(--color-muted)">Reserva estimada necesaria${p[g === 'aire' ? 'reservaAire' : 'reservaMec'] != null ? '' : ' (histórico)'}</td><td style="text-align:right;color:var(--color-muted)">${capFmtH(x.reserva)}</td></tr>
         <tr><td style="color:var(--color-muted)">Margen por técnico y por mes</td><td style="text-align:right;color:var(--color-muted)">${(x.margen / (tec || 1)).toFixed(0)} h</td></tr>
       </table>
-      <div style="font-size:11px;color:var(--color-muted);margin-top:8px">${A.dem.origen === 'real' ? `Sobre las ${A.dem.total} OTs que SAP programó para el mes (${A.dem.cerradas} ya cerradas).` : 'Proyección desde los planes (SAP aún no generó todas las OTs del mes).'} ${capFmtPct(sapPct)} de las horas salen de la hoja de ruta SAP; el resto está estimado por regla (${Math.round(d.otsEstim)} OTs).</div>
+      <div style="font-size:11px;color:var(--color-muted);margin-top:8px">${A.dem.origen === 'real' ? `Sobre las ${A.dem.total} OTs que SAP programó para el mes (${A.dem.cerradas} ya cerradas).` : 'Estimado con el patrón del año (SAP aún no generó todas las OTs del mes).'} ${capFmtPct(sapPct)} de las horas salen de la hoja de ruta SAP; el resto está estimado por regla (${Math.round(d.otsEstim)} OTs).</div>
     </div>`;
   };
 
@@ -514,14 +510,14 @@ function capacidadHTML() {
     const a = capAnalisis(m);
     const c = g => { const x = a.gremios[g]; return `<td style="text-align:right">${capFmtH(x.carga)}</td><td style="text-align:right">${capFmtH(x.cap)}</td><td>${capBarra(x.uso, x.estado.color)}</td><td style="text-align:right;color:${x.estado.color};font-weight:600">${capFmtPct(x.uso)}</td><td style="text-align:right;color:${x.margen < 0 ? '#dc2626' : 'inherit'}">${capFmtH(x.margen)}</td>`; };
     const real = a.dem.origen === 'real';
-    return `<tr class="${m === mes ? 'active' : ''}" style="cursor:pointer;${m === mes ? 'background:rgba(0,150,214,.08)' : ''}" onclick="capSetMes('${m}')"><td><b>${capMesLbl(m)}</b><div style="font-size:10px;color:var(--color-muted)" title="${real ? 'OTs que SAP ya programó' : 'SAP todavía no generó todas las OTs de este mes: se proyecta desde los planes'}">${real ? '✔ OTs de SAP' : '≈ proyección'}</div></td>${c('aire')}${c('mecanico')}</tr>`;
+    return `<tr class="${m === mes ? 'active' : ''}" style="cursor:pointer;${m === mes ? 'background:rgba(0,150,214,.08)' : ''}" onclick="capSetMes('${m}')"><td><b>${capMesLbl(m)}</b><div style="font-size:10px;color:var(--color-muted)" title="${real ? 'OTs que SAP ya programó' : 'SAP todavía no generó todas las OTs de este mes: se estima con el patrón de OTs del año'}">${real ? '✔ OTs de SAP' : '≈ estimado'}</div></td>${c('aire')}${c('mecanico')}</tr>`;
   }).join('');
   const tot = g => meses.reduce((z, m) => { const x = capAnalisis(m).gremios[g]; z.carga += x.carga; z.cap += x.cap; return z; }, { carga: 0, cap: 0 });
   const totFila = (() => { const c = g => { const t = tot(g); return `<td style="text-align:right"><b>${capFmtH(t.carga)}</b></td><td style="text-align:right"><b>${capFmtH(t.cap)}</b></td><td>${capBarra(t.carga / t.cap, '#0096d6')}</td><td style="text-align:right"><b>${capFmtPct(t.carga / t.cap)}</b></td><td style="text-align:right"><b>${capFmtH(t.cap - t.carga)}</b></td>`; };
-    return `<tr style="border-top:2px solid var(--color-border,#d1d5db)"><td><b>Total año</b></td>${c('aire')}${c('mecanico')}</tr>`; })();
+    return `<tr style="border-top:2px solid var(--color-border,#d1d5db)"><td><b>Total 12 meses</b></td>${c('aire')}${c('mecanico')}</tr>`; })();
 
-  const tabla = `<div class="table-card" style="margin-top:16px"><div style="padding:14px 16px 0"><b>El año: carga preventiva vs. capacidad</b>
-    <div style="font-size:11.5px;color:var(--color-muted)">Tocá un mes para ver su detalle. La capacidad es la nominal (sin francos compensatorios ni vacaciones). Los meses con “✔ OTs de SAP” usan las órdenes reales de la programación anual; los otros se proyectan desde los planes porque SAP todavía no generó todas sus OTs.</div></div>
+  const tabla = `<div class="table-card" style="margin-top:16px"><div style="padding:14px 16px 0"><b>Los próximos 12 meses: carga preventiva vs. capacidad</b>
+    <div style="font-size:11.5px;color:var(--color-muted)">Tocá un mes para ver su detalle. La capacidad es la nominal (sin francos compensatorios ni vacaciones). Los meses con “✔ OTs de SAP” usan las órdenes que SAP ya generó; los “≈ estimado” repiten el patrón de ese mes en el año (SAP crea las OTs con pocos meses de antelación).</div></div>
     <div class="table-wrap"><table><thead><tr><th rowspan="2">Mes</th><th colspan="5" style="text-align:center">❄️ Aire (AUX_TER)</th><th colspan="5" style="text-align:center">⚙️ Mecánicos (AUX_MEC)</th></tr>
     <tr>${['Carga', 'Capacidad', '', 'Uso', 'Margen'].map(t => `<th style="text-align:right">${t}</th>`).join('').repeat(2)}</tr></thead><tbody>${filas}${totFila}</tbody></table></div></div>`;
 
