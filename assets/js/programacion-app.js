@@ -1186,6 +1186,33 @@ function progGamaPorHojaDeRuta(o) {
   }
   return { gama: null, incluye: [], mixto, fuente: `hoja de ruta de varios paquetes (${mixto}) y SAP todavía no le asignó operaciones: revisar en SAP` };
 }
+/* Las hojas de ruta "multipaquete" (UTA 1M-3M-1A, Split 1M-2M-6M…) tienen una operación por paquete y
+   el texto de la operación NO dice la frecuencia ("Tomar temperatura de inyección y"). Pero la hoja de
+   ruta (HDR_GAMAS, IA17) sí dice a qué paquete pertenece cada operación ("pq": ["1 Mes"]): se cruza el
+   texto de la operación de la OT con esa hoja de ruta (2026-09-30: resuelve las 28 UTAs AACS4AEP/1 y
+   los Split AACS3AEP/2 que quedaban "a confirmar"). Solo vale si TODAS las operaciones de la OT se
+   reconocen en la hoja de ruta; una operación con varios paquetes cuenta por el menor. */
+function progPaqueteDias(t) {
+  const m = String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').match(/(\d+)\s*(dias?|mes(?:es)?|anos?)/);
+  if (!m) return null;
+  return +m[1] * (m[2][0] === 'd' ? 1 : m[2][0] === 'm' ? 30 : 360);
+}
+function progGamaPorPaqueteDeOperacion(hr, ops) {
+  if (typeof HDR_GAMAS === 'undefined' || !hr || !HDR_GAMAS[hr]) return null;
+  const hops = HDR_GAMAS[hr].o || [];
+  const norm = x => String(x || '').trim().toLowerCase();
+  const dias = [];
+  for (const t of ops) {
+    const h = hops.find(x => norm(x.d) === norm(t)) || hops.find(x => norm(t) && norm(x.d).startsWith(norm(t)));
+    const ds = h && (h.pq || []).map(progPaqueteDias).filter(d => d);
+    if (!ds || !ds.length) return null;
+    dias.push(Math.min(...ds));
+  }
+  const lista = [...new Set(dias)].sort((a, b) => a - b);
+  if (!lista.length) return null;
+  const nombre = d => (d === 14 ? 'Quincenal' : progCicloNombre(d));
+  return { gama: nombre(lista[lista.length - 1]), incluye: lista.slice(0, -1).map(nombre), fuente: `operación de la OT según la hoja de ruta ${hr} (paquete de cada operación, IA17)` };
+}
 function progGamaDe(o) {
   const orden = PROG_FRECUENCIAS.map(([k]) => k);
   const armar = (fs, fuente) => {
@@ -1199,6 +1226,8 @@ function progGamaDe(o) {
   const key = progNormOT(o.ot_num);
   const ops = (progState.opsOT || {})[key] || (typeof OPS_SAP_POR_ORDEN !== 'undefined' ? OPS_SAP_POR_ORDEN[key] : null);
   if (ops && ops.length) {
+    const porPaq = progGamaPorPaqueteDeOperacion(o.hr, ops);
+    if (porPaq) return porPaq;
     const fs = ops.flatMap(progFrecuenciasDeTexto);
     if (fs.length) return armar(fs, 'operaciones de la OT (SAP · IW49)');
   }
