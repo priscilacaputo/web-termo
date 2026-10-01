@@ -55,7 +55,7 @@ let estadoVista = 'categorias';
 let estadoHidroMostrarTodos = false;
 let estadoHidroFiltroEdificio = '';
 let estadoHidroFiltroUbic = '';
-const ESTADO_HIDRO_MESES = 2;
+const ESTADO_HIDRO_MESES = 6;   // mismo criterio que el Calendario de Hidrolavados (cada 6 meses)
 const estadoCatAbierta = {};
 const estadoDetalleAbierto = {};
 
