@@ -53,6 +53,8 @@ let estadoFiltroCategoria = '';
 let estadoFiltroEstado = '';
 let estadoVista = 'categorias';
 let estadoHidroMostrarTodos = false;
+let estadoHidroFiltroEdificio = '';
+let estadoHidroFiltroUbic = '';
 const ESTADO_HIDRO_MESES = 2;
 const estadoCatAbierta = {};
 const estadoDetalleAbierto = {};
@@ -370,6 +372,7 @@ function estadoRenderFilaEquipo(e, extraBadgeHtml, extraDetailHtml) {
       <div class="estado-eq-info">
         <span class="estado-eq-cod">${e.equipo}</span>
         <span class="estado-eq-denom" title="${e.denominacion}">${e.denominacion || '—'}</span>
+        ${e.ubicacionLinea ? `<span class="estado-eq-ubic" title="${e.ubicacionLinea}">📍 ${e.ubicacionLinea}</span>` : ''}
       </div>
       ${extraBadgeHtml || ''}
       <span class="estado-badge" style="background:${meta.color}18;color:${meta.color};border:1px solid ${meta.color}40">${meta.emoji} ${meta.label}${manual ? ' · manual' : ''}</span>
@@ -585,24 +588,122 @@ function estadoFechaHidrolavadoEfectiva(equipo, autoFecha) {
   return manual > autoFecha ? manual : autoFecha;
 }
 
-function renderEstadoHidrolavado() {
-  const wrap = document.getElementById('estado-hidrolavado-wrap');
+/* Ubicación técnica SAP (ej. AEP-ED6-NIVEL7-UBITEC009) → edificio/zona,
+   para el primer nivel del filtro. */
+function estadoEdificioDeUbicacion(ubic) {
+  const u = String(ubic || '').toUpperCase();
+  const m = u.match(/^AEP-ED(\d+)-/);
+  if (m) return 'Edificio ' + m[1];
+  if (u.startsWith('AEP-LAA-')) return 'LAA / Plataforma';
+  if (u.startsWith('AEP-TER-')) return 'Terminal';
+  if (u.startsWith('AEP-ESR-')) return 'Ed. Sur / Estación';
+  return u ? 'Otra' : 'Sin ubicación';
+}
+/* El campo `sector` de AAC_DATA es la descripción de la ubicación técnica;
+   en algunos equipos trae además una referencia después de " — "
+   (ej. dónde está el termostato), que se separa. */
+function estadoPartirSector(sector) {
+  const s = String(sector || '');
+  const i = s.indexOf(' — ');
+  return i < 0 ? { desc: s.trim(), ref: '' } : { desc: s.slice(0, i).trim(), ref: s.slice(i + 3).trim() };
+}
+
+function estadoHidroCalcularFilas() {
   const equipos = (typeof AAC_DATA !== 'undefined' ? AAC_DATA : []).filter(e => e.tipo === 'UTA' || e.tipo === 'Roof Top');
   const hidroIdx = estadoBuildHidrolavadoIndex();
-  const admin = estadoIsAdmin();
-
-  const filas = equipos.map(e => {
+  return equipos.map(e => {
     const autoFecha = hidroIdx[e.equipo] || null;
     const ultimaFecha = estadoFechaHidrolavadoEfectiva(e.equipo, autoFecha);
     const meses = estadoMesesDesde(ultimaFecha);
-    return { ...e, categoriaId: 'aac', ultimaFecha, vencido: meses > ESTADO_HIDRO_MESES };
+    const ov = estadoOverridesIndex[e.equipo];
+    const manualFecha = (ov && ov.hidrolavadoManual) || null;
+    const ubic = String(e.ubicacion || '').trim().toUpperCase();
+    const { desc, ref } = estadoPartirSector(e.sector);
+    return {
+      ...e, categoriaId: 'aac', ultimaFecha, meses, vencido: meses > ESTADO_HIDRO_MESES,
+      origenFecha: !ultimaFecha ? '' : (manualFecha && manualFecha === ultimaFecha ? 'Carga manual' : 'OT del historial'),
+      ubic, ubicDesc: desc, ubicRef: ref, edificio: estadoEdificioDeUbicacion(ubic),
+      ubicacionLinea: [ubic || 'Sin ubicación técnica', desc].filter(Boolean).join(' · '),
+    };
   }).sort((a, b) => {
     if (a.vencido !== b.vencido) return a.vencido ? -1 : 1;
     return (a.ultimaFecha || '').localeCompare(b.ultimaFecha || '');
   });
+}
 
+function estadoHidroAplicarFiltros(filas) {
+  return filas.filter(f => {
+    if (estadoHidroFiltroEdificio && f.edificio !== estadoHidroFiltroEdificio) return false;
+    if (estadoHidroFiltroUbic && f.ubic !== estadoHidroFiltroUbic) return false;
+    if (estadoSearch) {
+      const hay = [f.equipo, f.denominacion, f.ubic, f.sector].join(' ').toLowerCase();
+      if (!hay.includes(estadoSearch)) return false;
+    }
+    return true;
+  });
+}
+
+function estadoHidroDescargar(filas) {
+  if (!filas.length) { estadoToast('No hay equipos para descargar con los filtros actuales.', 'error'); return; }
+  const data = [...filas]
+    .sort((a, b) => a.ubic.localeCompare(b.ubic) || a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
+    .map(f => ({
+      ...f,
+      estadoHidro: f.vencido ? 'Vencido' : 'Al día',
+      ultimaTxt: f.ultimaFecha ? new Date(f.ultimaFecha + 'T00:00:00').toLocaleDateString('es-AR') : 'Nunca',
+      mesesTxt: isFinite(f.meses) ? Math.round(f.meses * 10) / 10 : '',
+      estadoEquipo: ESTADO_META[estadoDe(f.equipo)].label,
+    }));
+  const columns = [
+    { key: 'equipo',       header: 'Equipo' },
+    { key: 'denominacion', header: 'Denominación' },
+    { key: 'tipo',         header: 'Tipo' },
+    { key: 'edificio',     header: 'Edificio / Zona' },
+    { key: 'ubic',         header: 'Ubicación técnica' },
+    { key: 'ubicDesc',     header: 'Descripción ubicación' },
+    { key: 'ubicRef',      header: 'Referencia' },
+    { key: 'estadoHidro',  header: 'Hidrolavado' },
+    { key: 'ultimaTxt',    header: 'Último hidrolavado' },
+    { key: 'mesesTxt',     header: 'Meses desde el último' },
+    { key: 'origenFecha',  header: 'Origen de la fecha' },
+    { key: 'estadoEquipo', header: 'Estado del equipo' },
+    { key: 'capacidad',    header: 'Capacidad' },
+    { key: 'fabricante',   header: 'Fabricante' },
+    { key: 'modelo',       header: 'Modelo' },
+  ];
+  const sufijo = estadoHidroFiltroUbic || (estadoHidroFiltroEdificio ? estadoHidroFiltroEdificio.replace(/[^\w]+/g, '_') : '');
+  const nombre = `AEP_Hidrolavado_${estadoHidroMostrarTodos ? 'UTA_RTF' : 'pendientes'}${sufijo ? '_' + sufijo : ''}_${new Date().toISOString().slice(0, 10)}`;
+  exportToExcel(data, columns, nombre);
+}
+
+function renderEstadoHidrolavado() {
+  const wrap = document.getElementById('estado-hidrolavado-wrap');
+  const admin = estadoIsAdmin();
+  const todas = estadoHidroCalcularFilas();
+
+  // Opciones de los filtros (con la cantidad de pendientes / total de cada una)
+  const edificios = {};
+  const ubics = {};
+  todas.forEach(f => {
+    const ed = edificios[f.edificio] = edificios[f.edificio] || { total: 0, venc: 0 };
+    ed.total++; if (f.vencido) ed.venc++;
+    if (estadoHidroFiltroEdificio && f.edificio !== estadoHidroFiltroEdificio) return;
+    const u = ubics[f.ubic] = ubics[f.ubic] || { desc: f.ubicDesc, total: 0, venc: 0 };
+    u.total++; if (f.vencido) u.venc++;
+  });
+  if (estadoHidroFiltroUbic && !ubics[estadoHidroFiltroUbic]) estadoHidroFiltroUbic = '';
+  const optsEdificio = Object.keys(edificios).sort((a, b) => a.localeCompare(b, 'es', { numeric: true })).map(k =>
+    `<option value="${k}" ${k === estadoHidroFiltroEdificio ? 'selected' : ''}>${k} (${edificios[k].venc} pend. / ${edificios[k].total})</option>`).join('');
+  const optsUbic = Object.keys(ubics).sort().map(k =>
+    `<option value="${k}" ${k === estadoHidroFiltroUbic ? 'selected' : ''}>${k || 'Sin ubicación técnica'}${ubics[k].desc ? ' — ' + ubics[k].desc : ''} (${ubics[k].venc} pend. / ${ubics[k].total})</option>`).join('');
+
+  const filas = estadoHidroAplicarFiltros(todas);
   const vencidos = filas.filter(f => f.vencido);
   const mostrar = estadoHidroMostrarTodos ? filas : vencidos;
+  const hayFiltro = !!(estadoHidroFiltroEdificio || estadoHidroFiltroUbic || estadoSearch);
+  const filtroTxt = estadoHidroFiltroUbic
+    ? ` en <strong>${estadoHidroFiltroUbic}</strong>${ubics[estadoHidroFiltroUbic] && ubics[estadoHidroFiltroUbic].desc ? ' (' + ubics[estadoHidroFiltroUbic].desc + ')' : ''}`
+    : (estadoHidroFiltroEdificio ? ` en <strong>${estadoHidroFiltroEdificio}</strong>` : '');
 
   const filasHtml = mostrar.map(f => {
     const fechaTxt = f.ultimaFecha ? new Date(f.ultimaFecha + 'T00:00:00').toLocaleDateString('es-AR') : 'Nunca';
@@ -625,10 +726,24 @@ function renderEstadoHidrolavado() {
     <div class="estado-hidro-summary">
       <div class="estado-hidro-summary-num">${vencidos.length}</div>
       <div class="estado-hidro-summary-text">
-        de <strong>${filas.length}</strong> equipos UTA / Roof Top sin hidrolavado registrado en los últimos ${ESTADO_HIDRO_MESES} meses
+        de <strong>${filas.length}</strong> equipos UTA / Roof Top${filtroTxt} sin hidrolavado registrado en los últimos ${ESTADO_HIDRO_MESES} meses
         <span class="estado-hidro-hint">Se busca la palabra "hidrolav" en el comentario o título de las OTs del historial. Si un equipo nunca tuvo una OT así, figura como "Nunca registrado".</span>
       </div>
       <button type="button" class="prog-btn prog-btn-primary" id="estado-hidro-toggle-vencidos">${estadoHidroMostrarTodos ? 'Ver solo pendientes' : `Ver los ${filas.length} equipos (incluye al día)`}</button>
+    </div>
+    <div class="estado-hidro-toolbar">
+      <select id="estado-hidro-filtro-edificio" class="filter-select" title="Filtrar por edificio / zona">
+        <option value="">Todos los edificios</option>
+        ${optsEdificio}
+      </select>
+      <select id="estado-hidro-filtro-ubic" class="filter-select estado-hidro-filtro-ubic" title="Filtrar por ubicación técnica SAP">
+        <option value="">Todas las ubicaciones técnicas</option>
+        ${optsUbic}
+      </select>
+      ${hayFiltro ? '<button type="button" class="prog-btn" id="estado-hidro-limpiar">✕ Quitar filtros</button>' : ''}
+      <button type="button" class="prog-btn prog-btn-primary estado-hidro-descargar" id="estado-hidro-descargar" ${mostrar.length ? '' : 'disabled'}>
+        ⬇ Descargar ${estadoHidroMostrarTodos ? 'listado' : 'pendientes'} (${mostrar.length}) — Excel
+      </button>
     </div>
     <div class="estado-cat-card">
       <div class="estado-cat-body">
@@ -642,6 +757,24 @@ function renderEstadoHidrolavado() {
     estadoHidroMostrarTodos = !estadoHidroMostrarTodos;
     renderEstadoHidrolavado();
   });
+  document.getElementById('estado-hidro-filtro-edificio').addEventListener('change', function () {
+    estadoHidroFiltroEdificio = this.value;
+    renderEstadoHidrolavado();
+  });
+  document.getElementById('estado-hidro-filtro-ubic').addEventListener('change', function () {
+    estadoHidroFiltroUbic = this.value;
+    renderEstadoHidrolavado();
+  });
+  const limpiarBtn = document.getElementById('estado-hidro-limpiar');
+  if (limpiarBtn) limpiarBtn.addEventListener('click', () => {
+    estadoHidroFiltroEdificio = '';
+    estadoHidroFiltroUbic = '';
+    estadoSearch = '';
+    document.getElementById('estado-search').value = '';
+    document.getElementById('estado-clear-search').style.display = 'none';
+    renderEstadoHidrolavado();
+  });
+  document.getElementById('estado-hidro-descargar').addEventListener('click', () => estadoHidroDescargar(mostrar));
 }
 
 /* ─── Render dispatcher ──────────────────────────────────────── */
