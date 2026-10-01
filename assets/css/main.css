@@ -4449,6 +4449,153 @@ tr:hover .admin-edit-btn { opacity: 1; }
   .estado-cat-pills { margin-left: 0; }
 }
 
+/* ─── Calendario de Hidrolavados ────────────────────────── */
+.hidro-stat-sub {
+  font-size: 11.5px;
+  color: var(--color-muted);
+}
+.hidro-intro {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--color-text);
+}
+.hidro-intro p { margin: 0 0 8px; line-height: 1.5; }
+.hidro-leyenda { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--color-muted); }
+.hidro-leyenda-item { display: inline-flex; align-items: center; gap: 6px; }
+.hidro-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+.hidro-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.hidro-nav { display: flex; align-items: center; gap: 6px; }
+.hidro-nav .prog-btn {
+  background: var(--color-card);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+.hidro-nav-label { font-size: 13px; font-weight: 700; color: var(--color-text); min-width: 150px; text-align: center; }
+
+.hidro-carga {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+.hidro-carga-titulo { font-size: 12px; font-weight: 700; color: var(--color-text); margin-bottom: 8px; }
+.hidro-carga-titulo span { font-weight: 500; color: var(--color-muted); }
+.hidro-carga-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 16px; }
+.hidro-carga-item { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 2px 4px; border-radius: 6px; }
+.hidro-carga-item.sel { background: var(--color-primary-light); }
+.hidro-carga-label { width: 62px; color: var(--color-muted); font-weight: 600; flex-shrink: 0; }
+.hidro-carga-bar { flex: 1; height: 8px; background: var(--color-bg); border-radius: 999px; overflow: hidden; }
+.hidro-carga-bar span { display: block; height: 100%; background: var(--color-primary); border-radius: 999px; }
+.hidro-carga-num { width: 24px; text-align: right; font-weight: 800; color: var(--color-text); }
+
+.hidro-cal {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.hidro-mes-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 0;
+}
+.hidro-mes-card:hover { border-color: var(--color-primary); }
+.hidro-mes-card.actual { border-top: 4px solid var(--color-primary); }
+.hidro-mes-card.sel { box-shadow: 0 0 0 2px var(--color-primary), var(--shadow); }
+.hidro-mes-head { display: flex; align-items: baseline; gap: 6px; }
+.hidro-mes-nombre { font-size: 15px; font-weight: 800; color: var(--color-text); }
+.hidro-mes-anio { font-size: 12px; color: var(--color-muted); font-weight: 600; }
+.hidro-mes-total { margin-left: auto; font-size: 20px; font-weight: 800; color: var(--color-primary); }
+.hidro-mes-prog { height: 5px; background: var(--color-bg); border-radius: 999px; overflow: hidden; margin: 6px 0; }
+.hidro-mes-prog span { display: block; height: 100%; background: #10b981; }
+.hidro-mes-tipos { font-size: 11px; color: var(--color-muted); margin-bottom: 8px; }
+.hidro-mes-grupo { margin-bottom: 6px; }
+.hidro-mes-ubic {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+.hidro-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.hidro-chip {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
+  white-space: nowrap;
+}
+.hidro-vacio { font-size: 12px; color: var(--color-muted); margin: 4px 0; }
+
+.hidro-detalle {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+  scroll-margin-top: 90px;
+}
+.hidro-detalle-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.hidro-detalle-head h3 { margin: 0; font-size: 16px; color: var(--color-text); }
+.hidro-detalle-head h3 span { font-size: 12.5px; font-weight: 500; color: var(--color-muted); }
+.hidro-detalle-head .prog-btn { background: var(--color-bg); color: var(--color-text); }
+.hidro-detalle-grupo { margin-bottom: 14px; }
+.hidro-detalle-ubic {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--color-text);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.hidro-detalle-ubic code, .hidro-tabla code { font-size: 11px; color: var(--color-muted); }
+.hidro-tabla th { font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--color-muted); text-align: left; padding: 6px 8px; }
+.hidro-tabla td { padding: 7px 8px; border-bottom: 1px solid var(--color-border); vertical-align: top; font-size: 12.5px; }
+/* mismas columnas en todas las ubicaciones del detalle del mes */
+.hidro-tabla-mes { table-layout: fixed; min-width: 760px; }
+.hidro-tabla-mes th:nth-child(1) { width: 90px; }
+.hidro-tabla-mes th:nth-child(3) { width: 130px; }
+.hidro-tabla-mes th:nth-child(4) { width: 150px; }
+.hidro-tabla-mes th:nth-child(5) { width: 120px; }
+.hidro-tabla-mes th:nth-child(6) { width: 150px; }
+.hidro-tabla-mes.con-admin { min-width: 1060px; }
+.hidro-tabla-mes.con-admin th:nth-child(7) { width: 300px; }
+.hidro-cod { font-family: 'Courier New', monospace; font-weight: 800; white-space: nowrap; }
+.hidro-ref { font-size: 11px; color: var(--color-muted); }
+.hidro-admin { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.hidro-par-select { padding: 5px 8px; font-size: 12px; border-radius: 7px; }
+
 /* ─── Pañol / Repuestos ─────────────────────────────────── */
 .panol-modal-cod {
   /* igual a .modal-equipo, pero sin esa clase: evita que otros módulos

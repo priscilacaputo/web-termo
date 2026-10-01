@@ -14,6 +14,7 @@ const PAGE_TITLES = {
   planificador: ["Planificador", "AEP — Calendario mensual de OTs por guardia, día y hora"],
   "gamas-sam": ["Gamas para SAM", "AEP — Gama de tareas de las hojas de ruta en formato legible para SAP SAM"],
   estado:      ["Estado de Equipos", "AEP — Panorama general · Estado en vivo de todos los equipos"],
+  hidrolavados: ["Calendario de Hidrolavados", "AEP — Roof Top, UTA y condensadoras · un hidrolavado cada 6 meses"],
   puertas:     ["Puertas Automáticas", "AEP — Puertas automáticas corredizas · Manusa · Audoor"],
   aac:         ["Equipos de Aire",     "AEP — Aire acondicionado · Splits · VRF · Roof Tops · UTAs · Chillers"],
   ecas:        ["Incendios (ECAs)",    "AEP — Equipos de detección y extinción de incendios · Sprinklers · Hidrantes"],

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Termomecánica — Portal Interno</title>
-  <link rel="stylesheet" href="assets/css/main.css?v=13" />
+  <link rel="stylesheet" href="assets/css/main.css?v=14" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -48,6 +48,10 @@
       <li class="nav-item" data-page="estado">
         <span class="nav-icon">🚦</span>
         <span class="nav-label">Estado de Equipos</span>
+      </li>
+      <li class="nav-item" data-page="hidrolavados">
+        <span class="nav-icon">🚿</span>
+        <span class="nav-label">Calendario de Hidrolavados</span>
       </li>
 
       <li class="nav-section-label">Equipos e Instalaciones</li>
@@ -2285,6 +2289,55 @@
 
     </div>
 
+    <!-- ─── PÁGINA: Calendario de Hidrolavados ─── -->
+    <div class="page hidden" id="page-hidrolavados">
+
+      <div class="stats-grid" id="hidro-stats" style="margin-bottom:20px"></div>
+
+      <div class="hidro-intro" id="hidro-intro"></div>
+
+      <div class="toolbar" style="margin-bottom:16px">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="hidro-search" class="search-input" placeholder="Buscar equipo, denominación o ubicación técnica..." />
+          <button class="clear-btn" id="hidro-clear-search" title="Limpiar" style="display:none">✕</button>
+        </div>
+        <div class="filter-group">
+          <select id="hidro-filter-tipo" class="filter-select">
+            <option value="">Todos los tipos</option>
+            <option value="Roof Top">Roof Top</option>
+            <option value="UTA">UTA</option>
+            <option value="Condensadora">Condensadoras</option>
+          </select>
+          <select id="hidro-filter-edificio" class="filter-select">
+            <option value="">Todos los edificios</option>
+          </select>
+        </div>
+        <button type="button" class="prog-btn prog-btn-primary" id="hidro-descargar">⬇ Descargar Excel</button>
+      </div>
+
+      <div class="hidro-barra">
+        <div class="mangas-view-toggle">
+          <button class="aac-view-btn active" data-hview="calendario">📅 Calendario</button>
+          <button class="aac-view-btn" data-hview="equipos">☰ Por equipo</button>
+        </div>
+        <div class="hidro-nav">
+          <button type="button" class="prog-btn" id="hidro-prev" title="12 meses antes">‹</button>
+          <span class="hidro-nav-label" id="hidro-nav-label"></span>
+          <button type="button" class="prog-btn" id="hidro-next" title="12 meses después">›</button>
+          <button type="button" class="prog-btn" id="hidro-hoy">Hoy</button>
+        </div>
+      </div>
+
+      <div id="hidro-calendario-wrap">
+        <div class="hidro-carga" id="hidro-carga"></div>
+        <div class="hidro-cal" id="hidro-cal"></div>
+        <div id="hidro-mes-detalle"></div>
+      </div>
+      <div id="hidro-equipos-wrap" class="hidden"></div>
+
+    </div>
+
   </div>
 
   <!-- Modal ficha genérica (fallback para categorías sin modal propio) -->
@@ -2544,7 +2597,7 @@
   <script src="assets/js/mm60-data.js?v=1"></script>
   <script src="assets/js/mb51-data.js?v=1"></script>
   <script src="assets/js/sap-ficha.js?v=3"></script>
-  <script src="assets/js/app.js?v=23"></script>
+  <script src="assets/js/app.js?v=24"></script>
   <script src="assets/js/mant-app.js?v=15"></script>
   <script src="assets/js/planes-integrados-app.js?v=10"></script>
   <script src="assets/js/mangas-app.js?v=18"></script>
@@ -2633,11 +2686,14 @@
   <script src="assets/js/estado-equipos-data.js?v=1"></script>
   <script src="assets/js/tareas-data.js?v=1"></script>
   <script src="assets/js/estado-app.js?v=2"></script>
+  <script src="assets/js/hidrolavado-sap-data.js?v=1"></script>
+  <script src="assets/js/hidrolavado-plan-data.js?v=1"></script>
   <script src="assets/js/hdr-plan-data.js?v=6"></script>
   <script src="assets/js/hdr-estandar-data.js?v=4"></script>
   <script src="assets/js/hdr-data.js?v=3"></script>
   <script src="assets/js/hdr-audit.js?v=9"></script>
   <script src="assets/js/aac-sistemas-data.js?v=6"></script>
+  <script src="assets/js/hidrolavado-app.js?v=1"></script>
   <script src="assets/js/planificador-data.js?v=6"></script>
   <script src="assets/js/planificador-app.js?v=10"></script>
   <script src="assets/js/prog-anual-data.js?v=3"></script>
