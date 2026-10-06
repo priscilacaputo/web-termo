@@ -115,6 +115,32 @@ const PUERTAS_DATA = [
   { equipo:"PPA732",  denominacion:"Puerta automatica salida Puesto ECHO", tipo:"Automática",       ubicacion:"AEP-ED2-NIVEL0-UBITEC001", fabricante:"",       serie:"",       modelo:"" },
 ];
 
+/* ─── Observaciones del Informe Técnico de Mantenimiento PPA ───
+   Relevamiento en campo (Informe_Tecnico_Mantenimiento_PPA.pdf, oct-2026).
+   Solo equipos con falla/observación; el resto figura "-" en el informe. */
+const PUERTAS_OBS_FECHA = "Informe técnico PPA · oct-2026";
+const PUERTAS_OBS = {
+  PPA685: "Rozan los paños.",
+  PPA732: "Display no enciende. Paños desalineados.",
+  PPA694: "Cambiar guía superior.",
+  PPA695: "Cambiar guía superior.",
+  PPA696: "Cambiar guía superior.",
+  PPA697: "Correa cortada y base de la tapa se cae al intentar abrir el cajón.",
+  PPA703: "Falta zócalo de guías inferior.",
+  PPA704: "Falta perfil central del paño móvil.",
+  PPA707: "Sin identificación. No cierra.",
+  PPA666: "Correa rota.",
+  PPA667: "Penalizada. Fuente Visio retirada para reparar.",
+  PPA668: "Paño móvil caído.",
+  PPA671: "Rueda excéntrica rota.",
+  PPA674: "Roce entre paños fijo y móvil. Falta perfil central.",
+  PPA675: "Cambiar guía superior.",
+  PPA677: "Cambiar guía superior. Falta tornillo regulador de altura del carro.",
+  PPA678: "Cambiar guía superior.",
+  PPA679: "Cambiar guía superior y todas las ruedas.",
+  PPA680: "Falta perfil central de paño móvil."
+};
+
 /* ─── Plan preventivo ───────────────────────────────────── */
 
 const PUERTAS_PLAN = {
