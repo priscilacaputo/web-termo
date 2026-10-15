@@ -2202,6 +2202,12 @@
             <input type="search" id="sg-buscar" placeholder="Buscar técnico, OT o equipo…">
           </div>
           <div id="sg-kpis" class="sg-kpis"></div>
+          <div class="sg-grid2">
+            <div class="sg-card"><h3 class="sg-h">OTs por día y cobertura del turno</h3><div class="sg-chbox"><canvas id="sg-ch-dias"></canvas></div></div>
+            <div class="sg-card"><h3 class="sg-h">OTs por tipo de equipo</h3><div class="sg-chbox"><canvas id="sg-ch-fam"></canvas></div></div>
+          </div>
+          <div class="sg-card"><h3 class="sg-h">Mapa de actividad por hora</h3><div id="sg-heatmap"></div></div>
+          <h3 class="sg-h" style="margin:4px 0 8px">Detalle por día y turno <small class="sg-hint">(tocá una fila)</small></h3>
           <div class="sg-card sg-scroll"><table class="sg-tab"><thead><tr><th>Día</th><th>Turno</th><th>OTs</th><th>Con final</th><th>Confirm.</th><th>Técnicos</th><th>Horas</th><th>Cobertura</th><th>Huecos sin OT</th></tr></thead><tbody id="sg-dias"></tbody></table></div>
           <div id="sg-detalle" class="sg-card"></div>
         </div>

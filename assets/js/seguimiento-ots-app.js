@@ -122,8 +122,9 @@
   }
   const absHM = (rel, t) => hhm((rel + INI_TURNO[t]) % 1440);
   const fmtHuecos = (hs, t) => hs.filter(([a, b]) => b - a >= 30).map(([a, b]) => `${absHM(a, t)}–${absHM(b, t)}`).join(' · ') || '—';
-  function lineaTiempo(rows, t) {
+  function lineaTiempo(rows, t, mini) {
     const c = cobertura(rows, t);
+    if (mini) return `<div class="sg-tl mini"><div class="sg-tl-bar">${c.u.map(([a, b]) => `<i style="left:${a / DUR * 100}%;width:${(b - a) / DUR * 100}%"></i>`).join('')}</div></div>`;
     const marcas = [0, 3, 6, 9, 12].map(h => `<span style="left:${h / 12 * 100}%">${absHM(h * 60, t)}</span>`).join('');
     return `<div class="sg-tl"><div class="sg-tl-bar">${c.u.map(([a, b]) => `<i style="left:${a / DUR * 100}%;width:${(b - a) / DUR * 100}%"></i>`).join('')}</div><div class="sg-tl-marks">${marcas}</div></div>`;
   }
@@ -132,6 +133,67 @@
   function covMedia(g) {
     const k = Object.keys(g); if (!k.length) return 0;
     return Math.round(k.reduce((s, x) => s + cobertura(g[x], x.split('|')[1]).pct, 0) / k.length);
+  }
+
+  /* ── Visuales ── */
+  const FAM = { AAC: 'Aire acondicionado', MEQ: 'Patio de valijas', PPA: 'Puertas automáticas' };
+  const famDe = r => { const m = (r.eq || '').match(/^[A-Z]+/); return m ? (FAM[m[0]] || m[0]) : 'Sin equipo'; };
+  const charts = {};
+  function chart(id, cfg) {
+    if (typeof Chart === 'undefined' || !$(id)) return;
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart($(id), cfg);
+  }
+  function destruirCharts() { Object.keys(charts).forEach(k => { charts[k].destroy(); delete charts[k]; }); }
+
+  /* Mapa de calor: filas = días (operativos), columnas = 24 h desde las 06:00 (mañana | tarde).
+     Color = técnicos distintos con una OT en curso en esa hora. */
+  function mapaCalor(rows) {
+    const dias = {};
+    rows.forEach(r => {
+      const ini = ((r.hi - 360) % 1440 + 1440) % 1440;
+      const len = r.hf == null ? r.m : ((r.hf - r.hi) % 1440 + 1440) % 1440;
+      if (!len) return;
+      const fin = Math.min(1440, ini + len);
+      const d = dias[r.d] = dias[r.d] || Array.from({ length: 24 }, () => new Set());
+      for (let h = Math.floor(ini / 60); h < 24 && h * 60 < fin; h++) d[h].add(r.p);
+    });
+    const ks = Object.keys(dias).sort();
+    if (!ks.length) return '<p class="sg-hint">Sin datos.</p>';
+    let max = 1; ks.forEach(k => dias[k].forEach(x => { if (x.size > max) max = x.size; }));
+    const cab = Array.from({ length: 24 }, (_, h) => `<div class="sg-hh${h === 12 ? ' cut' : ''}">${h % 3 === 0 ? String((6 + h) % 24).padStart(2, '0') : ''}</div>`).join('');
+    const filas = ks.map(k => `<div class="sg-hl">${fmtDia(k).slice(0, 9)}</div>` + dias[k].map((x, h) => {
+      const n = x.size, a = n ? (0.25 + 0.75 * n / max) : 0;
+      return `<div class="sg-hc${h === 12 ? ' cut' : ''}${n ? '' : ' vacio'}" style="${n ? `background:rgba(22,163,74,${a.toFixed(2)})` : ''}" title="${fmtDia(k)} · ${String((6 + h) % 24).padStart(2, '0')}:00 · ${n} técnico${n === 1 ? '' : 's'} con OT"></div>`;
+    }).join('')).join('');
+    return `<div class="sg-heat"><div></div>${cab}${filas}</div><div class="sg-leyenda"><span class="vac"></span> sin actividad <span class="alt"></span> más técnicos con OT · el corte divide Mañana | Tarde</div>`;
+  }
+
+  function graficos(rows, g) {
+    const ks = Object.keys(g).sort();
+    chart('sg-ch-dias', {
+      type: 'bar',
+      data: {
+        labels: ks.map(k => fmtDia(k).slice(0, 9)),
+        datasets: [
+          { type: 'line', label: 'Cobertura media %', data: ks.map(k => { const ts = ['manana', 'tarde'].filter(t => g[k][t]); return Math.round(ts.reduce((s, t) => s + cobertura(g[k][t], t).pct, 0) / ts.length); }),
+            yAxisID: 'y2', borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension: .3, pointRadius: 3 },
+          { label: 'OTs mañana', data: ks.map(k => g[k].manana ? resumir(g[k].manana).ots : 0), backgroundColor: '#38bdf8', stack: 'a', borderRadius: 3 },
+          { label: 'OTs tarde', data: ks.map(k => g[k].tarde ? resumir(g[k].tarde).ots : 0), backgroundColor: '#6366f1', stack: 'a', borderRadius: 3 }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        scales: { y: { stacked: true, beginAtZero: true, title: { display: true, text: 'OTs' } }, y2: { position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks: { callback: v => v + '%' } }, x: { stacked: true } },
+        plugins: { legend: { position: 'bottom' } } }
+    });
+    const fam = {}, vistas = new Set();
+    rows.forEach(r => { const f = famDe(r), k = r.o + '|' + f; if (vistas.has(k)) return; vistas.add(k); fam[f] = (fam[f] || 0) + 1; });
+    const fk = Object.keys(fam).sort((a, b) => fam[b] - fam[a]);
+    chart('sg-ch-fam', {
+      type: 'doughnut',
+      data: { labels: fk, datasets: [{ data: fk.map(k => fam[k]), backgroundColor: ['#0ea5e9', '#6366f1', '#16a34a', '#f59e0b', '#ec4899', '#14b8a6', '#8b5cf6', '#ef4444', '#64748b', '#84cc16', '#f97316'] }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } } }
+    });
   }
 
   function render() {
@@ -153,6 +215,8 @@
           `<td><span class="sg-pct ${cv.pct >= 75 ? 'ok' : cv.pct >= 50 ? 'mid' : 'bad'}">${cv.pct}%</span></td><td class="sg-huecos">${fmtHuecos(cv.huecos, t)}</td></tr>`;
       }).join('');
     }).join('') || '<tr><td colspan="9" class="sg-hint">Sin datos para el filtro.</td></tr>';
+    $('sg-heatmap').innerHTML = mapaCalor(rows);
+    graficos(rows, g);
     renderDetalle(rows);
   }
 
@@ -165,7 +229,7 @@
     const cv = cobertura(rr, st.sel.t);
     box.innerHTML = `<h3>${fmtDia(st.sel.d)} · ${TURNO[st.sel.t]}</h3><p class="sg-hint">Cobertura ${cv.pct}% (${fh(cv.cub / 60)} de 12 h con al menos una OT en curso). Huecos de 30 min o más: ${fmtHuecos(cv.huecos, st.sel.t)}</p>` + lineaTiempo(rr, st.sel.t) + Object.keys(porP).sort().map(p => {
       const s = resumir(porP[p]);
-      return `<details class="sg-pers"><summary><b>${esc(p)}</b> — ${s.ots} OT · ${fh(s.horas)} h</summary><div class="sg-scroll"><table class="sg-tab"><thead><tr><th>OT</th><th>Equipo</th><th>Operación</th><th>Horario</th><th>Horas</th><th>Final</th><th>Texto</th></tr></thead><tbody>` +
+      return `<details class="sg-pers"><summary><span class="sg-pn"><b>${esc(p)}</b> — ${s.ots} OT · ${fh(s.horas)} h</span>${lineaTiempo(porP[p], st.sel.t, true)}</summary><div class="sg-scroll"><table class="sg-tab"><thead><tr><th>OT</th><th>Equipo</th><th>Operación</th><th>Horario</th><th>Horas</th><th>Final</th><th>Texto</th></tr></thead><tbody>` +
         porP[p].sort((a, b) => a.hi - b.hi).map(r => `<tr><td>${esc(r.o)}<br><small>${esc(r.on)}</small></td><td>${esc(r.eq)}<br><small>${esc(r.ob)}</small></td><td>${esc(r.op)}</td>` +
           `<td>${hhm(r.hi)}–${r.hf == null ? '' : hhm(r.hf)}</td><td>${fh(r.m / 60)}</td><td>${r.f ? '✔' : ''}</td><td>${esc(r.x)}</td></tr>`).join('') +
         '</tbody></table></div></details>';
@@ -222,7 +286,7 @@
     /* se re-verifica cada vez que se muestra la página; al salir se limpian los datos del DOM */
     new MutationObserver(() => {
       if (!page.classList.contains('hidden')) verificar();
-      else { $('sg-body').classList.add('hidden'); $('sg-dias').innerHTML = ''; $('sg-detalle').innerHTML = ''; st.sel = null; st.rows = []; }
+      else { $('sg-body').classList.add('hidden'); $('sg-dias').innerHTML = ''; $('sg-detalle').innerHTML = ''; st.sel = null; st.rows = []; destruirCharts(); $('sg-heatmap').innerHTML = ''; }
     }).observe(page, { attributes: true, attributeFilter: ['class'] });
   }
   init();
