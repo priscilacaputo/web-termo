@@ -39,16 +39,18 @@
     const col = pref => hdr.findIndex(h => h.startsWith(pref));
     const c = { orden: col('orden'), estado: col('estado'), oper: col('operacion'), texto: col('texto de la notif'), fecha: col('fe contab'),
       pers: col('numero de personal'), final: col('notificacion final'), obj: col('objeto tecnico'), trab: col('trabajo real'),
-      hini: col('hora del inicio'), ffin: col('fecha de fin'), hfin: col('hora de fin') };
-    if (c.orden < 0 || c.pers < 0 || c.ffin < 0 || c.hini < 0) throw new Error('El archivo no parece el export "Confirmaciones de orden de mantenimiento".');
+      hini: Math.max(col('hora del inicio'), col('hora de inicio')), ffin: col('fecha de fin'), fini: col('fecha de inicio'), hfin: col('hora de fin') };
+    /* Dos versiones del export: con "Fecha de fin" (la hora de inicio puede caer el día anterior) o con "Fecha de inicio" */
+    if (c.orden < 0 || c.pers < 0 || (c.ffin < 0 && c.fini < 0) || c.hini < 0) throw new Error('El archivo no parece el export "Confirmaciones de orden de mantenimiento".');
     const out = [];
     for (let i = 1; i < aoa.length; i++) {
       const r = aoa[i]; if (!r || !r[c.orden]) continue;
       const mi = toMin(r[c.hini]), mf = toMin(r[c.hfin]);
+      const ini = c.fini >= 0 && r[c.fini] instanceof Date ? r[c.fini] : null;
       const fin = r[c.ffin] instanceof Date ? r[c.ffin] : (r[c.fecha] instanceof Date ? r[c.fecha] : null);
-      if (mi == null || !fin) continue;
-      let dia = iso(fin);
-      if (mf != null && mi > mf) dia = addDays(dia, -1);              // arrancó el día anterior
+      if (mi == null || !(ini || fin)) continue;
+      let dia = ini ? iso(ini) : iso(fin);
+      if (!ini && mf != null && mi > mf) dia = addDays(dia, -1);      // arrancó el día anterior
       const turno = (mi >= 360 && mi < 1080) ? 'manana' : 'tarde';
       const opDia = (turno === 'tarde' && mi < 360) ? addDays(dia, -1) : dia;
       const ordTxt = String(r[c.orden]), m = ordTxt.match(/\((\d+)\)\s*$/);
@@ -73,10 +75,16 @@
       try {
         const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
         const nuevos = parseSheet(wb.Sheets[wb.SheetNames[0]]);
-        const have = new Set(st.rows.map(rowKey)); let add = 0;
-        nuevos.forEach(r => { const k = rowKey(r); if (!have.has(k)) { have.add(k); st.rows.push(r); add++; } });
+        if (!nuevos.length) throw new Error('No se encontraron renglones con fecha y hora en el archivo.');
+        /* El export nuevo reemplaza al anterior en el período que cubre (SAP corrige horas entre descargas);
+           lo anterior fuera de ese período se conserva. */
+        const desde = nuevos.reduce((m, r) => r.d < m ? r.d : m, nuevos[0].d), hasta = nuevos.reduce((m, r) => r.d > m ? r.d : m, nuevos[0].d);
+        const antes = st.rows.length;
+        st.rows = st.rows.filter(r => r.d < desde || r.d > hasta);
+        const reemplazados = antes - st.rows.length;
+        const have = new Set(); nuevos.forEach(r => { const k = rowKey(r); if (!have.has(k)) { have.add(k); st.rows.push(r); } });
         save(); render();
-        $('sg-msg').textContent = `✅ ${nuevos.length} renglones leídos · ${add} nuevos · ${nuevos.length - add} ya estaban.`;
+        $('sg-msg').textContent = `✅ ${nuevos.length} renglones del ${fmtDia(desde)} al ${fmtDia(hasta)}` + (reemplazados ? ` · reemplazaron ${reemplazados} anteriores de ese período.` : '.');
       } catch (err) { $('sg-msg').textContent = '❌ ' + err.message; }
     };
     rd.readAsArrayBuffer(file);
