@@ -14,7 +14,7 @@ const PAGE_TITLES = {
   planificador: ["Planificador", "AEP — Calendario mensual de OTs por guardia, día y hora"],
   "gamas-sam": ["Gamas para SAM", "AEP — Gama de tareas de las hojas de ruta en formato legible para SAP SAM"],
   estado:      ["Estado de Equipos", "AEP — Panorama general · Estado en vivo de todos los equipos"],
-  hidrolavados: ["Calendario de Hidrolavados", "AEP — Roof Top, UTA y condensadoras · un hidrolavado cada 6 meses"],
+  hidrolavados: ["Calendario de Hidrolavados", "AEP — Roof Top, UTA y condensadoras · campañas abril–mayo y septiembre–octubre"],
   puertas:     ["Puertas Automáticas", "AEP — Puertas automáticas corredizas · Manusa · Audoor"],
   aac:         ["Equipos de Aire",     "AEP — Aire acondicionado · Splits · VRF · Roof Tops · UTAs · Chillers"],
   ecas:        ["Incendios (ECAs)",    "AEP — Equipos de detección y extinción de incendios · Sprinklers · Hidrantes"],
@@ -26,6 +26,7 @@ const PAGE_TITLES = {
   "maint-planes": ["Planes de Mantenimiento", "AEP — Planes preventivos consolidados de todos los equipos"],
   historial:   ["Historial OTs / SAP", "AEP — Historial de órdenes de trabajo · Análisis automático de fallas"],
   kpis:        ["KPIs de Mantenimiento", "AEP — Indicadores clave · Fallas frecuentes · Equipos críticos"],
+  "ots-seguimiento": ["Seguimiento de OTs", "AEP — Reservado · OTs realizadas por día y por turno"],
   panol:       ["Pañol / Repuestos", "AEP — Stock de pañol (SAP) · Repuestos por equipo"],
 };
 
@@ -41,6 +42,7 @@ function updateBackButtonState() {
 }
 
 function showPage(pageId) {
+  if (pageId === "ots-seguimiento" && !window.adminMode) pageId = "personal";   // sección reservada
   document.querySelectorAll(".page").forEach(p => p.classList.add("hidden"));
   document.querySelectorAll(".nav-item:not(.disabled)").forEach(n => n.classList.remove("active"));
 

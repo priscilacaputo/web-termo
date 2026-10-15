@@ -15,6 +15,13 @@ REF = dt.datetime(2026, 9, 21)
 # equipos "MONT NOAC PTBO" eliminados del portal (regla permanente, ver memoria)
 NOAC = {'AAC193', 'AAC250', 'AAC1272', 'AAC2112', 'AAC2721', 'AAC2722', 'AAC2723', 'AAC2724', 'AAC2725',
         'AAC2732', 'AVO018', 'AVO876'}
+# altas duplicadas de un equipo físico ya existente, dadas de baja a mano por la usuaria
+DUPLICADOS = {
+    'AAC9300': 'duplicado de AAC9412 (misma condensadora, modelo 4TVH0040B) — 2026-09-24',
+    'AAC9298': 'duplicado — el interior real es AAC9413 — 2026-09-24',
+    'AAC9299': 'duplicado — el interior real es AAC9414 — 2026-09-24',
+}
+NOAC = NOAC | set(DUPLICADOS)
 
 
 def load_js_const(fn, name):

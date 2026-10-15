@@ -141,6 +141,28 @@ const PUERTAS_OBS = {
   PPA680: "Falta perfil central de paño móvil."
 };
 
+/* ─── Especificaciones técnicas relevadas (mismo informe) ─── */
+const PUERTAS_ESP = (() => {
+  const g = {
+    bravoMulti: "Electrónica Bravo / Correa cerrada con grampas dentadas y agujeros / Carros con ruedas planas grandes / Guía plana",
+    echo:       "Electrónica ELK-C101 (Optima +) / Guía curva / Carros con ruedas en V / Correa sin agujeros y grampas de chapa",
+    visioCerr:  "Electrónica Visio / Guía curva / Correa cerrada sin agujeros y grampas de chapa / Carros con ruedas en V",
+    visioAbier: "Electrónica Visio / Guía curva / Carros con ruedas en V / Correa abierta sin agujeros y grampas de chapa",
+    patio:      "Electrónica Visio / Correa sin agujeros y mordazas de chapa / Carros con ruedas en V / Guía curva",
+    optima:     "Electrónica ÓPTIMA + / Guía curva / Carros con ruedas en V / Correa cerrada sin agujeros y grampas plásticas",
+    bravoNac:   "Electrónica Bravo / Guía plana / Carros de ruedas grandes / Ruedas planas / Correa cerrada con agujeros y mordazas dentadas",
+    visioNac:   "Electrónica Visio / Guía plana / Carros con ruedas planas grandes / Correa cerrada con agujeros y mordazas dentadas"
+  };
+  const m = { PPA685: g.bravoMulti, PPA732: g.echo, PPA693: g.optima,
+              PPA667: "Fuente Visio (se retiró para reparar)", PPA680: g.visioNac };
+  const put = (txt, ids) => ids.forEach(n => { m["PPA" + n] = txt; });
+  put(g.visioCerr,  [943, 944, 945, 946, 690, 691, 692, 703, 704, 706, 707]);
+  put(g.visioAbier, [947, 921, 922, 919, 920]);
+  put(g.patio,      [694, 695, 696, 697, 698, 699, 700, 701]);
+  put(g.bravoNac,   [665, 666, 668, 669, 670, 671, 672, 673, 674, 675, 676, 677, 678, 679]);
+  return m;
+})();
+
 /* ─── Plan preventivo ───────────────────────────────────── */
 
 const PUERTAS_PLAN = {

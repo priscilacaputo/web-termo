@@ -75,9 +75,14 @@ for p in pending:
 # corregido.xlsx"): revisó los 17 sistemas y sacó 2 interiores que NO correspondían. La usuaria
 # confirmó (2026-09-22) que quedan PENDIENTES de asignar condensadora, no descartados. El resto
 # de cada sistema quedó validado → conf 'alta'.
+# 2026-09-24: se confirmó que AAC9300+AAC9298+AAC9299 es un trío ENTERO duplicado de la misma
+# condensadora física que AAC9412 (mismo modelo Trane 4TVH0040B) con sus interiores reales
+# AAC9413/AAC9414 (no AAC9298/AAC9299, como se pensó en una primera vuelta — ver
+# [[sistemas-de-aire-aac]] para el historial completo del ida y vuelta). Se dio de baja el trío
+# duplicado entero en el maestro (equipos-sap-data.js) → ya no entra en `E` acá, así que el
+# algoritmo automático arma solo AAC9412 con AAC9413/AAC9414 sin necesitar exclusión manual.
 EXCLUIDOS_MANUAL = {
     'AAC2099': ['AAC2089'],   # Checkpoint: AAC2089 no es de este sistema, pendiente de asignar condensadora
-    'AAC9412': ['AAC9414'],   # Customer service: AAC9414 no es de este sistema, pendiente de asignar condensadora
 }
 for cab, quitar in EXCLUIDOS_MANUAL.items():
     s = next((x for x in sistemas if x['cabeza'] == cab), None)
@@ -87,6 +92,7 @@ for cab, quitar in EXCLUIDOS_MANUAL.items():
         if eq in s['miembros']:
             s['miembros'].remove(eq)
             sin_par[eq] = 'pendiente-condensadora'
+
 for s in sistemas:
     if s['miembros']:
         s['conf'] = 'alta'   # validado a mano por la usuaria 2026-09-22
@@ -105,8 +111,8 @@ with open(os.path.join(JS, 'aac-sistemas-data.js'), 'w', encoding='utf-8') as f:
     f.write(header + 'const AAC_SISTEMAS = ' + json.dumps(out, ensure_ascii=False, indent=1) + ';\n\n')
     f.write('/* Equipos sin condensadora asociada. motivo: "piso-techo" = equipo autónomo, nunca va a\n'
             '   tener una (comedores/talleres); "pendiente-condensadora" = interior real cuya condensadora\n'
-            '   todavía no está confirmada (AAC2089/AAC9414: la usuaria los sacó de un sistema erróneo el\n'
-            '   2026-09-22 y pidió mantenerlos así hasta confirmar el real). */\n')
+            '   todavía no está confirmada (AAC2089: la usuaria lo sacó de un sistema erróneo el\n'
+            '   2026-09-22 y pidió mantenerlo así hasta confirmar el real). Ver [[sistemas-de-aire-aac]]. */\n')
     f.write('const AAC_SIN_EXTERIOR = ' + json.dumps(
         [{'equipo': eq, 'denom': den[eq], 'motivo': mot} for eq, mot in sin_par.items()], ensure_ascii=False) + ';\n')
 pendientes = sum(1 for m in sin_par.values() if m == 'pendiente-condensadora')

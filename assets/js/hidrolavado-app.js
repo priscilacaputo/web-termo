@@ -1,65 +1,69 @@
 /* ─── Calendario de Hidrolavados ─────────────────────────────────
    Roof Top + UTA (AAC_DATA) y condensadoras de los sistemas VRF / multi split
-   (cabezas de AAC_SISTEMAS): cada equipo se hidrolava cada 6 meses, siempre en
-   el mismo par de meses (Ene/Jul, Feb/Ago … Jun/Dic).
-   El par de cada equipo sale de, en este orden:
-     1. un cambio manual de un admin (HIDRO_PLAN);
-     2. el mes en que SAP ya programa el MP que trae el hidrolavado (HIDRO_SAP,
-        scratchpad/gen_hidrolavado_sap.py): así uno de los dos hidrolavados del año
-        (los dos, en los planes semestrales) cae con la OT que SAP ya abre;
-     3. si SAP todavía no lo define, el par con menos carga, juntando los equipos
-        de la misma ubicación técnica.
+   (cabezas de AAC_SISTEMAS). Cada equipo se hidrolava DOS veces por año
+   (pedido de la usuaria 2026-10-01/02): una en la campaña ABRIL–MAYO y otra en
+   la campaña SEPTIEMBRE–OCTUBRE, en cualquier momento dentro de esos 2 meses
+   (no hay mes fijo por equipo).
    "Hecho" = hay un registro de hidrolavado (OT del historial que dice "hidrolav"
-   o fecha cargada a mano en Estado de Equipos) dentro de la ventana de 6 meses
-   que rodea al mes programado: de 3 meses antes a 2 después. Las ventanas de dos
-   meses programados seguidos no se pisan. Usa helpers de estado-app.js
-   (ubicación, guardado admin). */
+   o fecha cargada a mano en Estado de Equipos) dentro de la ventana de la
+   campaña: feb–jul para Abr–May, ago–ene para Sep–Oct (cubren el año sin pisarse).
+   La columna SAP dice si la OT que SAP ya genera hoy (HIDRO_SAP,
+   scratchpad/gen_hidrolavado_sap.py) trae el hidrolavado dentro de la campaña,
+   o si hay que ajustar el plan en SAP.
+   Usa helpers de estado-app.js (ubicación, guardado admin). */
 
 const HIDRO_MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const HIDRO_MESES_CORTO = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-const HIDRO_PLAN_DESDE = '2026-10';   // arranque del calendario: antes no se marca "atrasado"
+const HIDRO_CAMPANAS = [
+  { nombre: 'Abril – Mayo',         corto: 'Abr–May', meses: [4, 5],  ventana: [2, 7],  icon: '🍂' },  // ventana feb–jul
+  { nombre: 'Septiembre – Octubre', corto: 'Sep–Oct', meses: [9, 10], ventana: [8, 13], icon: '🌱' },  // ventana ago–ene (13 = enero siguiente)
+];
+const HIDRO_PLAN_DESDE = '2026-09';   // primera campaña del calendario: Sep–Oct 2026
 const HIDRO_ESTADOS = {
-  hecho:      { label: 'Hecho',          color: '#10b981' },
-  mes:        { label: 'Este mes',       color: '#0096d6' },
-  atrasado:   { label: 'Atrasado',       color: '#dc2626' },
-  programado: { label: 'Programado',     color: '#64748b' },
-  previo:     { label: 'Antes del plan', color: '#a3b1c2' },
+  hecho:      { label: 'Hecho',            color: '#10b981' },
+  curso:      { label: 'Pendiente',        color: '#0096d6' },
+  atrasado:   { label: 'No realizado',     color: '#dc2626' },
+  programado: { label: 'Programado',       color: '#64748b' },
+  previo:     { label: 'Antes del plan',   color: '#a3b1c2' },
 };
-const HIDRO_ORIGEN = {
-  manual: 'Movido a mano',
-  sap:    'Mes del MP de SAP',
-  auto:   'Reparto por carga (SAP aún sin mes)',
-};
-const HIDRO_TIPO_CORTO = { 'Roof Top': 'RTF', 'UTA': 'UTA', 'Condensadora': 'Cond.' };
 
 let hidroVista = 'calendario';
-let hidroOffset = 0;              // meses desde el mes actual (de a 12)
+let hidroOffset = 0;              // campañas desde la actual (de a 2 = un año)
 let hidroSearch = '';
 let hidroFiltroTipo = '';
 let hidroFiltroEdificio = '';
-let hidroMesSel = null;           // 'YYYY-MM' del mes abierto en el detalle
+let hidroCampSel = null;          // idx de la campaña abierta en el detalle
 
 /* ─── Utilidades ─────────────────────────────────────────────── */
 function hidroEsc(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
-function hidroParDeMes(m) { return ((m - 1) % 6) + 1; }
-function hidroParLabel(p) { return HIDRO_MESES_CORTO[p - 1] + ' / ' + HIDRO_MESES_CORTO[p + 5]; }
 function hidroYm(y, m) { return y + '-' + String(m).padStart(2, '0'); }
 function hidroIso(d) { return hidroYm(d.getFullYear(), d.getMonth() + 1) + '-' + String(d.getDate()).padStart(2, '0'); }
 function hidroFecha(f) { return f ? new Date(f + 'T00:00:00').toLocaleDateString('es-AR') : 'Nunca'; }
 function hidroHoyYm() { const d = new Date(); return hidroYm(d.getFullYear(), d.getMonth() + 1); }
 function hidroIsAdmin() { return document.body.classList.contains('admin-mode'); }
 
-/* Los 12 meses visibles: desde el mes actual + hidroOffset */
-function hidroMesesVentana() {
-  const d = new Date();
-  const out = [];
-  for (let k = 0; k < 12; k++) {
-    const x = new Date(d.getFullYear(), d.getMonth() + hidroOffset + k, 1);
-    out.push({ y: x.getFullYear(), m: x.getMonth() + 1, ym: hidroYm(x.getFullYear(), x.getMonth() + 1) });
-  }
-  return out;
+/* Campañas numeradas en orden: idx = año·2 + (0 Abr–May | 1 Sep–Oct) */
+function hidroCamp(idx) {
+  const y = Math.floor(idx / 2), c = idx % 2, def = HIDRO_CAMPANAS[c];
+  return { idx, y, c, def, desde: hidroYm(y, def.meses[0]), hasta: hidroYm(y, def.meses[1]) };
+}
+function hidroCampLabel(camp) { return `${camp.def.corto} ${camp.y}`; }
+/* La campaña en curso o, si no hay, la próxima */
+function hidroCampActualIdx() {
+  const d = new Date(), y = d.getFullYear(), m = d.getMonth() + 1;
+  if (m <= 5) return y * 2;
+  if (m <= 10) return y * 2 + 1;
+  return (y + 1) * 2;
+}
+function hidroCampanasVisibles() {
+  const base = hidroCampActualIdx() + hidroOffset;
+  return [hidroCamp(base), hidroCamp(base + 1)];
+}
+function hidroCampDesdeIdx() {
+  const m = Number(HIDRO_PLAN_DESDE.slice(5));
+  return Number(HIDRO_PLAN_DESDE.slice(0, 4)) * 2 + HIDRO_CAMPANAS.findIndex(c => c.meses.includes(m));
 }
 
 /* ─── Universo de equipos ────────────────────────────────────── */
@@ -69,7 +73,6 @@ function hidroFicha(e, tipo) {
   return {
     equipo: e.equipo, denominacion: e.denominacion || '', tipo, sub: e.tipo || '',
     ubic, ubicDesc: desc, ubicRef: ref, edificio: estadoEdificioDeUbicacion(ubic),
-    capacidad: e.capacidad || '', fabricante: e.fabricante || '', modelo: e.modelo || '',
   };
 }
 function hidroEquiposBase() {
@@ -86,38 +89,6 @@ function hidroEquiposBase() {
   return out;
 }
 
-/* Par de meses de cada equipo (ver cabecera). Se calcula siempre sobre TODOS
-   los equipos, así los filtros de pantalla no cambian los meses. */
-function hidroAsignarPares(equipos) {
-  const manual = {};
-  (typeof HIDRO_PLAN !== 'undefined' ? HIDRO_PLAN : []).forEach(o => { if (o.par >= 1 && o.par <= 6) manual[o.equipo] = o.par; });
-  const sapIdx = typeof HIDRO_SAP !== 'undefined' ? HIDRO_SAP : {};
-  const carga = [0, 0, 0, 0, 0, 0, 0];
-  equipos.forEach(e => {
-    const sap = sapIdx[e.equipo] || null;
-    e.sap = sap;
-    e.sapPar = null;
-    if (sap && sap.meses) e.sapPar = hidroParDeMes(sap.meses[0]);
-    else if (sap && sap.cand) {
-      const pares = new Set(sap.cand.map(c => hidroParDeMes(c[0])));
-      if (pares.size === 1) e.sapPar = [...pares][0];   // p. ej. "enero o julio": mismo par
-    }
-    if (manual[e.equipo]) { e.par = manual[e.equipo]; e.origen = 'manual'; }
-    else if (e.sapPar) { e.par = e.sapPar; e.origen = 'sap'; }
-    else e.par = null;
-    if (e.par) carga[e.par]++;
-  });
-  const bloques = {};
-  equipos.filter(e => !e.par).forEach(e => { (bloques[e.ubic + '|' + e.tipo] = bloques[e.ubic + '|' + e.tipo] || []).push(e); });
-  Object.values(bloques).sort((a, b) => b.length - a.length).forEach(bl => {
-    let best = 1;
-    for (let p = 2; p <= 6; p++) if (carga[p] < carga[best]) best = p;
-    bl.forEach(e => { e.par = best; e.origen = 'auto'; });
-    carga[best] += bl.length;
-  });
-  return equipos;
-}
-
 /* Todas las fechas de hidrolavado registradas por equipo (ordenadas) */
 function hidroRegistros() {
   const idx = {};
@@ -131,18 +102,21 @@ function hidroRegistros() {
   return idx;
 }
 
-function hidroEstadoOcurrencia(regs, y, m, hoyYm) {
-  const desde = hidroIso(new Date(y, m - 4, 1));
-  const hasta = hidroIso(new Date(y, m + 2, 0));
+function hidroEstadoCamp(regs, camp, hoyYm) {
+  const [a, b] = camp.def.ventana;
+  const desde = hidroIso(new Date(camp.y, a - 1, 1));
+  const hasta = hidroIso(new Date(camp.y, b, 0));
   const r = (regs || []).filter(f => f >= desde && f <= hasta);
-  const ym = hidroYm(y, m);
   if (r.length) return { estado: 'hecho', fecha: r[r.length - 1] };
-  if (ym < HIDRO_PLAN_DESDE) return { estado: 'previo' };
-  if (ym === hoyYm) return { estado: 'mes' };
-  if (ym < hoyYm) return { estado: 'atrasado' };
+  if (camp.hasta < HIDRO_PLAN_DESDE) return { estado: 'previo' };
+  if (hoyYm > camp.hasta) return { estado: 'atrasado' };
+  if (hoyYm >= camp.desde) return { estado: 'curso' };
   return { estado: 'programado' };
 }
-function hidroCoincideSap(e, m) { return !!(e.sap && e.sap.meses && e.sap.meses.includes(m)); }
+/* ¿La OT que SAP genera hoy trae el hidrolavado dentro de la campaña c? */
+function hidroSapEnCamp(e, c) {
+  return !!(e.sap && e.sap.meses && e.sap.meses.some(m => HIDRO_CAMPANAS[c].meses.includes(m)));
+}
 function hidroSapTexto(e) {
   const s = e.sap;
   if (!s) return 'Sin plan SAP con hidrolavado';
@@ -150,28 +124,26 @@ function hidroSapTexto(e) {
   if (s.meses) return `${per} · ${s.meses.map(m => HIDRO_MESES_CORTO[m - 1]).join(' y ')}`;
   return `${per} · a definir (${s.cand.map(c => c.map(m => HIDRO_MESES_CORTO[m - 1]).join('+')).join(' ó ')})`;
 }
-function hidroUltimo(regs) { return regs && regs.length ? regs[regs.length - 1] : null; }
+function hidroSapAjuste(e) {
+  const faltan = HIDRO_CAMPANAS.filter((_, c) => !hidroSapEnCamp(e, c)).map(c => c.corto);
+  return faltan.length ? `Falta en SAP: ${faltan.join(' y ')}` : 'Nada: SAP ya la trae en las dos campañas';
+}
 function hidroMesesDesde(f) {
   if (!f) return Infinity;
   return (Date.now() - new Date(f + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24 * 30.44);
 }
-/* Próximo mes programado (desde el actual) que todavía no figura hecho */
-function hidroProximo(e, regs, hoyYm) {
-  const d = new Date();
-  for (let k = 0; k < 12; k++) {
-    const x = new Date(d.getFullYear(), d.getMonth() + k, 1);
-    const y = x.getFullYear(), m = x.getMonth() + 1;
-    if (hidroParDeMes(m) !== e.par) continue;
-    if (hidroEstadoOcurrencia(regs, y, m, hoyYm).estado !== 'hecho') return { y, m };
-  }
-  return null;
-}
 
 /* ─── Datos del render ───────────────────────────────────────── */
 function hidroDatos() {
-  const todos = hidroAsignarPares(hidroEquiposBase());
+  const sapIdx = typeof HIDRO_SAP !== 'undefined' ? HIDRO_SAP : {};
   const regs = hidroRegistros();
-  todos.forEach(e => { e.regs = regs[e.equipo] || []; e.ultimo = hidroUltimo(e.regs); });
+  const todos = hidroEquiposBase();
+  todos.forEach(e => {
+    e.sap = sapIdx[e.equipo] || null;
+    e.sapCoinc = HIDRO_CAMPANAS.filter((_, c) => hidroSapEnCamp(e, c)).length;
+    e.regs = regs[e.equipo] || [];
+    e.ultimo = e.regs.length ? e.regs[e.regs.length - 1] : null;
+  });
   const filtrados = todos.filter(e => {
     if (hidroFiltroTipo && e.tipo !== hidroFiltroTipo) return false;
     if (hidroFiltroEdificio && e.edificio !== hidroFiltroEdificio) return false;
@@ -181,35 +153,37 @@ function hidroDatos() {
     }
     return true;
   });
-  return { todos, filtrados, hoyYm: hidroHoyYm(), meses: hidroMesesVentana() };
+  return { todos, filtrados, hoyYm: hidroHoyYm(), campanas: hidroCampanasVisibles() };
 }
 function hidroOrdenar(a, b) {
   return a.ubic.localeCompare(b.ubic) || a.equipo.localeCompare(b.equipo, 'es', { numeric: true });
+}
+function hidroGrupos(lista) {
+  const g = {};
+  lista.forEach(e => { (g[e.ubic] = g[e.ubic] || []).push(e); });
+  return Object.keys(g).sort().map(k => ({ ubic: k, desc: g[k][0].ubicDesc, items: g[k].sort(hidroOrdenar) }));
 }
 
 /* ─── Render: stats + intro ─────────────────────────────────── */
 function renderHidroStats(D) {
   const L = D.filtrados;
   const porTipo = t => L.filter(e => e.tipo === t).length;
-  const [hy, hm] = D.hoyYm.split('-').map(Number);
-  const esteMes = L.filter(e => e.par === hidroParDeMes(hm));
-  const hechosMes = esteMes.filter(e => hidroEstadoOcurrencia(e.regs, hy, hm, D.hoyYm).estado === 'hecho').length;
-  let atrasados = 0;
-  L.forEach(e => {
-    for (let p = HIDRO_PLAN_DESDE; p < D.hoyYm;) {
-      const [y, m] = p.split('-').map(Number);
-      if (hidroParDeMes(m) === e.par && hidroEstadoOcurrencia(e.regs, y, m, D.hoyYm).estado === 'atrasado') atrasados++;
-      p = m === 12 ? hidroYm(y + 1, 1) : hidroYm(y, m + 1);
-    }
-  });
+  const actual = hidroCamp(hidroCampActualIdx());
+  const enCurso = D.hoyYm >= actual.desde;
+  const hechosAct = L.filter(e => hidroEstadoCamp(e.regs, actual, D.hoyYm).estado === 'hecho').length;
+  let noHechos = 0;
+  for (let i = hidroCampDesdeIdx(); i < actual.idx; i++) {
+    const camp = hidroCamp(i);
+    noHechos += L.filter(e => hidroEstadoCamp(e.regs, camp, D.hoyYm).estado === 'atrasado').length;
+  }
   const sinSeis = L.filter(e => hidroMesesDesde(e.ultimo) > 6).length;
-  const conSap = L.filter(e => e.origen === 'sap').length;
+  const conSap = L.reduce((s, e) => s + e.sapCoinc, 0);
   const cards = [
     { label: 'Equipos en el plan', value: L.length, sub: `${porTipo('Roof Top')} RTF · ${porTipo('UTA')} UTA · ${porTipo('Condensadora')} cond.`, icon: '🚿', color: '#1a56a4' },
-    { label: `${HIDRO_MESES[hm - 1]} (este mes)`, value: esteMes.length, sub: `${hechosMes} hechos`, icon: '📅', color: '#0096d6' },
-    { label: 'Atrasados', value: atrasados, sub: `meses programados sin registro desde ${HIDRO_MESES_CORTO[Number(HIDRO_PLAN_DESDE.slice(5)) - 1]} ${HIDRO_PLAN_DESDE.slice(0, 4)}`, icon: '⏰', color: '#dc2626' },
+    { label: `Campaña ${hidroCampLabel(actual)} (${enCurso ? 'en curso' : 'próxima'})`, value: `${hechosAct}/${L.length}`, sub: `hechos · faltan ${L.length - hechosAct}`, icon: actual.def.icon, color: '#0096d6' },
+    { label: 'No realizados', value: noHechos, sub: 'en campañas ya terminadas (desde Sep–Oct 2026)', icon: '⏰', color: '#dc2626' },
     { label: 'Más de 6 meses sin hidrolavado', value: sinSeis, sub: 'o nunca registrado', icon: '⚠️', color: '#d97706' },
-    { label: 'Caen con el MP de SAP', value: conSap, sub: 'equipos anclados al mes SAP', icon: '📋', color: '#10b981' },
+    { label: 'Ya caen con una OT de SAP', value: `${conSap}/${L.length * 2}`, sub: 'hidrolavados del año; el resto hay que ajustarlo en SAP', icon: '📋', color: '#10b981' },
   ];
   document.getElementById('hidro-stats').innerHTML = cards.map(c => `
     <div class="stat-card" style="--stat-color:${c.color}">
@@ -221,134 +195,119 @@ function renderHidroStats(D) {
 }
 
 function renderHidroIntro() {
-  const leyenda = ['hecho', 'mes', 'atrasado', 'programado'].map(k =>
+  const leyenda = ['hecho', 'curso', 'atrasado', 'programado'].map(k =>
     `<span class="hidro-leyenda-item"><span class="hidro-dot" style="background:${HIDRO_ESTADOS[k].color}"></span>${HIDRO_ESTADOS[k].label}</span>`).join('');
   document.getElementById('hidro-intro').innerHTML = `
-    <p>Cada equipo se hidrolava <strong>cada 6 meses</strong>, siempre en el mismo par de meses. El par se toma del
-    mes en que SAP ya programa el MP que incluye el hidrolavado (📋): en Roof Top y UTA es el anual, así que
-    uno de los dos cae con esa OT; en las condensadoras es semestral y caen los dos. Un mes figura
-    <strong>hecho</strong> si hay un hidrolavado registrado (OT del historial o fecha cargada en Estado de Equipos)
-    entre 3 meses antes y 2 después.${hidroIsAdmin() ? ' Como admin, podés mover equipos de mes y marcar hidrolavados desde el detalle.' : ''}</p>
-    <div class="hidro-leyenda">${leyenda}<span class="hidro-leyenda-item">📋 Cae con el MP de SAP</span></div>`;
+    <p>Cada equipo se hidrolava <strong>dos veces por año</strong>: una en la campaña <strong>abril–mayo</strong> y otra en la
+    campaña <strong>septiembre–octubre</strong>, en cualquier momento dentro de esos dos meses. Figura <strong>hecho</strong> si
+    tiene un hidrolavado registrado (OT del historial o fecha cargada en Estado de Equipos) dentro de la campaña: de febrero
+    a julio para Abr–May, de agosto a enero para Sep–Oct. 📋 = la OT que SAP genera hoy ya trae el hidrolavado en esa campaña.${hidroIsAdmin() ? ' Como admin, podés marcar hidrolavados hechos desde el detalle de la campaña.' : ''}</p>
+    <div class="hidro-leyenda">${leyenda}<span class="hidro-leyenda-item">📋 Cae con una OT de SAP</span></div>`;
 }
 
-/* ─── Render: calendario ────────────────────────────────────── */
-function renderHidroCarga(D) {
-  const carga = [0, 0, 0, 0, 0, 0, 0];
-  D.filtrados.forEach(e => { carga[e.par]++; });
-  const max = Math.max(1, ...carga.slice(1));
-  const prom = D.filtrados.length / 6;
-  const parSel = hidroMesSel ? hidroParDeMes(Number(hidroMesSel.slice(5))) : null;
+/* ─── Render: calendario por campañas ───────────────────────── */
+function renderHidroResumenActual(D) {
+  const camp = hidroCamp(hidroCampActualIdx());
+  const L = D.filtrados;
+  const hechos = L.filter(e => hidroEstadoCamp(e.regs, camp, D.hoyYm).estado === 'hecho').length;
+  const fin = new Date(camp.y, camp.def.meses[1], 0);
+  const ini = new Date(camp.y, camp.def.meses[0] - 1, 1);
+  const hoy = new Date();
+  const enCurso = hoy >= ini;
+  const dias = Math.max(0, Math.ceil(((enCurso ? fin : ini) - hoy) / 86400000));
   document.getElementById('hidro-carga').innerHTML = `
-    <div class="hidro-carga-titulo">Equipos por par de meses <span>(promedio ${prom.toFixed(1)})</span></div>
-    <div class="hidro-carga-grid">
-      ${[1, 2, 3, 4, 5, 6].map(p => `
-        <div class="hidro-carga-item ${p === parSel ? 'sel' : ''}" title="${carga[p]} equipos se hidrolavan en ${HIDRO_MESES[p - 1]} y ${HIDRO_MESES[p + 5]}">
-          <span class="hidro-carga-label">${hidroParLabel(p)}</span>
-          <span class="hidro-carga-bar"><span style="width:${(carga[p] / max) * 100}%"></span></span>
-          <span class="hidro-carga-num">${carga[p]}</span>
-        </div>`).join('')}
+    <div class="hidro-carga-titulo">${camp.def.icon} Campaña ${camp.def.nombre} ${camp.y}
+      <span>· ${enCurso ? `en curso, quedan ${dias} días` : `empieza en ${dias} días`}</span></div>
+    <div class="hidro-carga-item">
+      <span class="hidro-carga-bar"><span style="width:${L.length ? (hechos / L.length) * 100 : 0}%;background:#10b981"></span></span>
+      <span class="hidro-carga-num" style="width:auto">${hechos} de ${L.length} hechos · faltan ${L.length - hechos}</span>
     </div>`;
 }
 
-function hidroGrupos(lista) {
-  const g = {};
-  lista.forEach(e => { (g[e.ubic] = g[e.ubic] || []).push(e); });
-  return Object.keys(g).sort().map(k => ({ ubic: k, desc: g[k][0].ubicDesc, items: g[k].sort(hidroOrdenar) }));
-}
-
 function renderHidroCalendario(D) {
-  renderHidroCarga(D);
-  const cal = document.getElementById('hidro-cal');
-  cal.innerHTML = D.meses.map(({ y, m, ym }) => {
-    const items = D.filtrados.filter(e => e.par === hidroParDeMes(m));
-    const est = items.map(e => ({ e, o: hidroEstadoOcurrencia(e.regs, y, m, D.hoyYm) }));
-    const hechos = est.filter(x => x.o.estado === 'hecho').length;
-    const nTipo = t => items.filter(e => e.tipo === t).length;
+  renderHidroResumenActual(D);
+  const actualIdx = hidroCampActualIdx();
+  const wrap = document.getElementById('hidro-cal');
+  wrap.innerHTML = D.campanas.map(camp => {
     const estDe = {};
-    est.forEach(x => { estDe[x.e.equipo] = x.o; });
-    const grupos = hidroGrupos(items);
+    D.filtrados.forEach(e => { estDe[e.equipo] = hidroEstadoCamp(e.regs, camp, D.hoyYm); });
+    const hechos = D.filtrados.filter(e => estDe[e.equipo].estado === 'hecho').length;
+    const etapa = camp.idx < actualIdx ? 'Terminada' : camp.idx === actualIdx ? (D.hoyYm >= camp.desde ? 'En curso' : 'Próxima') : 'Programada';
+    const vd = new Date(camp.y, camp.def.ventana[0] - 1, 1), vh = new Date(camp.y, camp.def.ventana[1] - 1, 1);
+    const nTipo = t => D.filtrados.filter(e => e.tipo === t).length;
     return `
-      <div class="hidro-mes-card ${ym === D.hoyYm ? 'actual' : ''} ${ym === hidroMesSel ? 'sel' : ''}" data-ym="${ym}">
-        <div class="hidro-mes-head">
-          <span class="hidro-mes-nombre">${HIDRO_MESES[m - 1]}</span>
-          <span class="hidro-mes-anio">${y}</span>
-          <span class="hidro-mes-total">${items.length}</span>
+      <section class="hidro-campana ${camp.idx === actualIdx ? 'actual' : ''} ${camp.idx === hidroCampSel ? 'sel' : ''}" data-camp="${camp.idx}">
+        <div class="hidro-campana-head">
+          <span class="hidro-campana-icon">${camp.def.icon}</span>
+          <div class="hidro-campana-tit">
+            <h3>Campaña ${camp.def.nombre} ${camp.y}</h3>
+            <span>${nTipo('Roof Top')} RTF · ${nTipo('UTA')} UTA · ${nTipo('Condensadora')} cond. · ✅ ${hechos} de ${D.filtrados.length} ·
+              cuentan los hidrolavados de ${HIDRO_MESES_CORTO[vd.getMonth()].toLowerCase()} ${vd.getFullYear()} a ${HIDRO_MESES_CORTO[vh.getMonth()].toLowerCase()} ${vh.getFullYear()}</span>
+          </div>
+          <span class="hidro-campana-etapa">${etapa}</span>
+          <button type="button" class="prog-btn prog-btn-primary hidro-campana-ver">${camp.idx === hidroCampSel ? 'Viendo detalle' : 'Ver detalle'}</button>
         </div>
-        <div class="hidro-mes-prog" title="${hechos} de ${items.length} hechos"><span style="width:${items.length ? (hechos / items.length) * 100 : 0}%"></span></div>
-        <div class="hidro-mes-tipos">${nTipo('Roof Top')} RTF · ${nTipo('UTA')} UTA · ${nTipo('Condensadora')} cond. · ✅ ${hechos}/${items.length}</div>
-        <div class="hidro-mes-grupos">
-          ${grupos.map(g => `
+        <div class="hidro-mes-prog"><span style="width:${D.filtrados.length ? (hechos / D.filtrados.length) * 100 : 0}%"></span></div>
+        <div class="hidro-campana-grupos">
+          ${hidroGrupos(D.filtrados).map(g => `
             <div class="hidro-mes-grupo">
-              <span class="hidro-mes-ubic" title="${hidroEsc(g.ubic)}">${hidroEsc(g.desc || g.ubic || 'Sin ubicación técnica')}</span>
+              <span class="hidro-mes-ubic" title="${hidroEsc(g.ubic)}">${hidroEsc(g.desc || g.ubic || 'Sin ubicación técnica')} · ${g.items.length}</span>
               <div class="hidro-chips">
                 ${g.items.map(e => {
                   const o = estDe[e.equipo];
-                  const c = HIDRO_ESTADOS[o.estado].color;
-                  const sap = hidroCoincideSap(e, m);
-                  return `<span class="hidro-chip" style="--c:${c}" title="${hidroEsc(e.equipo + ' — ' + e.denominacion + ' · ' + HIDRO_ESTADOS[o.estado].label + (o.fecha ? ' ' + hidroFecha(o.fecha) : '') + (sap ? ' · cae con el MP de SAP' : ''))}">${e.equipo}${sap ? ' 📋' : ''}</span>`;
+                  const sap = hidroSapEnCamp(e, camp.c);
+                  return `<span class="hidro-chip" style="--c:${HIDRO_ESTADOS[o.estado].color}" title="${hidroEsc(e.equipo + ' — ' + e.denominacion + ' · ' + HIDRO_ESTADOS[o.estado].label + (o.fecha ? ' ' + hidroFecha(o.fecha) : '') + (sap ? ' · cae con una OT de SAP' : ''))}">${e.equipo}${sap ? ' 📋' : ''}</span>`;
                 }).join('')}
               </div>
-            </div>`).join('') || '<p class="hidro-vacio">Sin equipos</p>'}
+            </div>`).join('') || '<p class="hidro-vacio">Sin equipos con los filtros actuales.</p>'}
         </div>
-      </div>`;
+      </section>`;
   }).join('');
-  cal.querySelectorAll('.hidro-mes-card').forEach(card => {
-    card.addEventListener('click', () => {
-      hidroMesSel = card.dataset.ym;
+  wrap.querySelectorAll('.hidro-campana').forEach(sec => {
+    sec.querySelector('.hidro-campana-ver').addEventListener('click', () => {
+      hidroCampSel = Number(sec.dataset.camp);
       renderHidrolavados();
       const det = document.getElementById('hidro-mes-detalle');
       if (det) det.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
-  renderHidroDetalleMes(D);
+  renderHidroDetalleCamp(D);
 }
 
-function hidroSelectPar(attrs, actual, conAuto) {
-  return `<select class="filter-select hidro-par-select" ${attrs}>
-    ${conAuto ? '<option value="">↺ Automático</option>' : '<option value="">Mover a…</option>'}
-    ${[1, 2, 3, 4, 5, 6].map(p => `<option value="${p}" ${p === actual ? 'selected' : ''}>${hidroParLabel(p)}</option>`).join('')}
-  </select>`;
-}
-
-function renderHidroDetalleMes(D) {
+function renderHidroDetalleCamp(D) {
   const wrap = document.getElementById('hidro-mes-detalle');
-  if (!hidroMesSel) { wrap.innerHTML = ''; return; }
-  const [y, m] = hidroMesSel.split('-').map(Number);
+  if (hidroCampSel === null) { wrap.innerHTML = ''; return; }
+  const camp = hidroCamp(hidroCampSel);
   const admin = hidroIsAdmin();
-  const items = D.filtrados.filter(e => e.par === hidroParDeMes(m));
   const hoy = hidroIso(new Date());
-  const grupos = hidroGrupos(items);
   wrap.innerHTML = `
     <div class="hidro-detalle">
       <div class="hidro-detalle-head">
-        <h3>${HIDRO_MESES[m - 1]} ${y} <span>· ${items.length} equipos · se repiten en ${HIDRO_MESES[(m + 5) % 12]}</span></h3>
+        <h3>Campaña ${camp.def.nombre} ${camp.y} <span>· ${D.filtrados.length} equipos</span></h3>
         <button type="button" class="prog-btn" id="hidro-detalle-cerrar">✕</button>
       </div>
-      ${grupos.map(g => `
+      ${hidroGrupos(D.filtrados).map(g => `
         <div class="hidro-detalle-grupo">
           <div class="hidro-detalle-ubic">
             <span>📍 <strong>${hidroEsc(g.desc || 'Sin descripción')}</strong> <code>${hidroEsc(g.ubic)}</code> · ${g.items.length}</span>
-            ${admin ? hidroSelectPar(`data-grupo="${hidroEsc(g.items.map(e => e.equipo).join(','))}"`, null, false) : ''}
           </div>
           <div class="table-wrap"><table class="hidro-tabla hidro-tabla-mes ${admin ? 'con-admin' : ''}">
-            <thead><tr><th>Equipo</th><th>Denominación</th><th>Tipo</th><th>SAP</th><th>Último hidrolavado</th><th>Estado</th>${admin ? '<th>Admin</th>' : ''}</tr></thead>
+            <thead><tr><th>Equipo</th><th>Denominación</th><th>Tipo</th><th>OT de SAP</th><th>Último hidrolavado</th><th>Estado</th>${admin ? '<th>Admin</th>' : ''}</tr></thead>
             <tbody>
               ${g.items.map(e => {
-                const o = hidroEstadoOcurrencia(e.regs, y, m, D.hoyYm);
+                const o = hidroEstadoCamp(e.regs, camp, D.hoyYm);
                 const meta = HIDRO_ESTADOS[o.estado];
-                const sap = hidroCoincideSap(e, m);
+                const sap = hidroSapEnCamp(e, camp.c);
                 return `<tr>
                   <td class="hidro-cod">${e.equipo}</td>
                   <td>${hidroEsc(e.denominacion)}${e.ubicRef ? `<div class="hidro-ref">${hidroEsc(e.ubicRef)}</div>` : ''}</td>
                   <td>${e.tipo}${e.tipo === 'Condensadora' ? ` <span class="hidro-ref">${e.sub}${e.interiores ? ' · ' + e.interiores + ' int.' : ''}</span>` : ''}</td>
-                  <td title="${hidroEsc(e.sap ? e.sap.plan + ' (' + e.sap.hr + ')' : '')}">${sap ? '📋 Con el MP' : e.sap ? '<span class="hidro-ref">Extra</span>' : '—'}<div class="hidro-ref">${hidroEsc(hidroSapTexto(e))}</div></td>
+                  <td title="${hidroEsc(e.sap ? e.sap.plan + ' (' + e.sap.hr + ')' : '')}">${sap ? '📋 La trae' : '<span class="hidro-ajustar">Ajustar en SAP</span>'}<div class="hidro-ref">Hoy: ${hidroEsc(hidroSapTexto(e))}</div></td>
                   <td>${hidroFecha(e.ultimo)}</td>
                   <td><span class="estado-badge" style="background:${meta.color}18;color:${meta.color};border:1px solid ${meta.color}40">${meta.label}${o.fecha ? ' · ' + hidroFecha(o.fecha) : ''}</span></td>
                   ${admin ? `<td class="hidro-admin">
                     <input type="date" class="estado-hidro-fecha-input" value="${hoy}" max="${hoy}" />
                     <button type="button" class="prog-btn prog-btn-primary hidro-hecho-btn" data-equipo="${e.equipo}">✓ Hecho</button>
-                    ${hidroSelectPar(`data-equipo="${e.equipo}"`, e.origen === 'manual' ? e.par : null, true)}
                   </td>` : ''}
                 </tr>`;
               }).join('')}
@@ -356,53 +315,46 @@ function renderHidroDetalleMes(D) {
           </table></div>
         </div>`).join('') || '<p class="hidro-vacio">No hay equipos con los filtros actuales.</p>'}
     </div>`;
-  document.getElementById('hidro-detalle-cerrar').addEventListener('click', () => { hidroMesSel = null; renderHidrolavados(); });
+  document.getElementById('hidro-detalle-cerrar').addEventListener('click', () => { hidroCampSel = null; renderHidrolavados(); });
   hidroWireAdmin(wrap);
 }
 
 /* ─── Render: por equipo ────────────────────────────────────── */
+function hidroBadge(o) {
+  const meta = HIDRO_ESTADOS[o.estado];
+  return `<span class="estado-badge" style="background:${meta.color}18;color:${meta.color};border:1px solid ${meta.color}40">${meta.label}${o.fecha ? ' · ' + hidroFecha(o.fecha) : ''}</span>`;
+}
 function renderHidroEquipos(D) {
   const wrap = document.getElementById('hidro-equipos-wrap');
-  const admin = hidroIsAdmin();
-  const lista = [...D.filtrados].sort((a, b) => a.par - b.par || hidroOrdenar(a, b));
+  const lista = [...D.filtrados].sort(hidroOrdenar);
+  const [c1, c2] = D.campanas;
   wrap.innerHTML = `
     <div class="estado-lista-count">${lista.length} equipos</div>
     <div class="table-wrap"><table class="hidro-tabla hidro-tabla-equipos">
-      <thead><tr><th>Equipo</th><th>Denominación</th><th>Tipo</th><th>Ubicación técnica</th><th>Meses</th><th>Según SAP</th><th>Último</th><th>Próximo</th></tr></thead>
+      <thead><tr><th>Equipo</th><th>Denominación</th><th>Tipo</th><th>Ubicación técnica</th>
+        <th>${hidroCampLabel(c1)}</th><th>${hidroCampLabel(c2)}</th><th>SAP hoy</th><th>¿SAP la trae?</th><th>Último</th></tr></thead>
       <tbody>
         ${lista.map(e => {
-          const prox = hidroProximo(e, e.regs, D.hoyYm);
           const vencido = hidroMesesDesde(e.ultimo) > 6;
+          const col = e.sapCoinc === 2 ? '#10b981' : e.sapCoinc === 1 ? '#d97706' : '#dc2626';
           return `<tr>
             <td class="hidro-cod">${e.equipo}</td>
             <td>${hidroEsc(e.denominacion)}</td>
             <td>${e.tipo}${e.tipo === 'Condensadora' ? ` <span class="hidro-ref">${e.sub}</span>` : ''}</td>
             <td><code>${hidroEsc(e.ubic)}</code><div class="hidro-ref">${hidroEsc(e.ubicDesc)}</div></td>
-            <td>${admin ? hidroSelectPar(`data-equipo="${e.equipo}"`, e.par, true) : `<strong>${hidroParLabel(e.par)}</strong>`}
-              <div class="hidro-ref">${HIDRO_ORIGEN[e.origen]}</div></td>
+            <td>${hidroBadge(hidroEstadoCamp(e.regs, c1, D.hoyYm))}</td>
+            <td>${hidroBadge(hidroEstadoCamp(e.regs, c2, D.hoyYm))}</td>
             <td title="${hidroEsc(e.sap ? e.sap.plan + ' (' + e.sap.hr + ')' : '')}">${hidroEsc(hidroSapTexto(e))}</td>
+            <td><span style="color:${col};font-weight:700">${e.sapCoinc} de 2</span><div class="hidro-ref">${hidroEsc(hidroSapAjuste(e))}</div></td>
             <td><span style="color:${vencido ? '#dc2626' : '#10b981'};font-weight:700">${hidroFecha(e.ultimo)}</span></td>
-            <td>${prox ? `${HIDRO_MESES_CORTO[prox.m - 1]} ${prox.y}` : '—'}</td>
           </tr>`;
         }).join('')}
       </tbody>
     </table></div>`;
-  hidroWireAdmin(wrap);
 }
 
-/* ─── Admin: mover de mes y marcar hechos ───────────────────── */
+/* ─── Admin: marcar hechos ──────────────────────────────────── */
 function hidroWireAdmin(container) {
-  container.querySelectorAll('.hidro-par-select[data-equipo]').forEach(sel => {
-    sel.addEventListener('change', () => hidroGuardarPares({ [sel.dataset.equipo]: Number(sel.value) || null }));
-  });
-  container.querySelectorAll('.hidro-par-select[data-grupo]').forEach(sel => {
-    sel.addEventListener('change', () => {
-      if (!sel.value) return;
-      const cambios = {};
-      sel.dataset.grupo.split(',').forEach(eq => { cambios[eq] = Number(sel.value); });
-      hidroGuardarPares(cambios);
-    });
-  });
   container.querySelectorAll('.hidro-hecho-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const fecha = btn.closest('td').querySelector('input[type="date"]').value;
@@ -411,23 +363,6 @@ function hidroWireAdmin(container) {
     });
   });
 }
-
-/* cambios = { equipo: par (1-6) | null para volver al automático } */
-async function hidroGuardarPares(cambios) {
-  const fresh = (await estadoFetchLatestArray('assets/js/hidrolavado-plan-data.js', 'HIDRO_PLAN')) || HIDRO_PLAN;
-  const map = {};
-  fresh.forEach(o => { map[o.equipo] = o.par; });
-  Object.entries(cambios).forEach(([eq, par]) => { if (par) map[eq] = par; else delete map[eq]; });
-  const data = Object.keys(map).sort().map(eq => ({ equipo: eq, par: map[eq] }));
-  const n = Object.keys(cambios).length;
-  const ok = await estadoCommit('hidrolavado', data, `✓ Calendario actualizado (${n} equipo${n === 1 ? '' : 's'}). El sitio tarda ~1 min en redesplegar.`);
-  if (ok) {
-    HIDRO_PLAN.length = 0;
-    HIDRO_PLAN.push(...data);
-  }
-  renderHidrolavados();
-}
-
 async function hidroMarcarHecho(equipo, fecha) {
   const ov = (typeof ESTADO_OVERRIDES !== 'undefined' ? ESTADO_OVERRIDES : []).find(o => o.equipo === equipo);
   if (ov && ov.hidrolavadoManual && ov.hidrolavadoManual > fecha) {
@@ -445,28 +380,27 @@ function hidroDescargar() {
   if (typeof XLSX === 'undefined') { alert('La librería de Excel no está disponible. Verificá tu conexión a internet.'); return; }
   const D = hidroDatos();
   if (!D.filtrados.length) { estadoToast('No hay equipos con los filtros actuales.', 'error'); return; }
+  const lista = [...D.filtrados].sort(hidroOrdenar);
   const cal = [];
-  D.meses.forEach(({ y, m }) => {
-    D.filtrados.filter(e => e.par === hidroParDeMes(m)).sort(hidroOrdenar).forEach(e => {
-      const o = hidroEstadoOcurrencia(e.regs, y, m, D.hoyYm);
+  D.campanas.forEach(camp => {
+    lista.forEach(e => {
+      const o = hidroEstadoCamp(e.regs, camp, D.hoyYm);
       cal.push({
-        'Mes': `${HIDRO_MESES[m - 1]} ${y}`, 'Equipo': e.equipo, 'Denominación': e.denominacion, 'Tipo': e.tipo,
+        'Campaña': `${camp.def.nombre} ${camp.y}`, 'Equipo': e.equipo, 'Denominación': e.denominacion, 'Tipo': e.tipo,
         'Edificio / Zona': e.edificio, 'Ubicación técnica': e.ubic, 'Descripción ubicación': e.ubicDesc, 'Referencia': e.ubicRef,
-        'Cae con el MP de SAP': hidroCoincideSap(e, m) ? 'Sí' : 'No', 'Estado': HIDRO_ESTADOS[o.estado].label,
+        'OT de SAP en la campaña': hidroSapEnCamp(e, camp.c) ? 'Sí, la trae' : 'No (ajustar en SAP)', 'Estado': HIDRO_ESTADOS[o.estado].label,
         'Fecha registrada': o.fecha ? hidroFecha(o.fecha) : '', 'Último hidrolavado': hidroFecha(e.ultimo),
       });
     });
   });
-  const eqs = [...D.filtrados].sort((a, b) => a.par - b.par || hidroOrdenar(a, b)).map(e => {
-    const prox = hidroProximo(e, e.regs, D.hoyYm);
+  const eqs = lista.map(e => {
     const meses = hidroMesesDesde(e.ultimo);
     return {
       'Equipo': e.equipo, 'Denominación': e.denominacion, 'Tipo': e.tipo + (e.tipo === 'Condensadora' ? ` (${e.sub})` : ''),
       'Edificio / Zona': e.edificio, 'Ubicación técnica': e.ubic, 'Descripción ubicación': e.ubicDesc,
-      'Meses de hidrolavado': hidroParLabel(e.par), 'Cómo se eligió el mes': HIDRO_ORIGEN[e.origen],
-      'Hidrolavado según SAP': hidroSapTexto(e), 'Plan SAP': e.sap ? `${e.sap.plan} (${e.sap.hr})` : '',
+      'Hidrolavado en SAP hoy': hidroSapTexto(e), 'Plan SAP': e.sap ? `${e.sap.plan} (${e.sap.hr})` : '',
+      'Campañas que SAP ya trae': `${e.sapCoinc} de 2`, 'Qué ajustar en SAP': hidroSapAjuste(e),
       'Último hidrolavado': hidroFecha(e.ultimo), 'Meses desde el último': isFinite(meses) ? Math.round(meses * 10) / 10 : '',
-      'Próximo programado': prox ? `${HIDRO_MESES[prox.m - 1]} ${prox.y}` : '',
     };
   });
   const hoja = rows => {
@@ -476,10 +410,10 @@ function hidroDescargar() {
     return ws;
   };
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, hoja(cal), 'Calendario');
+  XLSX.utils.book_append_sheet(wb, hoja(cal), 'Campañas');
   XLSX.utils.book_append_sheet(wb, hoja(eqs), 'Equipos');
-  const a = D.meses[0], b = D.meses[11];
-  XLSX.writeFile(wb, `AEP_Calendario_Hidrolavados_${a.ym}_a_${b.ym}.xlsx`);
+  const [a, b] = D.campanas;
+  XLSX.writeFile(wb, `AEP_Calendario_Hidrolavados_${a.desde}_a_${b.hasta}.xlsx`);
 }
 
 /* ─── Render principal ──────────────────────────────────────── */
@@ -487,14 +421,12 @@ function renderHidrolavados() {
   const page = document.getElementById('page-hidrolavados');
   if (!page) return;
   const D = hidroDatos();
-  const ventana = D.meses.map(x => x.ym);
-  if (hidroMesSel && !ventana.includes(hidroMesSel)) hidroMesSel = null;
-  if (hidroMesSel === null && hidroOffset === 0 && !renderHidrolavados._abierto) {
-    hidroMesSel = D.hoyYm;               // la primera vez se abre el mes actual
+  if (hidroCampSel === null && hidroOffset === 0 && !renderHidrolavados._abierto) {
+    hidroCampSel = hidroCampActualIdx();   // la primera vez se abre la campaña actual
     renderHidrolavados._abierto = true;
   }
-  const a = D.meses[0], b = D.meses[11];
-  document.getElementById('hidro-nav-label').textContent = `${HIDRO_MESES_CORTO[a.m - 1]} ${a.y} – ${HIDRO_MESES_CORTO[b.m - 1]} ${b.y}`;
+  if (hidroCampSel !== null && !D.campanas.some(c => c.idx === hidroCampSel)) hidroCampSel = null;
+  document.getElementById('hidro-nav-label').textContent = D.campanas.map(hidroCampLabel).join(' · ');
   renderHidroStats(D);
   renderHidroIntro();
   document.getElementById('hidro-calendario-wrap').classList.toggle('hidden', hidroVista !== 'calendario');
@@ -525,9 +457,9 @@ function renderHidrolavados() {
   document.getElementById('hidro-filter-tipo').addEventListener('change', function () { hidroFiltroTipo = this.value; renderHidrolavados(); });
   selEd.addEventListener('change', function () { hidroFiltroEdificio = this.value; renderHidrolavados(); });
   document.getElementById('hidro-descargar').addEventListener('click', hidroDescargar);
-  document.getElementById('hidro-prev').addEventListener('click', () => { hidroOffset -= 12; renderHidrolavados(); });
-  document.getElementById('hidro-next').addEventListener('click', () => { hidroOffset += 12; renderHidrolavados(); });
-  document.getElementById('hidro-hoy').addEventListener('click', () => { hidroOffset = 0; hidroMesSel = hidroHoyYm(); renderHidrolavados(); });
+  document.getElementById('hidro-prev').addEventListener('click', () => { hidroOffset -= 2; renderHidrolavados(); });
+  document.getElementById('hidro-next').addEventListener('click', () => { hidroOffset += 2; renderHidrolavados(); });
+  document.getElementById('hidro-hoy').addEventListener('click', () => { hidroOffset = 0; hidroCampSel = hidroCampActualIdx(); renderHidrolavados(); });
   document.querySelectorAll('[data-hview]').forEach(btn => {
     btn.addEventListener('click', function () {
       document.querySelectorAll('[data-hview]').forEach(b => b.classList.remove('active'));

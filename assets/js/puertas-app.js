@@ -294,6 +294,7 @@ function openPuertaModal(equipo) {
     ${mf("N° Serie", p.serie || "Sin datos", false, true)}
     ${mf("Zona", zona)}
     ${mf("Ubicación SAP", p.ubicacion, true, true)}
+    ${typeof PUERTAS_ESP !== "undefined" ? mf("Especificaciones técnicas", PUERTAS_ESP[p.equipo], true) : ""}
     ${typeof PUERTAS_OBS !== "undefined" && PUERTAS_OBS[p.equipo]
       ? mf("Observaciones · " + PUERTAS_OBS_FECHA, `<span style="color:#dc2626">${PUERTAS_OBS[p.equipo]}</span>`, true) : ""}
   `;

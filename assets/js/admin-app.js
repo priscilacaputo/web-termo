@@ -86,6 +86,8 @@ function _adminLogout() {
   document.getElementById('admin-lock-btn').title = 'Acceso administrador';
   document.getElementById('admin-lock-btn').textContent = '🔒';
   document.querySelectorAll('.admin-upload-btn').forEach(el => el.remove());
+  const sg = document.getElementById('page-ots-seguimiento');
+  if (sg && !sg.classList.contains('hidden') && typeof showPage === 'function') showPage('personal');
 }
 
 /* ─── Inject upload button per section ───────────────────── */

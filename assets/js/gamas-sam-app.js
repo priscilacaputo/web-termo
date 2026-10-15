@@ -208,9 +208,11 @@
   const guardarHechas = () => { try { localStorage.setItem('gamasSamHechas', JSON.stringify(hechas)); } catch (e) { /* sin storage */ } };
   /* Uso real: OTs de 2026 por hoja de ruta (PROG_ANUAL). HDR_PLAN solo no alcanza: es un archivo de planes
      que puede estar desactualizado y dejaba como "sin equipos" hojas que hoy generan OTs. */
+  /* Solo OTs recientes (últimos 60 días) o futuras: las viejas son historial de planes que ya se pasaron a otra hoja de ruta. */
+  const corteOt = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
   const otPorKey = {};
   if (typeof PROG_ANUAL !== 'undefined') PROG_ANUAL.filas.forEach(r => {
-    if (!r[4]) return; const o = otPorKey[r[4]] || (otPorKey[r[4]] = { n: 0, eq: new Set() }); o.n++; o.eq.add(r[1]);
+    if (!r[4] || r[3] < corteOt) return; const o = otPorKey[r[4]] || (otPorKey[r[4]] = { n: 0, eq: new Set() }); o.n++; o.eq.add(r[1]);
   });
   const diagCache = {};
   function diagnostico(k) {
@@ -228,7 +230,7 @@
       : sb ? 'Suboperaciones con texto corrido' : li ? 'Texto libre con renglones cortados' : pasos ? 'Pasos sueltos como operaciones' : 'Sin texto de tareas';
     const nPlan = (equiposPorKey[k] || []).length, nOt = otPorKey[k] ? otPorKey[k].n : 0, eqOt = otPorKey[k] ? otPorKey[k].eq.size : 0;
     const ne = Math.max(nPlan, eqOt), nu = !!noUsar[k] || /NO USAR/i.test(h.d), motivos = [];
-    if (!ne) motivos.push('Sin planes vinculados ni OTs en 2026: candidata a depurar (confirmar en SAP).');
+    if (!ne) motivos.push('Sin planes vinculados ni OTs recientes: candidata a depurar (confirmar en SAP).');
     if (nu) motivos.push('Marcada NO USAR: confirmar y dejarla fuera.');
     if (tipo.startsWith('Sub')) motivos.push('El texto de las tareas está corrido dentro de suboperaciones (SAM lo une sin espacios).');
     if (tipo.startsWith('Texto libre')) motivos.push('Gama en texto libre con renglones cortados: reescribir una tarea por línea.');
@@ -246,7 +248,7 @@
     const c = { mejorar: 0, revisar: 0, baja: 0, nousar: 0 }; let eq = 0, hec = 0;
     Object.keys(HDR_GAMAS).forEach(k => { const d = diagnostico(k); c[d.prio]++; if (d.prio === 'mejorar') { eq += d.ne; if (hechas[k]) hec++; } });
     $('gsm-resumen').innerHTML = `<b>${c.mejorar}</b> para <b style="color:#b42318">mejorar</b> (${eq} equipos afectados · ${hec} ya marcadas como hechas) · ` +
-      `<b>${c.revisar}</b> para revisar · ${c.baja} sin uso (sin planes ni OTs 2026) · ${c.nousar} NO USAR`;
+      `<b>${c.revisar}</b> para revisar · ${c.baja} sin uso (sin planes ni OTs recientes) · ${c.nousar} NO USAR`;
   }
   function listar() {
     const q = norm($('gsm-buscar').value).trim(), f = $('gsm-filtro').value;
@@ -274,7 +276,7 @@
     if (!st.key) { $('gsm-diag').innerHTML = ''; return; }
     const d = diagnostico(st.key), h = !!hechas[st.key];
     $('gsm-diag').innerHTML = `<div class="gsm-diagbox gsm-b-${h ? 'hecha' : d.prio}"><b>${h ? '✓ Marcada como mejorada' : d.prio === 'mejorar' ? '⚠ Hay que mejorarla' : d.prio === 'revisar' ? 'Para revisar' : PRIO[d.prio][0]}</b> · ${esc(d.tipo)}` +
-      `${d.ne ? ` · ${d.nPlan} equipos en planes · ${d.nOt} OTs en 2026` : ' · ningún plan ni OT 2026 la usa'}<ul>${d.motivos.map(m => '<li>' + esc(m) + '</li>').join('')}</ul>` +
+      `${d.ne ? ` · ${d.nPlan} equipos en planes · ${d.nOt} OTs recientes o futuras` : ' · ningún plan ni OT reciente la usa'}<ul>${d.motivos.map(m => '<li>' + esc(m) + '</li>').join('')}</ul>` +
       `<button class="prog-btn" id="gsm-hecha">${h ? 'Desmarcar' : '✓ Marcar como mejorada en SAP'}</button></div>`;
     $('gsm-hecha').onclick = () => { if (hechas[st.key]) delete hechas[st.key]; else hechas[st.key] = 1; guardarHechas(); listar(); pintarDiag(); };
   }

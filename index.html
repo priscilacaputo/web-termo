@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Termomecánica — Portal Interno</title>
-  <link rel="stylesheet" href="assets/css/main.css?v=14" />
+  <link rel="stylesheet" href="assets/css/main.css?v=16" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -124,6 +124,10 @@
       <li class="nav-item" data-page="gamas-sam">
         <span class="nav-icon">📱</span>
         <span class="nav-label">Gamas para SAM</span>
+      </li>
+      <li class="nav-item admin-only-nav" data-page="ots-seguimiento">
+        <span class="nav-icon">🔐</span>
+        <span class="nav-label">Seguimiento de OTs</span>
       </li>
       <li class="nav-item" data-page="analytics">
         <span class="nav-icon">📊</span>
@@ -2130,7 +2134,7 @@
             <option value="aprox">A mejorar + a revisar</option>
             <option value="revisar">Solo a revisar</option>
             <option value="todas">Todas</option>
-            <option value="baja">Sin uso (sin planes ni OTs 2026)</option>
+            <option value="baja">Sin uso (sin planes ni OTs recientes)</option>
             <option value="nousar">NO USAR</option>
             <option value="hechas">Ya mejoradas</option>
           </select>
@@ -2174,6 +2178,32 @@
                 <button class="prog-btn" id="gsm-orig" title="Ver el texto original de SAP, sin ordenar">Ver original</button></div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PÁGINA SECRETA: Seguimiento de OTs por día y turno (sólo admin) ─── -->
+    <div class="page hidden" id="page-ots-seguimiento">
+      <div id="sg-gate" class="sg-gate">Verificando acceso…</div>
+      <div id="sg-body" class="hidden">
+        <div class="sg-card sg-top">
+          <label class="sg-upload">📤 Subir Excel de confirmaciones<input type="file" id="sg-file" accept=".xlsx,.xls" hidden /></label>
+          <span id="sg-msg" class="sg-hint"></span>
+          <button class="sg-btn" id="sg-export">⬇ Descargar Excel</button>
+          <button class="sg-btn sg-danger" id="sg-borrar">Borrar datos</button>
+        </div>
+        <p class="sg-hint">Turnos de 12 h: Mañana 06–18 · Tarde 18–06 (lo que arranca de madrugada cuenta para el turno del día anterior). Los datos quedan sólo en este navegador; subir otro Excel suma los renglones nuevos sin duplicar.</p>
+        <div id="sg-vacio" class="sg-card sg-hint">Todavía no hay datos. Subí el export “Confirmaciones de orden de mantenimiento” de SAP.</div>
+        <div id="sg-main" class="hidden">
+          <div class="sg-card sg-filtros">
+            <label>Desde <input type="date" id="sg-desde"></label>
+            <label>Hasta <input type="date" id="sg-hasta"></label>
+            <label>Turno <select id="sg-turno"><option value="">Todos</option><option value="manana">Mañana</option><option value="tarde">Tarde</option></select></label>
+            <input type="search" id="sg-buscar" placeholder="Buscar técnico, OT o equipo…">
+          </div>
+          <div id="sg-kpis" class="sg-kpis"></div>
+          <div class="sg-card sg-scroll"><table class="sg-tab"><thead><tr><th>Día</th><th>Turno</th><th>OTs</th><th>Con final</th><th>Confirm.</th><th>Técnicos</th><th>Horas</th></tr></thead><tbody id="sg-dias"></tbody></table></div>
+          <div id="sg-detalle" class="sg-card"></div>
         </div>
       </div>
     </div>
@@ -2322,16 +2352,16 @@
           <button class="aac-view-btn" data-hview="equipos">☰ Por equipo</button>
         </div>
         <div class="hidro-nav">
-          <button type="button" class="prog-btn" id="hidro-prev" title="12 meses antes">‹</button>
+          <button type="button" class="prog-btn" id="hidro-prev" title="Campañas anteriores">‹</button>
           <span class="hidro-nav-label" id="hidro-nav-label"></span>
-          <button type="button" class="prog-btn" id="hidro-next" title="12 meses después">›</button>
+          <button type="button" class="prog-btn" id="hidro-next" title="Campañas siguientes">›</button>
           <button type="button" class="prog-btn" id="hidro-hoy">Hoy</button>
         </div>
       </div>
 
       <div id="hidro-calendario-wrap">
         <div class="hidro-carga" id="hidro-carga"></div>
-        <div class="hidro-cal" id="hidro-cal"></div>
+        <div class="hidro-campanas" id="hidro-cal"></div>
         <div id="hidro-mes-detalle"></div>
       </div>
       <div id="hidro-equipos-wrap" class="hidden"></div>
@@ -2597,7 +2627,7 @@
   <script src="assets/js/mm60-data.js?v=1"></script>
   <script src="assets/js/mb51-data.js?v=1"></script>
   <script src="assets/js/sap-ficha.js?v=3"></script>
-  <script src="assets/js/app.js?v=24"></script>
+  <script src="assets/js/app.js?v=25"></script>
   <script src="assets/js/mant-app.js?v=15"></script>
   <script src="assets/js/planes-integrados-app.js?v=10"></script>
   <script src="assets/js/mangas-app.js?v=18"></script>
@@ -2609,8 +2639,8 @@
   <script src="assets/js/bombas-app.js?v=17"></script>
   <script src="assets/js/patio-app.js?v=7"></script>
   <script src="assets/js/personal-app.js?v=2"></script>
-  <script src="assets/js/puertas-data.js?v=7"></script>
-  <script src="assets/js/puertas-app.js?v=10"></script>
+  <script src="assets/js/puertas-data.js?v=8"></script>
+  <script src="assets/js/puertas-app.js?v=11"></script>
   <script src="assets/js/aac-data.js?v=8"></script>
   <script src="assets/js/uta-specs.js?v=4"></script>
   <script src="assets/js/aac-fichas.js?v=1"></script>
@@ -2687,19 +2717,19 @@
   <script src="assets/js/tareas-data.js?v=1"></script>
   <script src="assets/js/estado-app.js?v=3"></script>
   <script src="assets/js/hidrolavado-sap-data.js?v=1"></script>
-  <script src="assets/js/hidrolavado-plan-data.js?v=1"></script>
   <script src="assets/js/hdr-plan-data.js?v=6"></script>
   <script src="assets/js/hdr-estandar-data.js?v=4"></script>
   <script src="assets/js/hdr-data.js?v=3"></script>
   <script src="assets/js/hdr-audit.js?v=9"></script>
   <script src="assets/js/aac-sistemas-data.js?v=6"></script>
-  <script src="assets/js/hidrolavado-app.js?v=1"></script>
+  <script src="assets/js/hidrolavado-app.js?v=3"></script>
   <script src="assets/js/planificador-data.js?v=6"></script>
   <script src="assets/js/planificador-app.js?v=10"></script>
   <script src="assets/js/prog-anual-data.js?v=3"></script>
   <script src="assets/js/capacidad-app.js?v=10"></script>
   <script src="assets/js/nivelacion-app.js?v=11"></script>
   <script src="assets/js/hdr-gamas-data.js?v=4"></script>
-  <script src="assets/js/gamas-sam-app.js?v=9"></script>
+  <script src="assets/js/gamas-sam-app.js?v=10"></script>
+  <script src="assets/js/seguimiento-ots-app.js?v=1"></script>
 </body>
 </html>
