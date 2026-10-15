@@ -94,12 +94,52 @@
     return { ots: ots.size, fin: fin.size, pers: pers.size, horas: min / 60, conf: rows.length };
   }
 
+  /* ── Cobertura del turno ──
+     Intervalos [ini,fin] en minutos relativos al arranque del turno (0..720), unidos entre todos los
+     técnicos: "hay alguien con una OT en curso". Huecos = tramos del turno sin ninguna actividad. */
+  const INI_TURNO = { manana: 360, tarde: 1080 }, DUR = 720;
+  function intervalos(rows, t) {
+    const out = [];
+    rows.forEach(r => {
+      const ini = ((r.hi - INI_TURNO[t]) % 1440 + 1440) % 1440;
+      let len = r.hf == null ? r.m : ((r.hf - r.hi) % 1440 + 1440) % 1440;
+      if (!len || ini >= DUR) return;
+      out.push([ini, Math.min(DUR, ini + len)]);
+    });
+    return out.sort((a, b) => a[0] - b[0]);
+  }
+  function unir(iv) {
+    const u = [];
+    iv.forEach(([a, b]) => { const l = u[u.length - 1]; if (l && a <= l[1]) l[1] = Math.max(l[1], b); else u.push([a, b]); });
+    return u;
+  }
+  function cobertura(rows, t) {
+    const u = unir(intervalos(rows, t)), cub = u.reduce((s, [a, b]) => s + (b - a), 0), huecos = [];
+    let cur = 0;
+    u.forEach(([a, b]) => { if (a > cur) huecos.push([cur, a]); cur = b; });
+    if (cur < DUR) huecos.push([cur, DUR]);
+    return { u, cub, pct: Math.round(cub / DUR * 100), huecos };
+  }
+  const absHM = (rel, t) => hhm((rel + INI_TURNO[t]) % 1440);
+  const fmtHuecos = (hs, t) => hs.filter(([a, b]) => b - a >= 30).map(([a, b]) => `${absHM(a, t)}–${absHM(b, t)}`).join(' · ') || '—';
+  function lineaTiempo(rows, t) {
+    const c = cobertura(rows, t);
+    const marcas = [0, 3, 6, 9, 12].map(h => `<span style="left:${h / 12 * 100}%">${absHM(h * 60, t)}</span>`).join('');
+    return `<div class="sg-tl"><div class="sg-tl-bar">${c.u.map(([a, b]) => `<i style="left:${a / DUR * 100}%;width:${(b - a) / DUR * 100}%"></i>`).join('')}</div><div class="sg-tl-marks">${marcas}</div></div>`;
+  }
+
+  function g0(rows) { const g = {}; rows.forEach(r => { (g[r.d + '|' + r.t] = g[r.d + '|' + r.t] || []).push(r); }); return g; }
+  function covMedia(g) {
+    const k = Object.keys(g); if (!k.length) return 0;
+    return Math.round(k.reduce((s, x) => s + cobertura(g[x], x.split('|')[1]).pct, 0) / k.length);
+  }
+
   function render() {
     $('sg-vacio').classList.toggle('hidden', st.rows.length > 0);
     $('sg-main').classList.toggle('hidden', st.rows.length === 0);
     if (!st.rows.length) return;
     const rows = filtrado(), tot = resumir(rows);
-    $('sg-kpis').innerHTML = [['OTs trabajadas', tot.ots], ['Con notificación final', tot.fin], ['Confirmaciones', tot.conf], ['Técnicos', tot.pers], ['Horas trabajadas', fh(tot.horas)]]
+    $('sg-kpis').innerHTML = [['OTs trabajadas', tot.ots], ['Con notificación final', tot.fin], ['Confirmaciones', tot.conf], ['Técnicos', tot.pers], ['Horas trabajadas', fh(tot.horas)], ['Cobertura media del turno', covMedia(g0(rows)) + '%']]
       .map(([l, v]) => `<div class="sg-kpi"><b>${v}</b><span>${l}</span></div>`).join('');
     const g = {};
     rows.forEach(r => { (g[r.d] = g[r.d] || {})[r.t] = (g[r.d][r.t] || []).concat(r); });
@@ -107,11 +147,12 @@
     $('sg-dias').innerHTML = dias.map(d => {
       const ts = ['manana', 'tarde'].filter(t => g[d][t]);
       return ts.map((t, i) => {
-        const s = resumir(g[d][t]), sel = st.sel && st.sel.d === d && st.sel.t === t;
+        const s = resumir(g[d][t]), cv = cobertura(g[d][t], t), sel = st.sel && st.sel.d === d && st.sel.t === t;
         return `<tr class="sg-row${sel ? ' on' : ''}" data-d="${d}" data-t="${t}">${i === 0 ? `<td rowspan="${ts.length}"><b>${fmtDia(d)}</b></td>` : ''}` +
-          `<td>${TURNO[t]}</td><td>${s.ots}</td><td>${s.fin}</td><td>${s.conf}</td><td>${s.pers}</td><td>${fh(s.horas)}</td></tr>`;
+          `<td>${TURNO[t]}</td><td>${s.ots}</td><td>${s.fin}</td><td>${s.conf}</td><td>${s.pers}</td><td>${fh(s.horas)}</td>` +
+          `<td><span class="sg-pct ${cv.pct >= 75 ? 'ok' : cv.pct >= 50 ? 'mid' : 'bad'}">${cv.pct}%</span></td><td class="sg-huecos">${fmtHuecos(cv.huecos, t)}</td></tr>`;
       }).join('');
-    }).join('') || '<tr><td colspan="7" class="sg-hint">Sin datos para el filtro.</td></tr>';
+    }).join('') || '<tr><td colspan="9" class="sg-hint">Sin datos para el filtro.</td></tr>';
     renderDetalle(rows);
   }
 
@@ -121,7 +162,8 @@
     const rr = rows.filter(r => r.d === st.sel.d && r.t === st.sel.t);
     const porP = {};
     rr.forEach(r => { (porP[r.p] = porP[r.p] || []).push(r); });
-    box.innerHTML = `<h3>${fmtDia(st.sel.d)} · ${TURNO[st.sel.t]}</h3>` + Object.keys(porP).sort().map(p => {
+    const cv = cobertura(rr, st.sel.t);
+    box.innerHTML = `<h3>${fmtDia(st.sel.d)} · ${TURNO[st.sel.t]}</h3><p class="sg-hint">Cobertura ${cv.pct}% (${fh(cv.cub / 60)} de 12 h con al menos una OT en curso). Huecos de 30 min o más: ${fmtHuecos(cv.huecos, st.sel.t)}</p>` + lineaTiempo(rr, st.sel.t) + Object.keys(porP).sort().map(p => {
       const s = resumir(porP[p]);
       return `<details class="sg-pers"><summary><b>${esc(p)}</b> — ${s.ots} OT · ${fh(s.horas)} h</summary><div class="sg-scroll"><table class="sg-tab"><thead><tr><th>OT</th><th>Equipo</th><th>Operación</th><th>Horario</th><th>Horas</th><th>Final</th><th>Texto</th></tr></thead><tbody>` +
         porP[p].sort((a, b) => a.hi - b.hi).map(r => `<tr><td>${esc(r.o)}<br><small>${esc(r.on)}</small></td><td>${esc(r.eq)}<br><small>${esc(r.ob)}</small></td><td>${esc(r.op)}</td>` +
@@ -139,7 +181,8 @@
     rows.forEach(r => { (g[r.d + '|' + r.t] = g[r.d + '|' + r.t] || []).push(r); });
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(Object.keys(g).sort().map(k => {
       const [d, t] = k.split('|'), s = resumir(g[k]);
-      return { Fecha: d, Turno: TURNO[t], OTs: s.ots, 'Con final': s.fin, Confirmaciones: s.conf, Técnicos: s.pers, Horas: +s.horas.toFixed(2) };
+      const cv = cobertura(g[k], t);
+      return { Fecha: d, Turno: TURNO[t], OTs: s.ots, 'Con final': s.fin, Confirmaciones: s.conf, Técnicos: s.pers, Horas: +s.horas.toFixed(2), 'Cobertura %': cv.pct, 'Huecos (>=30 min)': fmtHuecos(cv.huecos, t) };
     })), 'Por día y turno');
     XLSX.writeFile(wb, 'Seguimiento_OTs.xlsx');
   }
