@@ -110,15 +110,11 @@ function renderKPIsSection() {
       </div>
     </div>
 
-    <!-- Fila 2: Evolución mensual (prev vs corr) + Técnicos -->
+    <!-- Fila 2: Evolución mensual (prev vs corr) -->
     <div class="kpis-charts-row">
       <div class="kpis-chart-card">
         <h3 class="kpis-chart-title">Evolución mensual — Preventivos vs Correctivos</h3>
         <canvas id="chartMensual"></canvas>
-      </div>
-      <div class="kpis-chart-card">
-        <h3 class="kpis-chart-title">Técnicos con más intervenciones</h3>
-        <canvas id="chartTecnicos"></canvas>
       </div>
     </div>
 
@@ -160,7 +156,6 @@ function renderKPIsSection() {
     buildChartTipo(preventivos, correctivos, ots.filter(o=>o.tipo==='otro').length);
     buildChartEquipos(equipoAnalysis);
     buildChartMensual(ots);
-    buildChartTecnicos(ots);
     buildChartFallas(ots);
     buildChartTiempo(equipoAnalysis);
     buildCriticalityTable(equipoAnalysis);
@@ -283,25 +278,6 @@ function buildChartMensual(ots) {
         x: { ...axisOpts(false), ticks:{ color:'#5c7592', font:{ size:10 }, maxRotation:45 } }
       }
     }
-  });
-}
-
-/* ── Bar horizontal: técnicos ───────────────────────────── */
-function buildChartTecnicos(ots) {
-  const ctx = document.getElementById('chartTecnicos');
-  if (!ctx) return;
-  const counts = {};
-  ots.forEach(o => { if (o.tecnico) counts[o.tecnico]=(counts[o.tecnico]||0)+1; });
-  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  _kpiCharts.tecnicos = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels:   sorted.map(([t])=>t.length>24?t.substring(0,24)+'…':t),
-      datasets: [{ label:'Intervenciones', data:sorted.map(([,n])=>n),
-                   backgroundColor:'#7c3aed', borderRadius:4, borderSkipped:false }]
-    },
-    options: { indexAxis:'y', ...baseChartOpts({ plugins:{ legend:{ display:false } } }),
-               scales:{ y:axisOpts(false), x:axisOpts() } }
   });
 }
 
@@ -431,20 +407,6 @@ function exportKPIsExcel() {
     };
   }).sort((a,b)=>b['Total OTs']-a['Total OTs']);
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(equipoRows), 'Por equipo');
-
-  const tecCounts = {};
-  ots.forEach(o => {
-    if (!o.tecnico) return;
-    if (!tecCounts[o.tecnico]) tecCounts[o.tecnico]={ ots:0, prev:0, corr:0, tiempo:0 };
-    tecCounts[o.tecnico].ots++;
-    if (o.tipo==='preventivo') tecCounts[o.tecnico].prev++;
-    if (o.tipo==='correctivo') tecCounts[o.tecnico].corr++;
-    tecCounts[o.tecnico].tiempo += parseFloat(o.tiempo)||0;
-  });
-  const tecRows = Object.entries(tecCounts)
-    .sort((a,b)=>b[1].ots-a[1].ots)
-    .map(([t,d])=>({ 'Técnico':t, 'Total OTs':d.ots, 'Preventivos':d.prev, 'Correctivos':d.corr, 'Horas totales':d.tiempo.toFixed(1) }));
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tecRows), 'Por técnico');
 
   XLSX.writeFile(wb, `kpis-mantenimiento-${new Date().toISOString().slice(0,10)}.xlsx`);
 }
