@@ -5103,3 +5103,41 @@ body.admin-mode .admin-only-nav { display: flex; }
 .sg-leyenda { font-size: 11px; color: var(--color-muted); margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .sg-leyenda .vac, .sg-leyenda .alt { display: inline-block; width: 14px; height: 10px; border-radius: 2px; } .sg-leyenda .vac { background: #fee2e2; } .sg-leyenda .alt { background: #16a34a; }
 .sg-pers summary { display: flex; align-items: center; gap: 12px; } .sg-pn { flex: 0 0 260px; } .sg-tl.mini { flex: 1; margin: 0; } .sg-tl.mini .sg-tl-bar { height: 12px; }
+/* Seguimiento de OTs — jornada por técnico y comparación con la gama */
+.sg-kpi small { font-size: 10.5px; color: var(--color-muted); margin-top: 2px; }
+.sg-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 12px; border-bottom: 2px solid var(--color-border); }
+.sg-tabbtn { background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -2px; padding: 9px 14px; font-size: 13px; font-weight: 600; color: var(--color-muted); cursor: pointer; }
+.sg-tabbtn:hover { color: var(--color-navy); } .sg-tabbtn.on { color: var(--color-navy); border-bottom-color: #0ea5e9; }
+.sg-mt { border-collapse: separate; border-spacing: 2px; font-size: 11px; }
+.sg-mt th { font-weight: 500; color: var(--color-muted); text-align: center; padding: 0 2px; white-space: nowrap; }
+.sg-mt th small { display: block; font-size: 9px; opacity: .8; }
+.sg-mt th.sg-mt-n { position: sticky; left: 0; z-index: 1; background: var(--color-card); text-align: left; padding-right: 10px; color: var(--color-navy); font-weight: 600; font-size: 12px; }
+.sg-mt th.sg-mt-n small { font-weight: 400; color: var(--color-muted); }
+.sg-mt-c { padding: 0; min-width: 36px; height: 34px; vertical-align: middle; }
+.sg-mt-c.libre { background: repeating-linear-gradient(45deg, #f1f5f9, #f1f5f9 4px, #fff 4px, #fff 8px); border-radius: 4px; }
+.sg-cell { width: 100%; height: 100%; min-height: 32px; border: 2px solid transparent; border-radius: 5px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 2px; }
+.sg-cell em { font-style: normal; font-size: 8px; opacity: .7; }
+.sg-cell.on { border-color: var(--color-navy); box-shadow: 0 0 0 2px #bae6fd; }
+.sg-cell.m4, .sw.m4 { background: #16a34a; color: #fff; } .sg-cell.m3, .sw.m3 { background: #86efac; color: #14532d; }
+.sg-cell.m2, .sw.m2 { background: #fde68a; color: #78350f; } .sg-cell.m1, .sw.m1 { background: #fca5a5; color: #7f1d1d; }
+.sg-leyenda .sw { display: inline-block; width: 12px; height: 10px; border-radius: 2px; }
+.sg-g { margin: 6px 0 4px; } .sg-g-bar { position: relative; height: 34px; background: #fee2e2; border-radius: 8px; overflow: hidden; }
+.sg-g-meta { position: absolute; left: 0; top: 0; bottom: 0; background: repeating-linear-gradient(90deg, rgba(100,116,139,.18), rgba(100,116,139,.18) 2px, transparent 2px, transparent 6px); pointer-events: none; }
+.sg-g-bar i { position: absolute; top: 4px; bottom: 4px; border-radius: 4px; opacity: .92; }
+.sg-li { list-style: none; margin: 10px 0 0; padding: 0; } .sg-li li { padding: 7px 0; border-bottom: 1px solid var(--color-border); font-size: 12.5px; }
+.sg-li .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; }
+.sg-li small { color: var(--color-muted); } .sg-li-d { display: block; margin: 2px 0 0 17px; font-size: 12px; color: var(--color-muted); }
+.sg-chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: 4px; }
+.sg-chip.ok, .sg-vc.ok b { background: #dcfce7; color: #166534; } .sg-chip.bajo, .sg-vc.bajo b { background: #fef9c3; color: #854d0e; }
+.sg-chip.alto, .sg-vc.alto b { background: #fee2e2; color: #991b1b; } .sg-chip.parcial, .sg-chip.sin { background: #e2e8f0; color: #475569; }
+.sg-resumen .chipbox { font-size: 13.5px; margin-bottom: 10px; line-height: 1.5; }
+.sg-vchips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.sg-vc { display: flex; align-items: center; gap: 8px; background: var(--color-card); border: 2px solid var(--color-border); border-radius: 10px; padding: 6px 12px 6px 6px; font-size: 12.5px; cursor: pointer; }
+.sg-vc b { min-width: 34px; text-align: center; padding: 4px 6px; border-radius: 7px; font-size: 15px; } .sg-vc.todas b { background: #e0f2fe; color: #075985; }
+.sg-vc.on { border-color: var(--color-navy); background: var(--color-sky-light); }
+.sg-est td { vertical-align: middle; } .sg-vsh small { font-weight: 400; } .sg-vscell { min-width: 220px; width: 28%; }
+.sg-vs { position: relative; height: 16px; background: #f1f5f9; border-radius: 8px; }
+.sg-vs .band { position: absolute; top: 0; bottom: 0; background: #bfdbfe; border-radius: 8px; } .sg-vs .core { position: absolute; top: 4px; bottom: 4px; background: #3b82f6; border-radius: 4px; opacity: .8; }
+.sg-vs .mk { position: absolute; top: -3px; width: 5px; height: 22px; margin-left: -2px; border-radius: 3px; border: 1px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+.sg-vs .mk.ok { background: #16a34a; } .sg-vs .mk.bajo { background: #f59e0b; } .sg-vs .mk.alto { background: #dc2626; }
+.sg-est td:first-child { min-width: 230px; } .sg-est td:nth-child(5) { min-width: 130px; }

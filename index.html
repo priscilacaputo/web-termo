@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Termomecánica — Portal Interno</title>
-  <link rel="stylesheet" href="assets/css/main.css?v=16" />
+  <link rel="stylesheet" href="assets/css/main.css?v=18" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -2199,17 +2199,34 @@
             <label>Desde <input type="date" id="sg-desde"></label>
             <label>Hasta <input type="date" id="sg-hasta"></label>
             <label>Turno <select id="sg-turno"><option value="">Todos</option><option value="manana">Mañana</option><option value="tarde">Tarde</option></select></label>
+            <label title="Horas de un turno de 12 h que se esperan con OT: se descuentan almuerzo, descansos, recorridas y un margen. Es un supuesto editable.">Meta productiva por turno <input type="number" id="sg-meta" value="7.5" min="1" max="12" step="0.5" style="width:64px"> h</label>
             <input type="search" id="sg-buscar" placeholder="Buscar técnico, OT o equipo…">
           </div>
           <div id="sg-kpis" class="sg-kpis"></div>
-          <div class="sg-grid2">
-            <div class="sg-card"><h3 class="sg-h">OTs por día y cobertura del turno</h3><div class="sg-chbox"><canvas id="sg-ch-dias"></canvas></div></div>
-            <div class="sg-card"><h3 class="sg-h">OTs por tipo de equipo</h3><div class="sg-chbox"><canvas id="sg-ch-fam"></canvas></div></div>
+          <div class="sg-tabs">
+            <button class="sg-tabbtn on" data-tab="jornada">1 · ¿Cubren la jornada?</button>
+            <button class="sg-tabbtn" data-tab="estandar">2 · Tiempo registrado vs. gama</button>
+            <button class="sg-tabbtn" data-tab="dias">3 · Detalle por día y turno</button>
           </div>
-          <div class="sg-card"><h3 class="sg-h">Mapa de actividad por hora</h3><div id="sg-heatmap"></div></div>
-          <h3 class="sg-h" style="margin:4px 0 8px">Detalle por día y turno <small class="sg-hint">(tocá una fila)</small></h3>
-          <div class="sg-card sg-scroll"><table class="sg-tab"><thead><tr><th>Día</th><th>Turno</th><th>OTs</th><th>Con final</th><th>Confirm.</th><th>Técnicos</th><th>Horas</th><th>Cobertura</th><th>Huecos sin OT</th></tr></thead><tbody id="sg-dias"></tbody></table></div>
-          <div id="sg-detalle" class="sg-card"></div>
+
+          <div class="sg-panel" data-tab="jornada">
+            <div class="sg-card"><h3 class="sg-h">Horas con OT por técnico y día <small class="sg-hint">(tocá una celda para ver ese turno hora por hora)</small></h3><div id="sg-matriz"></div></div>
+            <div id="sg-jsel" class="sg-card"></div>
+            <div class="sg-card"><h3 class="sg-h">OTs por día y horas con OT por técnico</h3><div class="sg-chbox"><canvas id="sg-ch-dias"></canvas></div></div>
+            <div class="sg-card"><h3 class="sg-h">Mapa de actividad por hora</h3><div id="sg-heatmap"></div></div>
+          </div>
+
+          <div class="sg-panel hidden" data-tab="estandar">
+            <div class="sg-card"><div id="sg-est-res"></div></div>
+            <div class="sg-card"><h3 class="sg-h">Horas-hombre por tipo de equipo: lo que pide la gama vs. lo registrado</h3><div class="sg-chbox"><canvas id="sg-ch-vs"></canvas></div></div>
+            <div class="sg-card sg-scroll"><table class="sg-tab sg-est"><thead><tr><th>OT</th><th>Equipo</th><th>Personas</th><th>Registrado</th><th>Gama (hoja de ruta)</th><th class="sg-vsh">Registrado frente a la gama <small>(franja azul = lo esperado ±20%)</small></th><th>Desvío</th></tr></thead><tbody id="sg-est-tab"></tbody></table></div>
+            <p class="sg-hint">Sólo se comparan OTs preventivas (MP / IP / PD) con notificación final. El tiempo registrado es la suma de las horas de reloj (inicio a fin) de cada técnico en la OT. La gama sale de la hoja de ruta de SAP (IA17) vinculada al equipo: horas-hombre = duración × personas. Si el nombre de la OT junta frecuencias (ej. 2M-6M), la gama es un rango: de la frecuencia más corta a la suma de todas. Los vehículos quedan afuera (el estándar los mide por kilómetros). La tabla va ordenada por horas de diferencia.</p>
+          </div>
+
+          <div class="sg-panel hidden" data-tab="dias">
+            <div class="sg-card sg-scroll"><table class="sg-tab"><thead><tr><th>Día</th><th>Turno</th><th>OTs</th><th>Con final</th><th>Confirm.</th><th>Técnicos</th><th>Horas</th><th>Con alguien trabajando</th><th>Huecos sin OT</th></tr></thead><tbody id="sg-dias"></tbody></table></div>
+            <div id="sg-detalle" class="sg-card"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -2736,6 +2753,6 @@
   <script src="assets/js/nivelacion-app.js?v=11"></script>
   <script src="assets/js/hdr-gamas-data.js?v=4"></script>
   <script src="assets/js/gamas-sam-app.js?v=10"></script>
-  <script src="assets/js/seguimiento-ots-app.js?v=1"></script>
+  <script src="assets/js/seguimiento-ots-app.js?v=3"></script>
 </body>
 </html>
