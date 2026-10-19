@@ -341,6 +341,12 @@
       ` · 0,0 = cargó OTs pero sin horas · ☀ mañana ☾ tarde · casillero rayado = ese día no le tocaba${conGrilla ? '' : ' (o no cargó nada: sin la grilla no se puede distinguir)'}</div>`;
   }
 
+  /* Cada guardia se nombra por sus supervisores (apellidos que figuran en la grilla) */
+  function nombreGuardia(n) {
+    const ap = new Set();
+    Object.values(st.grilla).forEach(l => l.forEach(([, a, esp, , , gd]) => { if (gd === n && esp === 'SUPERVISOR') ap.add(a); }));
+    return ap.size ? [...ap].sort().map(a => a.charAt(0) + a.slice(1).toLowerCase()).join(' / ') : 'Guardia ' + n;
+  }
   const COL_GUARDIA = { 1: '#2980b9', 2: '#27ae60', 3: '#9b59b6', 4: '#e67e22', 0: '#94a3b8' };
   /* Horas con OT por guardia y día (suma de lo que cargó cada técnico) contra la meta de los técnicos de guardia ese día */
   function graficoGuardias(js) {
@@ -356,7 +362,7 @@
         datasets: [
           { type: 'line', label: `Meta de las guardias del día (${fh(metaH())} h × técnico de guardia)`, data: dias.map(d => +(js.filter(j => j.d === d && j.cuenta).length * metaH()).toFixed(1)),
             borderColor: '#0f172a', backgroundColor: '#0f172a', borderDash: [6, 4], tension: .2, pointRadius: 2, order: 0 },
-          ...gds.map(n => ({ label: n ? 'Guardia ' + n : 'Sin figurar de guardia', data: dias.map(d => horas(d, n)), backgroundColor: COL_GUARDIA[n] || '#64748b', stack: 'h', borderRadius: 2, order: 1 }))
+          ...gds.map(n => ({ label: n ? nombreGuardia(n) : 'Sin figurar de guardia', data: dias.map(d => horas(d, n)), backgroundColor: COL_GUARDIA[n] || '#64748b', stack: 'h', borderRadius: 2, order: 1 }))
         ]
       },
       options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
