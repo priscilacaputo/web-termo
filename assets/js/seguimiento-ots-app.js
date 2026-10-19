@@ -10,7 +10,7 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
   const TURNO = { manana: 'Mañana (06–18)', tarde: 'Tarde (18–06)' };
-  const st = { rows: [], sel: null, tab: 'jornada', vf: 'todas', grilla: {} };
+  const st = { rows: [], sel: null, tab: 'dias', vf: 'todas', grilla: {} };
   const META_KEY = 'seg_ots_meta_h';
   const metaH = () => { const v = parseFloat(($('sg-meta') || {}).value); return v > 0 && v <= 12 ? v : 7.5; };
 
@@ -92,6 +92,14 @@
     rd.readAsArrayBuffer(file);
   }
 
+  /* El análisis es del mes más reciente del export (hoy octubre): los meses anteriores quedan guardados pero fuera del filtro. */
+  function periodoPorDefecto() {
+    if (!st.rows.length || $('sg-desde').value || $('sg-hasta').value) return;
+    const mx = st.rows.reduce((m, r) => r.d > m ? r.d : m, st.rows[0].d), [y, m] = mx.split('-').map(Number);
+    $('sg-desde').value = `${y}-${String(m).padStart(2, '0')}-01`;
+    $('sg-hasta').value = `${y}-${String(m).padStart(2, '0')}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`;
+  }
+
   /* ── Agregación ── */
   function filtrado() {
     const d1 = $('sg-desde').value, d2 = $('sg-hasta').value, tu = $('sg-turno').value, q = norm($('sg-buscar').value);
@@ -156,7 +164,7 @@
   const legDe = r => r.pl ? String(+r.pl) : '';
   function entrada(p, leg, d, t, rr) {
     const cv = cobertura(rr, t), meta = metaH() * 60;
-    return { p, leg, key: leg || 'n:' + p, d, t, rows: rr, cv, cub: cv.cub, pctMeta: cv.cub / meta, pctJ: cv.cub / DUR, ots: new Set(rr.map(r => r.o)).size, prog: null, estado: '', sup: false, cuenta: true };
+    return { p, leg, key: leg || 'n:' + p, d, t, rows: rr, cv, cub: cv.cub, pctMeta: cv.cub / meta, pctJ: cv.cub / DUR, ots: new Set(rr.map(r => r.o)).size, prog: null, estado: '', sup: false, cuenta: true, gd: 0 };
   }
   function jornadas(rows) {
     const g = {};
@@ -168,10 +176,12 @@
      st.grilla[fecha] = [[legajo, apellido, especialidad, turno, estado], ...] de las guardias que trabajan ese día
      (estado: TRABAJO · COMP_FRANCO · FRANCO · LICENCIA · VACACIONES). El legajo del export es el "Número de personal". */
   const EST = { TRABAJO: 'de guardia', COMP_FRANCO: 'franco compensatorio', FRANCO: 'franco', LICENCIA: 'licencia', VACACIONES: 'vacaciones' };
-  const GR_KEY = 'seg_ots_grilla_v1';
+  const GR_KEY = 'seg_ots_grilla_v2';
   function cargarCacheGrilla() { try { st.grilla = Object.assign(JSON.parse(localStorage.getItem(GR_KEY) || '{}'), st.grilla); } catch (e) { /* sin cache */ } }
   async function traerGrilla(force) {
-    const ds = [...new Set(st.rows.map(r => r.d))].sort();
+    periodoPorDefecto();
+    const d1 = $('sg-desde').value, d2 = $('sg-hasta').value;
+    const ds = [...new Set(st.rows.filter(r => (!d1 || r.d >= d1) && (!d2 || r.d <= d2)).map(r => r.d))].sort();
     if (!ds.length) return;
     const fechas = []; for (let f = ds[0]; f <= ds[ds.length - 1]; f = addDays(f, 1)) fechas.push(f);
     cargarCacheGrilla();
@@ -185,7 +195,7 @@
           if (!j || !j.success || !j.data || !Array.isArray(j.data.guards)) throw new Error('respuesta inesperada');
           const out = [];
           j.data.guards.filter(g => g.worksToday).forEach(g => (g.members || []).forEach(m =>
-            out.push([String(m.userId).replace(/\D/g, ''), m.surname, m.specialty, String(g.shiftType).toUpperCase() === 'NOCHE' ? 'tarde' : 'manana', m.status])));
+            out.push([String(m.userId).replace(/\D/g, ''), m.surname, m.specialty, String(g.shiftType).toUpperCase() === 'NOCHE' ? 'tarde' : 'manana', m.status, g.guardNumber])));
           st.grilla[f] = out;
         } catch (e) { fallos++; }
         hechos++; if (msg) msg.textContent = `Cruzando con la grilla… ${hechos}/${need.length}`;
@@ -213,13 +223,13 @@
       if (cand.length === 1) { alias[cand[0][0]] = leg; st.avisos.push(`${nom}: legajo ${leg} en SAP y ${cand[0][0]} en la grilla (se cruzó por apellido; conviene corregir uno de los dos)`); }
     });
     const todas = base.slice();
-    ds.filter(f => f >= d1 && f <= d2).sort().forEach(f => st.grilla[f].forEach(([leg0, ap, esp, t, estado]) => {
+    ds.filter(f => f >= d1 && f <= d2).sort().forEach(f => st.grilla[f].forEach(([leg0, ap, esp, t, estado, gd]) => {
       const leg = alias[leg0] || leg0, es = porLD.get(leg + '|' + f), sup = esp === 'SUPERVISOR';
-      if (es) { es.forEach(e => { e.estado = estado; e.sup = sup; e.prog = estado === 'TRABAJO'; e.otroTurno = e.prog && e.t !== t; e.cuenta = e.prog && !sup; }); return; }
+      if (es) { es.forEach(e => { e.estado = estado; e.sup = sup; e.prog = estado === 'TRABAJO'; e.otroTurno = e.prog && e.t !== t; e.cuenta = e.prog && !sup; e.gd = e.prog ? gd : 0; }); return; }
       if (estado !== 'TRABAJO' || sup || (tu && t !== tu)) return;
       const nom = nombres.get(leg) || ap;
       if (q && !norm(nom + ' ' + ap).includes(q)) return;
-      const e = entrada(nom, leg, f, t, []); e.prog = true; e.estado = 'TRABAJO'; e.cuenta = true; todas.push(e);
+      const e = entrada(nom, leg, f, t, []); e.prog = true; e.estado = 'TRABAJO'; e.cuenta = true; e.gd = gd; todas.push(e);
     }));
     base.forEach(e => { if (e.prog == null && st.grilla[e.d]) { e.prog = false; e.cuenta = false; } });   // sin grilla ese día: no se juzga
     return todas;
@@ -331,24 +341,28 @@
       ` · 0,0 = cargó OTs pero sin horas · ☀ mañana ☾ tarde · casillero rayado = ese día no le tocaba${conGrilla ? '' : ' (o no cargó nada: sin la grilla no se puede distinguir)'}</div>`;
   }
 
-  /* Mapa de calor: filas = días (operativos), columnas = 24 h desde las 06:00 (mañana | tarde). */
-  function mapaCalor(rows) {
-    const dias = {};
-    rows.forEach(r => {
-      const ini = ((r.hi - 360) % 1440 + 1440) % 1440, len = r.hf == null ? r.m : durRow(r);
-      if (!len) return;
-      const fin = Math.min(1440, ini + len), d = dias[r.d] = dias[r.d] || Array.from({ length: 24 }, () => new Set());
-      for (let h = Math.floor(ini / 60); h < 24 && h * 60 < fin; h++) d[h].add(r.p);
+  const COL_GUARDIA = { 1: '#2980b9', 2: '#27ae60', 3: '#9b59b6', 4: '#e67e22', 0: '#94a3b8' };
+  /* Horas con OT por guardia y día (suma de lo que cargó cada técnico) contra la meta de los técnicos de guardia ese día */
+  function graficoGuardias(js) {
+    const hint = $('sg-ch-gd-hint'), conGrilla = Object.keys(st.grilla).length > 0;
+    hint.classList.toggle('hidden', conGrilla);
+    if (!conGrilla) { if (charts['sg-ch-gd']) { charts['sg-ch-gd'].destroy(); delete charts['sg-ch-gd']; } return; }
+    const dias = [...new Set(js.map(j => j.d))].sort(), gds = [...new Set(js.map(j => j.gd))].sort((a, b) => a - b);
+    const horas = (d, n) => +(js.filter(j => j.d === d && j.gd === n).reduce((s, j) => s + j.cub, 0) / 60).toFixed(1);
+    chart('sg-ch-gd', {
+      type: 'bar',
+      data: {
+        labels: dias.map(d => fmtDia(d).slice(0, 9)),
+        datasets: [
+          { type: 'line', label: `Meta de las guardias del día (${fh(metaH())} h × técnico de guardia)`, data: dias.map(d => +(js.filter(j => j.d === d && j.cuenta).length * metaH()).toFixed(1)),
+            borderColor: '#0f172a', backgroundColor: '#0f172a', borderDash: [6, 4], tension: .2, pointRadius: 2, order: 0 },
+          ...gds.map(n => ({ label: n ? 'Guardia ' + n : 'Sin figurar de guardia', data: dias.map(d => horas(d, n)), backgroundColor: COL_GUARDIA[n] || '#64748b', stack: 'h', borderRadius: 2, order: 1 }))
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        scales: { y: { stacked: true, beginAtZero: true, title: { display: true, text: 'horas con OT' } }, x: { stacked: true } },
+        plugins: { legend: { position: 'bottom' } } }
     });
-    const ks = Object.keys(dias).sort();
-    if (!ks.length) return '<p class="sg-hint">Sin datos.</p>';
-    let max = 1; ks.forEach(k => dias[k].forEach(x => { if (x.size > max) max = x.size; }));
-    const cab = Array.from({ length: 24 }, (_, h) => `<div class="sg-hh${h === 12 ? ' cut' : ''}">${h % 3 === 0 ? String((6 + h) % 24).padStart(2, '0') : ''}</div>`).join('');
-    const filas = ks.map(k => `<div class="sg-hl">${fmtDia(k).slice(0, 9)}</div>` + dias[k].map((x, h) => {
-      const n = x.size, a = n ? (0.25 + 0.75 * n / max) : 0;
-      return `<div class="sg-hc${h === 12 ? ' cut' : ''}${n ? '' : ' vacio'}" style="${n ? `background:rgba(22,163,74,${a.toFixed(2)})` : ''}" title="${fmtDia(k)} · ${String((6 + h) % 24).padStart(2, '0')}:00 · ${n} técnico${n === 1 ? '' : 's'} con OT"></div>`;
-    }).join('')).join('');
-    return `<div class="sg-heat"><div></div>${cab}${filas}</div><div class="sg-leyenda"><span class="vac"></span> sin actividad <span class="alt"></span> más técnicos con OT · el corte divide Mañana | Tarde</div>`;
   }
 
   function graficosJornada(g, js) {
@@ -407,7 +421,6 @@
 
     /* Pestaña 1: jornada */
     $('sg-matriz').innerHTML = avisosHTML(rows, js) + matrizTecnicos(js);
-    $('sg-heatmap').innerHTML = mapaCalor(rows);
     renderJornadaSel(js);
     /* Pestaña 2: estándar */
     renderEstandar(cs, comp, regC, expC);
@@ -419,12 +432,13 @@
         const s = resumir(g[d][t]), cv = cobertura(g[d][t], t), sel = st.sel && st.sel.d === d && st.sel.t === t && !st.sel.k;
         return `<tr class="sg-row${sel ? ' on' : ''}" data-d="${d}" data-t="${t}">${i === 0 ? `<td rowspan="${ts.length}"><b>${fmtDia(d)}</b></td>` : ''}` +
           `<td>${TURNO[t]}</td><td>${s.ots}</td><td>${s.fin}</td><td>${s.conf}</td><td>${s.pers}</td><td>${fh(s.horas)}</td>` +
+          `<td>${conGrilla ? (n => n ? `<b class="sg-rojo">${n}</b>` : '0')(js.filter(j => j.d === d && j.t === t && j.cuenta && !j.ots).length) : '—'}</td>` +
           `<td><span class="sg-pct ${cv.pct >= 75 ? 'ok' : cv.pct >= 50 ? 'mid' : 'bad'}">${cv.pct}%</span></td><td class="sg-huecos">${fmtHuecos(cv.huecos, t)}</td></tr>`;
       }).join('');
-    }).join('') || '<tr><td colspan="9" class="sg-hint">Sin datos para el filtro.</td></tr>';
+    }).join('') || '<tr><td colspan="10" class="sg-hint">Sin datos para el filtro.</td></tr>';
     renderDetalle(rows);
     /* los gráficos sólo se dibujan si su pestaña está visible (canvas oculto = tamaño 0) */
-    if (st.tab === 'jornada') graficosJornada(g, js); else if (st.tab === 'estandar') graficosEstandar(cs);
+    if (st.tab === 'jornada') { graficosJornada(g, js); graficoGuardias(js); } else if (st.tab === 'estandar') graficosEstandar(cs);
   }
 
   /* Línea de tiempo de un técnico en un turno: un bloque por OT, y lo que queda sin OT */
@@ -526,14 +540,15 @@
         return;
       }
     } catch (e) { gate.textContent = '❌ No se pudo verificar el acceso (sin conexión con el servidor).'; return; }
-    gate.classList.add('hidden'); body.classList.remove('hidden'); load(); render(); traerGrilla();
+    gate.classList.add('hidden'); body.classList.remove('hidden'); load(); periodoPorDefecto(); render(); traerGrilla();
   }
 
   function init() {
     const page = $('page-ots-seguimiento');
     if (!page) return;
     $('sg-file').addEventListener('change', e => { if (e.target.files[0]) importFile(e.target.files[0]); e.target.value = ''; });
-    ['sg-desde', 'sg-hasta', 'sg-turno'].forEach(id => $(id).addEventListener('change', render));
+    ['sg-desde', 'sg-hasta'].forEach(id => $(id).addEventListener('change', () => { render(); traerGrilla(); }));
+    $('sg-turno').addEventListener('change', render);
     $('sg-buscar').addEventListener('input', render);
     $('sg-export').addEventListener('click', exportar);
     $('sg-gr-btn').addEventListener('click', () => traerGrilla(true));
@@ -555,7 +570,7 @@
     /* se re-verifica cada vez que se muestra la página; al salir se limpian los datos del DOM */
     new MutationObserver(() => {
       if (!page.classList.contains('hidden')) verificar();
-      else { $('sg-body').classList.add('hidden'); $('sg-dias').innerHTML = ''; $('sg-detalle').innerHTML = ''; st.sel = null; st.rows = []; destruirCharts(); ['sg-heatmap', 'sg-matriz', 'sg-jsel', 'sg-est-tab', 'sg-est-res'].forEach(id => { $(id).innerHTML = ''; }); }
+      else { $('sg-body').classList.add('hidden'); $('sg-dias').innerHTML = ''; $('sg-detalle').innerHTML = ''; st.sel = null; st.rows = []; destruirCharts(); ['sg-matriz', 'sg-jsel', 'sg-est-tab', 'sg-est-res'].forEach(id => { $(id).innerHTML = ''; }); }
     }).observe(page, { attributes: true, attributeFilter: ['class'] });
   }
   init();
