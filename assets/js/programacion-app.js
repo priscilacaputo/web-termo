@@ -1779,8 +1779,12 @@ function progMailGuardiaTexto(g) {
       const s = x.sector.toLowerCase();
       return /sala.?t[eé]c/.test(s) || x.ots.some(progEsSalaTecnicaO);
     };
-    const salasTec  = sistemasInfo.filter(esSisSalaTec);
-    const restoSis  = sistemasInfo.filter(x => !esSisSalaTec(x));
+    const salasTecSis   = sistemasInfo.filter(esSisSalaTec);
+    const restoSis      = sistemasInfo.filter(x => !esSisSalaTec(x));
+    /* Splits/equipos sueltos de sala técnica también van al bloque de prioridad */
+    const salasTecSuel  = aireNoSis.filter(progEsSalaTecnicaO);
+    const restoNoSis    = aireNoSis.filter(o => !progEsSalaTecnicaO(o));
+    const haySalasTec   = salasTecSis.length || salasTecSuel.length;
 
     const printSistema = x => {
       const p = progPeriodicidadSistema(x.ots);
@@ -1792,16 +1796,25 @@ function progMailGuardiaTexto(g) {
       L.push(`      Equipos: ${equiposTxt}${faltanN > 0 ? ` (${faltanN} sin OT este mes)` : ''}`);
       L.push(`      Periodicidad: ${p.txt}`);
     };
+    const printSuelto = o => {
+      const rec = idx[o.equipo] || {};
+      const sector = rec.sector || o.zona || '';
+      L.push(`  · ${o.equipo} ${o.denominacion || ''}${sector ? ' — ' + sector : ''} — ${progPeriodicidadCorta(o)}${o.esAltura ? ' ⛰️' : ''}`);
+    };
 
-    if (salasTec.length) {
+    if (haySalasTec) {
+      const nTotal = salasTecSis.length + salasTecSuel.length;
       L.push('');
-      L.push(`⚡ EMPEZAR POR: Salas Técnicas (${salasTec.length} sistema${salasTec.length === 1 ? '' : 's'})`);
-      salasTec.forEach(printSistema);
+      L.push(`⚡ EMPEZAR POR: Salas Técnicas (${nTotal} equipo${nTotal === 1 ? '' : 's'})`);
+      salasTecSis.forEach(printSistema);
+      salasTecSuel
+        .sort((a, b) => a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
+        .forEach(printSuelto);
     }
 
     if (restoSis.length) {
       L.push('');
-      if (salasTec.length) L.push('Resto de sistemas de aire:');
+      if (haySalasTec) L.push('Resto de sistemas de aire:');
       /* Agrupar por sector */
       const porSector = {};
       restoSis.forEach(x => {
@@ -1814,20 +1827,16 @@ function progMailGuardiaTexto(g) {
       });
     }
 
-    /* Equipos de aire sin sistema asignado */
-    if (aireNoSis.length) {
+    /* Equipos de aire sueltos que no son sala técnica */
+    if (restoNoSis.length) {
       L.push('');
-      L.push('Equipos de aire sueltos:');
-      aireNoSis
+      if (haySalasTec || restoSis.length) L.push('Equipos de aire sueltos:');
+      restoNoSis
         .sort((a, b) => (a.zona || '').localeCompare(b.zona || '') || a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
-        .forEach(o => {
-          const rec = idx[o.equipo] || {};
-          const sector = rec.sector || o.zona || '';
-          L.push(`  · ${o.equipo} ${o.denominacion || ''}${sector ? ' — ' + sector : ''} — ${progPeriodicidadCorta(o)}${o.esAltura ? ' ⛰️' : ''}`);
-        });
+        .forEach(printSuelto);
     }
 
-    if (!salasTec.length && !restoSis.length && !aireNoSis.length) {
+    if (!haySalasTec && !restoSis.length && !restoNoSis.length) {
       L.push('  Sin OTs de aire este mes.');
     }
   }
