@@ -170,6 +170,7 @@ function renderAAC() {
   const isPlanes = aacView === 'planes';
   const isPlanos = aacView === 'planos';
   const isMapa   = aacView === 'mapa';
+  const isBae    = aacView === 'bae';
 
   document.getElementById('aac-result-count').textContent =
     isData ? `${aacFiltered.length} de ${AAC_DATA.length} equipos` : '';
@@ -181,6 +182,7 @@ function renderAAC() {
   document.getElementById('aac-planes-wrap').classList.toggle('hidden',  !isPlanes);
   document.getElementById('aac-planos-wrap').classList.toggle('hidden',  !isPlanos);
   document.getElementById('aac-mapa-wrap').classList.toggle('hidden',    !isMapa);
+  document.getElementById('aac-bae-wrap').classList.toggle('hidden',     !isBae);
 
   if (aacView === 'grid')   renderAACGrid();
   if (aacView === 'table')  renderAACTable();

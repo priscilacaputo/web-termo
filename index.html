@@ -1494,6 +1494,7 @@
           <button class="aac-view-btn" data-view="planes">📋 Planes</button>
           <button class="aac-view-btn" data-view="planos">📄 Planos</button>
           <button class="aac-view-btn" data-view="mapa">🗺️ Mapa</button>
+          <button class="aac-view-btn" data-view="bae">💧 Tablero BAE</button>
         </div>
         <button class="altura-toggle-btn" id="aac-altura-btn" title="Filtrar equipos que requieren trabajo en altura">🏔 Altura</button>
         <button class="export-btn" id="aac-export-btn">⬇ Excel</button>
@@ -1574,6 +1575,83 @@
       </div>
 
       <!-- Vista: Mapa interactivo -->
+
+      <!-- Vista: Tablero de bombas de agua enfriada (TS-BAE) -->
+      <div id="aac-bae-wrap" class="hidden puertas-guia">
+        <div class="pguia-intro-card">
+          <div class="pguia-intro-logo">💧</div>
+          <div>
+            <div class="pguia-intro-title">Tablero de bombas de agua enfriada (TS-BAE)</div>
+            <div class="pguia-intro-sub">Descripción y funcionamiento · interconexiones de seguridad entre las bombas (BAE 1 y BAE 2) y los chillers (CH 1 y CH 2)</div>
+          </div>
+        </div>
+
+        <div class="pguia-section-title">Componentes del tablero</div>
+        <div class="pguia-two-col">
+          <ol style="margin:0 0 0 18px;font-size:13px;line-height:1.8">
+            <li>Interruptor general</li>
+            <li>Asignación de bombas de agua enfriada para Chiller 1 y Chiller 2</li>
+            <li>Selección de modo (manual – 0 – automático) de BAE 1 y BAE 2</li>
+            <li>Parada de emergencia</li>
+            <li>Selección de Chiller 1 – 0 – Chiller 2</li>
+            <li>Selección de modo de arranque de Chiller 1 y Chiller 2 (local – 0 – remoto)</li>
+          </ol>
+          <figure class="pguia-fig"><img src="assets/img/tablero-bae/p1.png" alt="Frente del tablero TS-BAE con los componentes numerados" loading="lazy"><figcaption>Frente del tablero TS-BAE con los componentes numerados</figcaption></figure>
+        </div>
+
+        <div class="pguia-section-title">Condiciones necesarias para el funcionamiento</div>
+        <div class="pguia-two-col">
+          <div class="pguia-intro-card" style="display:block"><b>BAE 1 (manual o automático)</b><ul style="margin:6px 0 0 18px;font-size:13px;line-height:1.55"><li>BAE 2 detenida</li><li>Actuador 1 abierto</li></ul></div>
+          <div class="pguia-intro-card" style="display:block"><b>BAE 2 (manual o automático)</b><ul style="margin:6px 0 0 18px;font-size:13px;line-height:1.55"><li>BAE 1 detenida</li><li>Actuador 2 abierto</li></ul></div>
+          <div class="pguia-intro-card" style="display:block"><b>CH 1 (local o remoto)</b><ul style="margin:6px 0 0 18px;font-size:13px;line-height:1.55"><li>Al menos 1 BAE asignada (llaves selectoras, punto 2)</li><li>La BAE asignada (1 o 2) en modo AUTO</li><li>Actuador 3 abierto</li><li>Circulación de agua verificada (flow switch)</li></ul></div>
+          <div class="pguia-intro-card" style="display:block"><b>CH 2 (local o remoto)</b><ul style="margin:6px 0 0 18px;font-size:13px;line-height:1.55"><li>Al menos 1 BAE asignada (llaves selectoras, punto 2)</li><li>La BAE asignada (1 o 2) en modo AUTO</li><li>Actuador 4 abierto</li><li>Circulación de agua verificada (flow switch)</li></ul></div>
+        </div>
+        <div class="pguia-intro-card" style="border-left:4px solid #dc2626;display:block">
+          <b>⚠ IMPORTANTE</b> — Los 4 actuadores deben estar siempre en modo automático. Solo se pasan a manual para una operación de mantenimiento y después deben volver a la posición automático.
+        </div>
+
+        <div class="pguia-section-title">Descripción de funcionamiento</div>
+        <div class="pguia-modos-grid">
+          <div class="pguia-modo-card" style="--mc:var(--color-primary)"><div class="pguia-modo-name">② Asignación de BAE</div><div class="pguia-modo-desc">Solo asigna una BAE a cada chiller. Al CH1 y al CH2 se les puede asignar tanto BAE 1 como BAE 2. Si una bomba sale de servicio, la misma BAE puede asignarse a ambos chillers.</div></div>
+          <div class="pguia-modo-card" style="--mc:#059669"><div class="pguia-modo-name">③ Modo de BAE (manual-0-auto)</div><div class="pguia-modo-desc">Determina el modo de arranque de BAE 1 y BAE 2. En manual, la bomba arranca si se dan las condiciones básicas (ej.: BAE 1 arranca solo si BAE 2 está apagada y su actuador está en la posición correcta). En automático, el arranque lo determina el CH1 o CH2 según la asignación, condicionado al actuador y al estado de la otra bomba.</div></div>
+          <div class="pguia-modo-card" style="--mc:#dc2626"><div class="pguia-modo-name">④ Parada de emergencia</div><div class="pguia-modo-desc">Detiene en conjunto BAE 1, BAE 2, CH1 y CH2, y cierra todos los actuadores.</div></div>
+          <div class="pguia-modo-card" style="--mc:#d97706"><div class="pguia-modo-name">⑤ Selección CH1 – 0 – CH2</div><div class="pguia-modo-desc">Habilita CH1 o CH2 para un arranque manual. Es válida solo si la selección de arranque de los chillers está en manual; de lo contrario la habilitación queda en manos del sistema BMS.</div></div>
+          <div class="pguia-modo-card" style="--mc:#7c3aed"><div class="pguia-modo-name">⑥ Modo de CH1 y CH2 (local-0-remoto)</div><div class="pguia-modo-desc">Determina el modo de operación de los chillers. En modo manual (local), CH1 y CH2 arrancan si se dan las condiciones básicas.</div></div>
+        </div>
+
+        <div class="pguia-section-title">Ejemplos de operación</div>
+        <div class="pguia-intro-card" style="align-items:flex-start;flex-wrap:wrap;gap:14px">
+          <div style="flex:1 1 260px"><div class="pguia-intro-title">Ejemplo 1</div>
+            <ul style="margin:6px 0 8px 18px;font-size:13px;line-height:1.55"><li>CH1 y CH2 en modo local</li><li>BAE 1 y BAE 2 en automático</li><li>CH1 y CH2 tienen asignada BAE 1</li><li>Habilitado CH2</li></ul>
+            <div style="font-weight:600;color:var(--color-primary)">→ Funciona CH2 con BAE 1.</div></div>
+          <div style="flex:0 1 260px"><figure class="pguia-fig"><img src="assets/img/tablero-bae/p4.png" alt="Tablero TS-BAE — ejemplo 1" loading="lazy"><figcaption>Tablero TS-BAE — ejemplo 1</figcaption></figure></div>
+        </div>
+        <div class="pguia-intro-card" style="align-items:flex-start;flex-wrap:wrap;gap:14px">
+          <div style="flex:1 1 260px"><div class="pguia-intro-title">Ejemplo 2</div>
+            <ul style="margin:6px 0 8px 18px;font-size:13px;line-height:1.55"><li>CH1 y CH2 en modo local</li><li>BAE 1 y BAE 2 en automático</li><li>CH1 tiene asignada BAE 1; CH2 tiene asignada BAE 2</li><li>Habilitado CH1</li></ul>
+            <div style="font-weight:600;color:var(--color-primary)">→ Funciona CH1 con BAE 1.</div></div>
+          <div style="flex:0 1 260px"><figure class="pguia-fig"><img src="assets/img/tablero-bae/p5.png" alt="Tablero TS-BAE — ejemplo 2" loading="lazy"><figcaption>Tablero TS-BAE — ejemplo 2</figcaption></figure></div>
+        </div>
+        <div class="pguia-intro-card" style="align-items:flex-start;flex-wrap:wrap;gap:14px">
+          <div style="flex:1 1 260px"><div class="pguia-intro-title">Ejemplo 3</div>
+            <ul style="margin:6px 0 8px 18px;font-size:13px;line-height:1.55"><li>CH1 y CH2 en modo local</li><li>BAE 1 y BAE 2 en automático</li><li>CH1 tiene asignada BAE 1; CH2 tiene asignada BAE 2</li><li>Habilitado CH2</li></ul>
+            <div style="font-weight:600;color:var(--color-primary)">→ Funciona CH2 con BAE 2.</div></div>
+          <div style="flex:0 1 260px"><figure class="pguia-fig"><img src="assets/img/tablero-bae/p6.png" alt="Tablero TS-BAE — ejemplo 3" loading="lazy"><figcaption>Tablero TS-BAE — ejemplo 3</figcaption></figure></div>
+        </div>
+        <div class="pguia-intro-card" style="align-items:flex-start;flex-wrap:wrap;gap:14px">
+          <div style="flex:1 1 260px"><div class="pguia-intro-title">Ejemplo 4</div>
+            <ul style="margin:6px 0 8px 18px;font-size:13px;line-height:1.55"><li>CH1 y CH2 en modo local</li><li>BAE 1 y BAE 2 en automático</li><li>CH1 y CH2 tienen asignada BAE 2</li><li>Habilitado CH1</li></ul>
+            <div style="font-weight:600;color:var(--color-primary)">→ Funciona CH1 con BAE 2.</div></div>
+          <div style="flex:0 1 260px"><figure class="pguia-fig"><img src="assets/img/tablero-bae/p7.png" alt="Tablero TS-BAE — ejemplo 4" loading="lazy"><figcaption>Tablero TS-BAE — ejemplo 4</figcaption></figure></div>
+        </div>
+        <div class="pguia-intro-card" style="align-items:flex-start;flex-wrap:wrap;gap:14px">
+          <div style="flex:1 1 260px"><div class="pguia-intro-title">Ejemplo 5</div>
+            <ul style="margin:6px 0 8px 18px;font-size:13px;line-height:1.55"><li>CH1 y CH2 en modo local</li><li>BAE 1 y BAE 2 en <b>manual</b></li><li>CH1 y CH2 tienen asignada BAE 2</li><li>Habilitado CH1</li></ul>
+            <div style="font-weight:600;color:var(--color-primary)">→ Funciona CH1 con BAE 2 en modo manual.</div></div>
+          <div style="flex:0 1 260px"><figure class="pguia-fig"><img src="assets/img/tablero-bae/p8.png" alt="Tablero TS-BAE — ejemplo 5" loading="lazy"><figcaption>Tablero TS-BAE — ejemplo 5</figcaption></figure></div>
+        </div>
+      </div>
+
       <div id="aac-mapa-wrap" class="hidden">
         <div class="plano-toolbar">
           <span class="plano-toolbar-title">🗺️ Mapa Interactivo de Equipos de Aire — AEP</span>
@@ -2670,7 +2748,7 @@
   <script src="assets/js/uta-specs.js?v=4"></script>
   <script src="assets/js/aac-fichas.js?v=1"></script>
   <script src="assets/js/aac-mapa-data.js?v=4"></script>
-  <script src="assets/js/aac-app.js?v=11"></script>
+  <script src="assets/js/aac-app.js?v=12"></script>
   <script src="assets/js/otros-data.js?v=2"></script>
   <script src="assets/js/otros-app.js?v=4"></script>
   <script src="assets/js/valvulas-data.js?v=1"></script>
