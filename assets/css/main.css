@@ -4051,6 +4051,13 @@ tr:hover .admin-edit-btn { opacity: 1; }
   color: var(--color-sky);
   font-weight: 600;
 }
+.prog-ot-sistema {
+  font-size: 10px;
+  color: var(--color-primary);
+  opacity: .85;
+  font-family: 'Courier New', monospace;
+  overflow-wrap: break-word;
+}
 .prog-altura-badge {
   font-size: 13px;
   flex-shrink: 0;

@@ -1053,11 +1053,20 @@ function renderProgGuardias() {
     const eqSisEnGuardia = items.filter(o => progSistemaDeEquipo(o.equipo)).length;
 
     const rows = items.length
-      ? items.map(o => `
+      ? items.map(o => {
+          const sisFila = progSistemaDeEquipo(o.equipo);
+          const sisTxt  = sisFila ? (() => {
+            const cargados   = sisMiembrosEsteMes[sisFila.id] || new Set();
+            const allUnits   = [sisFila.cabeza, ...sisFila.miembros];
+            const unitsTxt   = allUnits.map(u => (cargados.has(u) ? '✓' : '○') + ' ' + u).join(' · ');
+            return `<span class="prog-ot-sistema">🔗 ${sisFila.nombre}: ${unitsTxt}</span>`;
+          })() : '';
+          return `
           <div class="prog-ot-row">
             <div class="prog-ot-info">
               <span class="prog-ot-equipo">${o.equipo}</span>
               <span class="prog-ot-denom" title="${o.denominacion}">${o.denominacion || '—'}</span>
+              ${sisTxt}
               <span class="prog-ot-zona">📍 ${o.zona}</span>
             </div>
             ${progGamaBadge(o)}
@@ -1077,7 +1086,7 @@ function renderProgGuardias() {
               ${progOrdenGuardias().map(n => `<option value="${n}" ${n === o.guardia ? 'selected' : ''}>${progOpcionGuardiaTxt(n)}</option>`).join('')}
             </select>
           </div>
-        `).join('')
+        `; }).join('')
       : `<p class="prog-guardia-empty">Sin equipos asignados${hayFiltrosActivos ? ' (con los filtros actuales)' : ''}.</p>`;
 
     return `
@@ -1102,11 +1111,20 @@ function renderProgGuardias() {
           <span class="prog-guardia-count"><b>${sinAsignar.length} OT${sinAsignar.length === 1 ? '' : 's'}</b> — asignales una guardia con el desplegable</span>
         </div>
         <div class="prog-guardia-list">
-          ${sinAsignar.map(o => `
+          ${sinAsignar.map(o => {
+            const sisFila2 = progSistemaDeEquipo(o.equipo);
+            const sisTxt2  = sisFila2 ? (() => {
+              const cargados2  = sisMiembrosEsteMes[sisFila2.id] || new Set();
+              const allUnits2  = [sisFila2.cabeza, ...sisFila2.miembros];
+              const unitsTxt2  = allUnits2.map(u => (cargados2.has(u) ? '✓' : '○') + ' ' + u).join(' · ');
+              return `<span class="prog-ot-sistema">🔗 ${sisFila2.nombre}: ${unitsTxt2}</span>`;
+            })() : '';
+            return `
             <div class="prog-ot-row">
               <div class="prog-ot-info">
                 <span class="prog-ot-equipo">${o.equipo}</span>
                 <span class="prog-ot-denom" title="${o.denominacion}">${o.denominacion || '—'}</span>
+                ${sisTxt2}
                 <span class="prog-ot-zona">📍 ${o.zona}</span>
               </div>
               ${progGamaBadge(o)}
@@ -1117,7 +1135,7 @@ function renderProgGuardias() {
                 <option value="" selected>— Sin asignar —</option>
                 ${progOrdenGuardias().map(n => `<option value="${n}">${progOpcionGuardiaTxt(n)}</option>`).join('')}
               </select>
-            </div>`).join('')}
+            </div>`;}).join('')}
         </div>
       </div>`;
   }
@@ -1816,13 +1834,23 @@ function progMailGuardiaTexto(g) {
     const haySalasTec  = salasTecSis.length || salasTecSuel.length;
 
     const printSistema = x => {
-      const p        = progPeriodicidadSistema(x.ots);
-      const intOTs   = x.sis.miembros.filter(m => x.equipos.has(m));
-      const faltanN  = x.sis.miembros.length + 1 - x.equipos.size;
-      const altStr   = x.ots.some(o => o.esAltura) ? ' ⛰️' : '';
-      L.push(`  · ${x.sis.cabeza} ${x.sis.nombre}${altStr} — ${p.txt}`);
-      const eqTxt = x.sis.cabeza + ' (cond.)' + (intOTs.length ? ' + ' + intOTs.join(', ') : '');
-      L.push(`      ${eqTxt}${faltanN > 0 ? ` (+${faltanN} sin OT este mes)` : ''}`);
+      const p       = progPeriodicidadSistema(x.ots);
+      const faltanN = x.sis.miembros.length + 1 - x.equipos.size;
+      const altStr  = x.ots.some(o => o.esAltura) ? ' ⛰️' : '';
+      const incoTxt = faltanN > 0 ? ` ⚠ ${faltanN} sin OT este mes` : '';
+      L.push(`  📦 ${x.sis.nombre}${x.sector ? ' — ' + x.sector : ''}${altStr} — ${p.txt}${incoTxt}`);
+      /* condensadora */
+      const altCab = x.ots.find(o => o.equipo === x.sis.cabeza)?.esAltura ? ' ⛰️' : '';
+      L.push(`      ✓ ${x.sis.cabeza} — condensadora${altCab}`);
+      /* interiores */
+      x.sis.miembros.forEach(m => {
+        if (x.equipos.has(m)) {
+          const altInt = x.ots.find(o => o.equipo === m)?.esAltura ? ' ⛰️' : '';
+          L.push(`      ✓ ${m} — interior${altInt}`);
+        } else {
+          L.push(`      ○ ${m} — interior (sin OT este mes)`);
+        }
+      });
     };
     const printSuelto = o => {
       L.push(`  · ${o.equipo} — ${o.denominacion || ''}${o.esAltura ? ' ⛰️' : ''} — ${progPeriodicidadCorta(o)}`);
