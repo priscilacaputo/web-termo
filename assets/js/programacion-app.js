@@ -1073,6 +1073,7 @@ function renderProgGuardias() {
             })()}
             ${o.regla ? `<span class="prog-regla-badge ${o.turno === 'noche' ? 'noche' : 'manana'}">${o.turno === 'noche' ? '🌙' : '☀️'} ${o.regla}</span>` : `<span class="prog-regla-badge libre">✏️ Sin regla</span>`}
             <select class="prog-ot-select" data-id="${o.id}">
+              <option value="" ${o.guardia == null ? 'selected' : ''}>— Sin asignar —</option>
               ${progOrdenGuardias().map(n => `<option value="${n}" ${n === o.guardia ? 'selected' : ''}>${progOpcionGuardiaTxt(n)}</option>`).join('')}
             </select>
           </div>
@@ -1091,11 +1092,41 @@ function renderProgGuardias() {
     `;
   }).join('');
 
+  /* ── Tarjeta de OTs sin guardia asignada ── */
+  const sinAsignar = filtradas.filter(o => o.guardia == null);
+  if (sinAsignar.length) {
+    wrap.innerHTML += `
+      <div class="prog-guardia-card" style="border-color:#f59e0b;opacity:.92">
+        <div class="prog-guardia-header">
+          <span class="prog-guardia-name" style="color:#b45309">⚠ Sin asignar</span>
+          <span class="prog-guardia-count"><b>${sinAsignar.length} OT${sinAsignar.length === 1 ? '' : 's'}</b> — asignales una guardia con el desplegable</span>
+        </div>
+        <div class="prog-guardia-list">
+          ${sinAsignar.map(o => `
+            <div class="prog-ot-row">
+              <div class="prog-ot-info">
+                <span class="prog-ot-equipo">${o.equipo}</span>
+                <span class="prog-ot-denom" title="${o.denominacion}">${o.denominacion || '—'}</span>
+                <span class="prog-ot-zona">📍 ${o.zona}</span>
+              </div>
+              ${progGamaBadge(o)}
+              ${o.prio ? `<span class="prog-regla-badge ${o.prio === 1 ? 'noche' : o.prio === 2 ? 'manana' : 'libre'}">P${o.prio}</span>` : ''}
+              ${o.esAltura ? `<span class="prog-altura-badge">⛰️</span>` : ''}
+              ${o.regla ? `<span class="prog-regla-badge ${o.turno === 'noche' ? 'noche' : 'manana'}">${o.turno === 'noche' ? '🌙' : '☀️'} ${o.regla}</span>` : ''}
+              <select class="prog-ot-select" data-id="${o.id}">
+                <option value="" selected>— Sin asignar —</option>
+                ${progOrdenGuardias().map(n => `<option value="${n}">${progOpcionGuardiaTxt(n)}</option>`).join('')}
+              </select>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
   wrap.querySelectorAll('.prog-ot-select').forEach(sel => {
     sel.addEventListener('change', function () {
       const ot = progState.ots.find(o => o.id === this.dataset.id);
       if (ot) {
-        ot.guardia = parseInt(this.value, 10);
+        ot.guardia = this.value === '' ? null : parseInt(this.value, 10);
         progSincronizarMangas(progState.ots);
         progSincronizarSistemasAire(progState.ots, null, ot);
         progSave();
