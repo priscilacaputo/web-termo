@@ -1705,20 +1705,203 @@ function renderProgResumenPrioridad() {
     </div>`;
 }
 
-/* ─── Mail para cada guardia: mangas + altura + tareas adicionales + OTs prioritarias ─── */
+/* ─── Helpers de clasificación para el mail ────────────────────────── */
+function progEsSalaTecnicaO(o) {
+  const rec = progGetEquipoIndex()[o.equipo] || {};
+  const sector = String(rec.sector || '').toLowerCase();
+  const denom  = String(o.denominacion || rec.denominacion || '').toLowerCase();
+  return /sala.?t[eé]c/.test(sector) || /sala.?t[eé]c/.test(denom);
+}
+function progEsCarruselO(o) {
+  const rec  = progGetEquipoIndex()[o.equipo] || {};
+  const tipo = String(rec.tipo || rec.clase || '').toUpperCase();
+  const denom = String(o.denominacion || rec.denominacion || '').toLowerCase();
+  return tipo === 'TT' || tipo === 'CAR' || /carrusel/.test(denom);
+}
+
+/* ─── Mail para cada guardia: vista completa de Aire y Mecánicos ─── */
 function progMailGuardiaTexto(g) {
-  const mes = progMesLegible(progState.otsMes || progState.mes);
+  const mes   = progMesLegible(progState.otsMes || progState.mes);
   const turno = PROG_GUARDIA_TURNO[g] === 'noche' ? 'Noche' : 'Mañana';
-  const cuerpo = f => f(g).split('\n').slice(2).join('\n').trim();   // sin el título, que ya va en el encabezado
-  return [
-    `Hola, equipo de ${PROG_GUARDIAS[g]}:`, '',
-    `Les paso lo que les toca en la programación de OTs de ${mes} (turno ${turno}).`, '',
-    '━━━ 🛬 MANGAS ━━━', cuerpo(progMangasTexto), '',
-    '━━━ ⛰️ OTs DE ALTURA ━━━', cuerpo(progAlturaTexto), '',
-    '━━━ ➕ OTs CON TAREAS ADICIONALES AL MANTENIMIENTO BÁSICO ━━━', cuerpo(progAdicionalesTexto), '',
-    '━━━ 🚩 OTs A PRIORIZAR A PRINCIPIO DE MES ━━━', cuerpo(progPrioTexto), '',
-    'Cualquier duda con alguna OT, avisen.', 'Saludos.',
-  ].join('\n');
+  const idx   = progGetEquipoIndex();
+
+  const mOTs    = progState.ots.filter(o => o.guardia === g);
+  const aireOTs = mOTs.filter(o => o.grupo === 'aire');
+  const mecOTs  = mOTs.filter(o => o.grupo === 'mecanico');
+
+  const L = [];
+  L.push(`Hola, equipo de ${PROG_GUARDIAS[g]}:`);
+  L.push('');
+  L.push(`Les paso la programación de OTs de ${mes} (turno ${turno}).`);
+  L.push(`Tienen ${mOTs.length} OT${mOTs.length === 1 ? '' : 's'} en total: ${aireOTs.length} de aire y ${mecOTs.length} de mecánicos.`);
+
+  /* ── Prioridades SAP altas ─ van al principio como advertencia ── */
+  const prioAlta = mOTs.filter(o => o.prio && o.prio <= progPrioCorte());
+  if (prioAlta.length) {
+    L.push('');
+    L.push('⚠ PRIORIDAD ALTA EN SAP — arrancar con estas:');
+    prioAlta
+      .sort((a, b) => a.prio - b.prio || a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
+      .forEach(o => {
+        const rec    = idx[o.equipo] || {};
+        const sector = rec.sector || o.zona || '';
+        L.push(`  · [P${o.prio} ${PROG_PRIO_NOMBRE[o.prio]}] ${o.ot_num ? 'OT ' + o.ot_num + ' · ' : ''}${o.equipo} ${o.denominacion || ''}${sector ? ' — ' + sector : ''}${o.esAltura ? ' ⛰️' : ''}`);
+      });
+  }
+
+  /* ════════════════════════════════════════════
+     💨  SECCIÓN AIRE
+     ════════════════════════════════════════════ */
+  if (aireOTs.length) {
+    L.push('');
+    L.push(`━━━ 💨 AIRE — ${aireOTs.length} OT${aireOTs.length === 1 ? '' : 's'} ━━━`);
+
+    /* Armar sistemas: { sis, sector, ots[], equipos:Set } */
+    const vistosSis  = {};
+    const sistemasInfo = [];
+    const aireNoSis  = [];
+    aireOTs.forEach(o => {
+      const sis = progSistemaDeEquipo(o.equipo);
+      if (sis) {
+        if (!vistosSis[sis.id]) {
+          const rec = idx[sis.cabeza] || {};
+          vistosSis[sis.id] = { sis, sector: rec.sector || '', ots: [], equipos: new Set() };
+          sistemasInfo.push(vistosSis[sis.id]);
+        }
+        vistosSis[sis.id].ots.push(o);
+        vistosSis[sis.id].equipos.add(o.equipo);
+      } else {
+        aireNoSis.push(o);
+      }
+    });
+
+    const esSisSalaTec = x => {
+      const s = x.sector.toLowerCase();
+      return /sala.?t[eé]c/.test(s) || x.ots.some(progEsSalaTecnicaO);
+    };
+    const salasTec  = sistemasInfo.filter(esSisSalaTec);
+    const restoSis  = sistemasInfo.filter(x => !esSisSalaTec(x));
+
+    const printSistema = x => {
+      const p = progPeriodicidadSistema(x.ots);
+      const intOTs  = x.sis.miembros.filter(m => x.equipos.has(m));
+      const faltanN = x.sis.miembros.length + 1 - x.equipos.size;
+      const alturaSis = x.ots.some(o => o.esAltura) ? ' ⛰️' : '';
+      L.push(`  · ${x.sis.cabeza} ${x.sis.nombre}${x.sector ? ' — ' + x.sector : ''}${alturaSis}`);
+      const equiposTxt = x.sis.cabeza + ' (condensadora)' + (intOTs.length ? ' + ' + intOTs.join(', ') : '');
+      L.push(`      Equipos: ${equiposTxt}${faltanN > 0 ? ` (${faltanN} sin OT este mes)` : ''}`);
+      L.push(`      Periodicidad: ${p.txt}`);
+    };
+
+    if (salasTec.length) {
+      L.push('');
+      L.push(`⚡ EMPEZAR POR: Salas Técnicas (${salasTec.length} sistema${salasTec.length === 1 ? '' : 's'})`);
+      salasTec.forEach(printSistema);
+    }
+
+    if (restoSis.length) {
+      L.push('');
+      if (salasTec.length) L.push('Resto de sistemas de aire:');
+      /* Agrupar por sector */
+      const porSector = {};
+      restoSis.forEach(x => {
+        const sec = x.sector || 'Sin sector';
+        (porSector[sec] = porSector[sec] || []).push(x);
+      });
+      Object.keys(porSector).sort().forEach(sec => {
+        if (sec !== 'Sin sector' && Object.keys(porSector).length > 1) L.push(`  📍 ${sec}`);
+        porSector[sec].forEach(printSistema);
+      });
+    }
+
+    /* Equipos de aire sin sistema asignado */
+    if (aireNoSis.length) {
+      L.push('');
+      L.push('Equipos de aire sueltos:');
+      aireNoSis
+        .sort((a, b) => (a.zona || '').localeCompare(b.zona || '') || a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
+        .forEach(o => {
+          const rec = idx[o.equipo] || {};
+          const sector = rec.sector || o.zona || '';
+          L.push(`  · ${o.equipo} ${o.denominacion || ''}${sector ? ' — ' + sector : ''} — ${progPeriodicidadCorta(o)}${o.esAltura ? ' ⛰️' : ''}`);
+        });
+    }
+
+    if (!salasTec.length && !restoSis.length && !aireNoSis.length) {
+      L.push('  Sin OTs de aire este mes.');
+    }
+  }
+
+  /* ════════════════════════════════════════════
+     🔧  SECCIÓN MECÁNICOS
+     ════════════════════════════════════════════ */
+  if (mecOTs.length) {
+    L.push('');
+    L.push(`━━━ 🔧 MECÁNICOS — ${mecOTs.length} OT${mecOTs.length === 1 ? '' : 's'} ━━━`);
+
+    const carruseles = mecOTs.filter(progEsCarruselO);
+    const mangaOTs   = mecOTs.filter(o => {
+      const man = progMangaDeEquipo(o.equipo);
+      return man != null || String(o.equipo).toUpperCase().startsWith('MAN');
+    });
+    const mangaSet  = new Set(mangaOTs.map(o => o.equipo));
+    const carruselSet = new Set(carruseles.map(o => o.equipo));
+    const resto     = mecOTs.filter(o => !carruselSet.has(o.equipo) && !mangaSet.has(o.equipo));
+
+    /* ── Carruseles ── */
+    if (carruseles.length) {
+      L.push('');
+      L.push(`⚡ EMPEZAR POR: Carruseles (${carruseles.length} OT${carruseles.length === 1 ? '' : 's'})`);
+      carruseles
+        .sort((a, b) => a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
+        .forEach(o => {
+          const rec = idx[o.equipo] || {};
+          const sector = rec.sector || o.zona || '';
+          L.push(`  · ${o.ot_num ? 'OT ' + o.ot_num + ' · ' : ''}${o.equipo} ${o.denominacion || ''}${sector ? ' — ' + sector : ''} — ${progPeriodicidadCorta(o)}${o.esAltura ? ' ⛰️' : ''}`);
+        });
+    }
+
+    /* ── Mangas ── */
+    if (mangaOTs.length) {
+      L.push('');
+      L.push(`🛬 Mangas de embarque (${mangaOTs.length} OT${mangaOTs.length === 1 ? '' : 's'})`);
+      const porManga = {};
+      mangaOTs.forEach(o => {
+        const man   = progMangaDeEquipo(o.equipo) || (String(o.equipo).toUpperCase().startsWith('MAN') ? o.equipo : null);
+        const label = man ? (PROG_MANGA_LABELS[man] || man) : 'Manga';
+        (porManga[label] = porManga[label] || []).push(o);
+      });
+      Object.keys(porManga).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).forEach(label => {
+        const equipos = porManga[label].map(o => o.equipo).join(', ');
+        L.push(`  · ${label}: ${equipos}`);
+      });
+    }
+
+    /* ── Resto agrupado por zona ── */
+    if (resto.length) {
+      L.push('');
+      if (carruseles.length || mangaOTs.length) L.push('Resto de mecánicos:');
+      const porZona = {};
+      resto.forEach(o => {
+        const z = o.zona || 'Sin zona';
+        (porZona[z] = porZona[z] || []).push(o);
+      });
+      Object.keys(porZona).sort().forEach(zona => {
+        const ots = porZona[zona];
+        L.push(`  📍 ${zona} (${ots.length} OT${ots.length === 1 ? '' : 's'})`);
+        ots
+          .sort((a, b) => a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
+          .forEach(o => {
+            L.push(`    · ${o.ot_num ? 'OT ' + o.ot_num + ' · ' : ''}${o.equipo} ${o.denominacion || ''} — ${progPeriodicidadCorta(o)}${o.esAltura ? ' ⛰️' : ''}`);
+          });
+      });
+    }
+  }
+
+  L.push('');
+  L.push('Cualquier duda con alguna OT, avisen.');
+  L.push('Saludos.');
+  return L.join('\n');
 }
 function progCopiarMailGuardia(g) { progCopiarTexto(progMailGuardiaTexto(g), `📋 Mail de ${PROG_GUARDIAS[g]} copiado: pegalo en el correo.`); }
 function progAbrirMailGuardia(g) {
@@ -1733,24 +1916,36 @@ function renderProgMailGuardias() {
   if (!wrap) return;
   if (!progState.ots.length) { wrap.innerHTML = ''; return; }
   const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const mg = progMangasPorGuardia(), al = progAlturaPorGuardia(), ad = progAdicionalesPorGuardia(), pr = progPrioPorGuardia();
   wrap.innerHTML = `
     <div class="table-card" style="margin-top:20px">
       <div style="padding:14px 16px;border-bottom:1px solid var(--color-border)">
         <div style="font-weight:800;font-size:14px">✉ Mail para cada guardia · ${esc(progMesLegible(progState.otsMes || progState.mes))}</div>
-        <div style="font-size:12px;color:var(--color-muted)">Un mail por guardia con sus mangas, OTs de altura, OTs con tareas adicionales y OTs a priorizar a principio de mes. "Abrir en el mail" copia el texto y abre un correo nuevo para pegarlo.</div>
+        <div style="font-size:12px;color:var(--color-muted)">Un mail por guardia con todas sus OTs de aire (sistemas por sector, salas técnicas primero) y mecánicos (carruseles primero, luego mangas, resto por zona). "Abrir en el mail" copia el texto y abre un correo nuevo para pegarlo.</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;padding:14px 16px">
-        ${progOrdenGuardias().map((g, i) => `
+        ${progOrdenGuardias().map(g => {
+          const mOTs    = progState.ots.filter(o => o.guardia === g);
+          const aireN   = mOTs.filter(o => o.grupo === 'aire').length;
+          const mecN    = mOTs.filter(o => o.grupo === 'mecanico').length;
+          const sisN    = new Set(mOTs.map(o => { const s = progSistemaDeEquipo(o.equipo); return s && s.id; }).filter(Boolean)).size;
+          const carrN   = mOTs.filter(progEsCarruselO).length;
+          const prioN   = mOTs.filter(o => o.prio && o.prio <= progPrioCorte()).length;
+          const salaN   = mOTs.filter(o => o.grupo === 'aire' && progEsSalaTecnicaO(o)).length;
+          return `
           <div style="border:1px solid var(--color-border);border-radius:10px;padding:10px 12px">
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px">
               <b style="font-size:13.5px;color:var(--color-primary)">${esc(PROG_GUARDIAS[g])}</b>
               <span class="turno-badge ${PROG_GUARDIA_TURNO[g] === 'noche' ? 'noche' : 'manana'}">${PROG_GUARDIA_TURNO[g] === 'noche' ? '🌙 Noche' : '☀️ Mañana'}</span>
             </div>
-            <div style="font-size:12px;color:var(--color-muted);margin-bottom:8px">🛬 ${mg[i].mangas.length} mangas · ⛰️ ${al[i].aire.length + al[i].mec.length} altura · ➕ ${ad[i].ots.length} adicionales · 🚩 ${pr[i].ots.length} prioritarias</div>
+            <div style="font-size:12px;color:var(--color-muted);margin-bottom:8px;line-height:1.6">
+              💨 ${aireN} aire (${sisN} sistemas${salaN ? ', <b>' + salaN + ' sala tec.</b>' : ''})
+              · 🔧 ${mecN} mecánicos${carrN ? ' (<b>' + carrN + ' carrusel' + (carrN === 1 ? '' : 'es') + '</b>)' : ''}
+              ${prioN ? `· 🚩 <b>${prioN} prioritaria${prioN === 1 ? '' : 's'}</b>` : ''}
+            </div>
             <button class="prog-btn" onclick="progCopiarMailGuardia(${g})">📋 Copiar mail</button>
             <button class="prog-btn prog-btn-primary" onclick="progAbrirMailGuardia(${g})">✉ Abrir en el mail</button>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
       </div>
     </div>`;
 }
