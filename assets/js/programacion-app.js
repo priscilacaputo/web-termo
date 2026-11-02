@@ -1759,26 +1759,13 @@ function progMailGuardiaTexto(g) {
   const mOTs    = progState.ots.filter(o => o.guardia === g);
   const aireOTs = mOTs.filter(o => o.grupo === 'aire');
   const mecOTs  = mOTs.filter(o => o.grupo === 'mecanico');
+  const sep     = '─────────────────────────────────────────';
 
   const L = [];
   L.push(`Hola, equipo de ${PROG_GUARDIAS[g]}:`);
   L.push('');
   L.push(`Les paso la programación de OTs de ${mes} (turno ${turno}).`);
   L.push(`Tienen ${mOTs.length} OT${mOTs.length === 1 ? '' : 's'} en total: ${aireOTs.length} de aire y ${mecOTs.length} de mecánicos.`);
-
-  /* ── Prioridades SAP altas ─ van al principio como advertencia ── */
-  const prioAlta = mOTs.filter(o => o.prio && o.prio <= progPrioCorte());
-  if (prioAlta.length) {
-    L.push('');
-    L.push('⚠ PRIORIDAD ALTA EN SAP — arrancar con estas:');
-    prioAlta
-      .sort((a, b) => a.prio - b.prio || a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
-      .forEach(o => {
-        const rec    = idx[o.equipo] || {};
-        const sector = rec.sector || o.zona || '';
-        L.push(`  · [P${o.prio} ${PROG_PRIO_NOMBRE[o.prio]}] ${o.ot_num ? 'OT ' + o.ot_num + ' · ' : ''}${o.equipo} ${o.denominacion || ''}${sector ? ' — ' + sector : ''}${o.esAltura ? ' ⛰️' : ''}`);
-      });
-  }
 
   /* ════════════════════════════════════════════
      💨  SECCIÓN AIRE
@@ -1787,16 +1774,31 @@ function progMailGuardiaTexto(g) {
     L.push('');
     L.push(`━━━ 💨 AIRE — ${aireOTs.length} OT${aireOTs.length === 1 ? '' : 's'} ━━━`);
 
-    /* Armar sistemas: { sis, sector, ots[], equipos:Set } */
-    const vistosSis  = {};
+    /* Prioridades SAP dentro de la sección */
+    const airePrio = aireOTs.filter(o => o.prio && o.prio <= progPrioCorte());
+    if (airePrio.length) {
+      L.push('');
+      L.push(`⚠ Prioridades SAP — hacer primero (${airePrio.length} OT${airePrio.length === 1 ? '' : 's'}):`);
+      airePrio
+        .sort((a, b) => a.prio - b.prio || a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
+        .forEach(o => {
+          const rec    = idx[o.equipo] || {};
+          const sector = rec.sector || o.zona || '';
+          L.push(`  [P${o.prio}] ${o.equipo} — ${o.denominacion || ''}${sector ? ' — ' + sector : ''}${o.esAltura ? ' ⛰️' : ''}`);
+        });
+      L.push(sep);
+    }
+
+    /* Armar índice de sistemas VRF */
+    const vistosSis    = {};
     const sistemasInfo = [];
-    const aireNoSis  = [];
+    const aireNoSis    = [];
     aireOTs.forEach(o => {
       const sis = progSistemaDeEquipo(o.equipo);
       if (sis) {
         if (!vistosSis[sis.id]) {
           const rec = idx[sis.cabeza] || {};
-          vistosSis[sis.id] = { sis, sector: rec.sector || '', ots: [], equipos: new Set() };
+          vistosSis[sis.id] = { sis, sector: rec.sector || o.zona || '', ots: [], equipos: new Set() };
           sistemasInfo.push(vistosSis[sis.id]);
         }
         vistosSis[sis.id].ots.push(o);
@@ -1806,70 +1808,57 @@ function progMailGuardiaTexto(g) {
       }
     });
 
-    const esSisSalaTec = x => {
-      const s = x.sector.toLowerCase();
-      return /sala.?t[eé]c/.test(s) || x.ots.some(progEsSalaTecnicaO);
-    };
-    const salasTecSis   = sistemasInfo.filter(esSisSalaTec);
-    const restoSis      = sistemasInfo.filter(x => !esSisSalaTec(x));
-    /* Splits/equipos sueltos de sala técnica también van al bloque de prioridad */
-    const salasTecSuel  = aireNoSis.filter(progEsSalaTecnicaO);
-    const restoNoSis    = aireNoSis.filter(o => !progEsSalaTecnicaO(o));
-    const haySalasTec   = salasTecSis.length || salasTecSuel.length;
+    const esSisSalaTec = x => /sala.?t[eé]c/.test(x.sector.toLowerCase()) || x.ots.some(progEsSalaTecnicaO);
+    const salasTecSis  = sistemasInfo.filter(esSisSalaTec);
+    const restoSis     = sistemasInfo.filter(x => !esSisSalaTec(x));
+    const salasTecSuel = aireNoSis.filter(progEsSalaTecnicaO);
+    const restoNoSis   = aireNoSis.filter(o => !progEsSalaTecnicaO(o));
+    const haySalasTec  = salasTecSis.length || salasTecSuel.length;
 
     const printSistema = x => {
-      const p = progPeriodicidadSistema(x.ots);
-      const intOTs  = x.sis.miembros.filter(m => x.equipos.has(m));
-      const faltanN = x.sis.miembros.length + 1 - x.equipos.size;
-      const alturaSis = x.ots.some(o => o.esAltura) ? ' ⛰️' : '';
-      L.push(`  · ${x.sis.cabeza} ${x.sis.nombre}${x.sector ? ' — ' + x.sector : ''}${alturaSis}`);
-      const equiposTxt = x.sis.cabeza + ' (condensadora)' + (intOTs.length ? ' + ' + intOTs.join(', ') : '');
-      L.push(`      Equipos: ${equiposTxt}${faltanN > 0 ? ` (${faltanN} sin OT este mes)` : ''}`);
-      L.push(`      Periodicidad: ${p.txt}`);
+      const p        = progPeriodicidadSistema(x.ots);
+      const intOTs   = x.sis.miembros.filter(m => x.equipos.has(m));
+      const faltanN  = x.sis.miembros.length + 1 - x.equipos.size;
+      const altStr   = x.ots.some(o => o.esAltura) ? ' ⛰️' : '';
+      L.push(`  · ${x.sis.cabeza} ${x.sis.nombre}${altStr} — ${p.txt}`);
+      const eqTxt = x.sis.cabeza + ' (cond.)' + (intOTs.length ? ' + ' + intOTs.join(', ') : '');
+      L.push(`      ${eqTxt}${faltanN > 0 ? ` (+${faltanN} sin OT este mes)` : ''}`);
     };
     const printSuelto = o => {
-      const rec = idx[o.equipo] || {};
-      const sector = rec.sector || o.zona || '';
-      L.push(`  · ${o.equipo} ${o.denominacion || ''}${sector ? ' — ' + sector : ''} — ${progPeriodicidadCorta(o)}${o.esAltura ? ' ⛰️' : ''}`);
+      L.push(`  · ${o.equipo} — ${o.denominacion || ''}${o.esAltura ? ' ⛰️' : ''} — ${progPeriodicidadCorta(o)}`);
     };
 
+    /* ⚡ Salas técnicas primero */
     if (haySalasTec) {
-      const nTotal = salasTecSis.length + salasTecSuel.length;
       L.push('');
-      L.push(`⚡ EMPEZAR POR: Salas Técnicas (${nTotal} equipo${nTotal === 1 ? '' : 's'})`);
+      L.push(`⚡ Salas Técnicas — empezar por acá (${salasTecSis.length + salasTecSuel.length}):`);
       salasTecSis.forEach(printSistema);
       salasTecSuel
         .sort((a, b) => a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
         .forEach(printSuelto);
     }
 
-    if (restoSis.length) {
+    /* Agrupar el resto por sector (sistemas + sueltos juntos) */
+    const porSectorAire = {};
+    restoSis.forEach(x => {
+      const sec = x.sector || 'Sin sector';
+      (porSectorAire[sec] = porSectorAire[sec] || { sistemas: [], sueltos: [] }).sistemas.push(x);
+    });
+    restoNoSis.forEach(o => {
+      const rec = idx[o.equipo] || {};
+      const sec = rec.sector || o.zona || 'Sin sector';
+      (porSectorAire[sec] = porSectorAire[sec] || { sistemas: [], sueltos: [] }).sueltos.push(o);
+    });
+    Object.keys(porSectorAire).sort().forEach(sec => {
+      const grp   = porSectorAire[sec];
+      const total = grp.sistemas.length + grp.sueltos.length;
       L.push('');
-      if (haySalasTec) L.push('Resto de sistemas de aire:');
-      /* Agrupar por sector */
-      const porSector = {};
-      restoSis.forEach(x => {
-        const sec = x.sector || 'Sin sector';
-        (porSector[sec] = porSector[sec] || []).push(x);
-      });
-      Object.keys(porSector).sort().forEach(sec => {
-        if (sec !== 'Sin sector' && Object.keys(porSector).length > 1) L.push(`  📍 ${sec}`);
-        porSector[sec].forEach(printSistema);
-      });
-    }
-
-    /* Equipos de aire sueltos que no son sala técnica */
-    if (restoNoSis.length) {
-      L.push('');
-      if (haySalasTec || restoSis.length) L.push('Equipos de aire sueltos:');
-      restoNoSis
-        .sort((a, b) => (a.zona || '').localeCompare(b.zona || '') || a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
+      L.push(`📍 ${sec} (${total} OT${total === 1 ? '' : 's'})`);
+      grp.sistemas.forEach(printSistema);
+      grp.sueltos
+        .sort((a, b) => a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
         .forEach(printSuelto);
-    }
-
-    if (!haySalasTec && !restoSis.length && !restoNoSis.length) {
-      L.push('  Sin OTs de aire este mes.');
-    }
+    });
   }
 
   /* ════════════════════════════════════════════
@@ -1879,32 +1868,44 @@ function progMailGuardiaTexto(g) {
     L.push('');
     L.push(`━━━ 🔧 MECÁNICOS — ${mecOTs.length} OT${mecOTs.length === 1 ? '' : 's'} ━━━`);
 
-    const carruseles = mecOTs.filter(progEsCarruselO);
-    const mangaOTs   = mecOTs.filter(o => {
-      const man = progMangaDeEquipo(o.equipo);
-      return man != null || String(o.equipo).toUpperCase().startsWith('MAN');
-    });
-    const mangaSet  = new Set(mangaOTs.map(o => o.equipo));
-    const carruselSet = new Set(carruseles.map(o => o.equipo));
-    const resto     = mecOTs.filter(o => !carruselSet.has(o.equipo) && !mangaSet.has(o.equipo));
+    /* Prioridades SAP dentro de la sección */
+    const mecPrio = mecOTs.filter(o => o.prio && o.prio <= progPrioCorte());
+    if (mecPrio.length) {
+      L.push('');
+      L.push(`⚠ Prioridades SAP — hacer primero (${mecPrio.length} OT${mecPrio.length === 1 ? '' : 's'}):`);
+      mecPrio
+        .sort((a, b) => a.prio - b.prio || a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
+        .forEach(o => {
+          const rec    = idx[o.equipo] || {};
+          const sector = rec.sector || o.zona || '';
+          L.push(`  [P${o.prio}] ${o.equipo} — ${o.denominacion || ''}${sector ? ' — ' + sector : ''}${o.esAltura ? ' ⛰️' : ''}`);
+        });
+      L.push(sep);
+    }
 
-    /* ── Carruseles ── */
+    const carruseles  = mecOTs.filter(progEsCarruselO);
+    const mangaOTs    = mecOTs.filter(o => progMangaDeEquipo(o.equipo) != null || String(o.equipo).toUpperCase().startsWith('MAN'));
+    const mangaSet    = new Set(mangaOTs.map(o => o.equipo));
+    const carruselSet = new Set(carruseles.map(o => o.equipo));
+    const resto       = mecOTs.filter(o => !carruselSet.has(o.equipo) && !mangaSet.has(o.equipo));
+
+    /* ⚡ Carruseles primero */
     if (carruseles.length) {
       L.push('');
-      L.push(`⚡ EMPEZAR POR: Carruseles (${carruseles.length} OT${carruseles.length === 1 ? '' : 's'})`);
+      L.push(`⚡ Carruseles — hacer antes (${carruseles.length} OT${carruseles.length === 1 ? '' : 's'}):`);
       carruseles
         .sort((a, b) => a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
         .forEach(o => {
-          const rec = idx[o.equipo] || {};
+          const rec    = idx[o.equipo] || {};
           const sector = rec.sector || o.zona || '';
-          L.push(`  · ${o.ot_num ? 'OT ' + o.ot_num + ' · ' : ''}${o.equipo} ${o.denominacion || ''}${sector ? ' — ' + sector : ''} — ${progPeriodicidadCorta(o)}${o.esAltura ? ' ⛰️' : ''}`);
+          L.push(`  · ${o.equipo} — ${o.denominacion || ''}${sector ? ' — ' + sector : ''} — ${progPeriodicidadCorta(o)}${o.esAltura ? ' ⛰️' : ''}`);
         });
     }
 
-    /* ── Mangas ── */
+    /* 🛬 Mangas */
     if (mangaOTs.length) {
       L.push('');
-      L.push(`🛬 Mangas de embarque (${mangaOTs.length} OT${mangaOTs.length === 1 ? '' : 's'})`);
+      L.push(`🛬 Mangas de embarque (${mangaOTs.length} OT${mangaOTs.length === 1 ? '' : 's'}):`);
       const porManga = {};
       mangaOTs.forEach(o => {
         const man   = progMangaDeEquipo(o.equipo) || (String(o.equipo).toUpperCase().startsWith('MAN') ? o.equipo : null);
@@ -1912,27 +1913,23 @@ function progMailGuardiaTexto(g) {
         (porManga[label] = porManga[label] || []).push(o);
       });
       Object.keys(porManga).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).forEach(label => {
-        const equipos = porManga[label].map(o => o.equipo).join(', ');
-        L.push(`  · ${label}: ${equipos}`);
+        const eqs = porManga[label].map(o => `${o.equipo}${o.esAltura ? ' ⛰️' : ''}`).join(', ');
+        L.push(`  · ${label}: ${eqs}`);
       });
     }
 
-    /* ── Resto agrupado por zona ── */
+    /* Resto por zona */
     if (resto.length) {
-      L.push('');
-      if (carruseles.length || mangaOTs.length) L.push('Resto de mecánicos:');
       const porZona = {};
-      resto.forEach(o => {
-        const z = o.zona || 'Sin zona';
-        (porZona[z] = porZona[z] || []).push(o);
-      });
+      resto.forEach(o => { (porZona[o.zona || 'Sin zona'] = porZona[o.zona || 'Sin zona'] || []).push(o); });
       Object.keys(porZona).sort().forEach(zona => {
         const ots = porZona[zona];
-        L.push(`  📍 ${zona} (${ots.length} OT${ots.length === 1 ? '' : 's'})`);
+        L.push('');
+        L.push(`📍 ${zona} (${ots.length} OT${ots.length === 1 ? '' : 's'})`);
         ots
           .sort((a, b) => a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
           .forEach(o => {
-            L.push(`    · ${o.ot_num ? 'OT ' + o.ot_num + ' · ' : ''}${o.equipo} ${o.denominacion || ''} — ${progPeriodicidadCorta(o)}${o.esAltura ? ' ⛰️' : ''}`);
+            L.push(`  · ${o.equipo} — ${o.denominacion || ''} — ${progPeriodicidadCorta(o)}${o.esAltura ? ' ⛰️' : ''}`);
           });
       });
     }
