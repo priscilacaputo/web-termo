@@ -856,7 +856,7 @@ function progFiltered() {
     if (progFiltroAltura && !o.esAltura) return false;
     if (progFiltroPrio !== '' && (o.prio || 0) !== Number(progFiltroPrio)) return false;
     if (progSearch) {
-      const hay = (o.equipo + ' ' + o.denominacion).toLowerCase();
+      const hay = (o.equipo + ' ' + o.denominacion + ' ' + (o.textoOT || '')).toLowerCase();
       if (!hay.includes(progSearch)) return false;
     }
     return true;
