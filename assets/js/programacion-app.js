@@ -1775,7 +1775,9 @@ function progMailGuardiaTexto(g) {
   const idx   = progGetEquipoIndex();
 
   const mOTs    = progState.ots.filter(o => o.guardia === g);
-  const aireOTs = mOTs.filter(o => o.grupo === 'aire');
+  const isHidro = o => typeof ALTURA_HIDROLAVADO !== 'undefined' && ALTURA_HIDROLAVADO.has(o.equipo);
+  const aireOTs = mOTs.filter(o => o.grupo === 'aire' && !isHidro(o));
+  const hidroOTs = mOTs.filter(o => o.grupo === 'aire' && isHidro(o));
   const mecOTs  = mOTs.filter(o => o.grupo === 'mecanico');
   const sep     = '─────────────────────────────────────────';
 
@@ -1783,29 +1785,15 @@ function progMailGuardiaTexto(g) {
   L.push(`Hola, equipo de ${PROG_GUARDIAS[g]}:`);
   L.push('');
   L.push(`Les paso la programación de OTs de ${mes} (turno ${turno}).`);
-  L.push(`Tienen ${mOTs.length} OT${mOTs.length === 1 ? '' : 's'} en total: ${aireOTs.length} de aire y ${mecOTs.length} de mecánicos.`);
+  const totalAire = aireOTs.length + hidroOTs.length;
+  L.push(`Tienen ${mOTs.length} OT${mOTs.length === 1 ? '' : 's'} en total: ${totalAire} de aire${hidroOTs.length ? ' (' + hidroOTs.length + ' de hidrolavado)' : ''} y ${mecOTs.length} de mecánicos.`);
 
   /* ════════════════════════════════════════════
      💨  SECCIÓN AIRE
      ════════════════════════════════════════════ */
-  if (aireOTs.length) {
+  if (aireOTs.length || hidroOTs.length) {
     L.push('');
-    L.push(`━━━ 💨 AIRE — ${aireOTs.length} OT${aireOTs.length === 1 ? '' : 's'} ━━━`);
-
-    /* Prioridades SAP dentro de la sección */
-    const airePrio = aireOTs.filter(o => o.prio && o.prio <= progPrioCorte());
-    if (airePrio.length) {
-      L.push('');
-      L.push(`⚠ Prioridades SAP — hacer primero (${airePrio.length} OT${airePrio.length === 1 ? '' : 's'}):`);
-      airePrio
-        .sort((a, b) => a.prio - b.prio || a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
-        .forEach(o => {
-          const rec    = idx[o.equipo] || {};
-          const sector = rec.sector || o.zona || '';
-          L.push(`  [P${o.prio}] ${o.equipo} — ${o.denominacion || ''}${sector ? ' — ' + sector : ''}${o.esAltura ? ' ⛰️' : ''}`);
-        });
-      L.push(sep);
-    }
+    L.push(`━━━ 💨 AIRE — ${totalAire} OT${totalAire === 1 ? '' : 's'} ━━━`);
 
     /* Armar índice de sistemas VRF */
     const vistosSis    = {};
@@ -1836,24 +1824,23 @@ function progMailGuardiaTexto(g) {
     const printSistema = x => {
       const p       = progPeriodicidadSistema(x.ots);
       const faltanN = x.sis.miembros.length + 1 - x.equipos.size;
-      const altStr  = x.ots.some(o => o.esAltura) ? ' ⛰️' : '';
       const incoTxt = faltanN > 0 ? ` ⚠ ${faltanN} sin OT este mes` : '';
-      L.push(`  📦 ${x.sis.nombre}${x.sector ? ' — ' + x.sector : ''}${altStr} — ${p.txt}${incoTxt}`);
+      L.push(`  📦 ${x.sis.nombre}${x.sector ? ' — ' + x.sector : ''} — ${p.txt}${incoTxt}`);
       /* condensadora */
-      const altCab = x.ots.find(o => o.equipo === x.sis.cabeza)?.esAltura ? ' ⛰️' : '';
-      L.push(`      ✓ ${x.sis.cabeza} — condensadora${altCab}`);
+      const otCab = x.ots.find(o => o.equipo === x.sis.cabeza);
+      L.push(`      ✓ ${otCab?.ot_num ? 'OT ' + otCab.ot_num + ' — ' : ''}${x.sis.cabeza} — condensadora`);
       /* interiores */
       x.sis.miembros.forEach(m => {
         if (x.equipos.has(m)) {
-          const altInt = x.ots.find(o => o.equipo === m)?.esAltura ? ' ⛰️' : '';
-          L.push(`      ✓ ${m} — interior${altInt}`);
+          const otInt = x.ots.find(o => o.equipo === m);
+          L.push(`      ✓ ${otInt?.ot_num ? 'OT ' + otInt.ot_num + ' — ' : ''}${m} — interior`);
         } else {
           L.push(`      ○ ${m} — interior (sin OT este mes)`);
         }
       });
     };
     const printSuelto = o => {
-      L.push(`  · ${o.equipo} — ${o.denominacion || ''}${o.esAltura ? ' ⛰️' : ''} — ${progPeriodicidadCorta(o)}`);
+      L.push(`  · ${o.ot_num ? 'OT ' + o.ot_num + ' — ' : ''}${o.equipo} — ${o.denominacion || ''} — ${progPeriodicidadCorta(o)}`);
     };
 
     /* ⚡ Salas técnicas primero */
@@ -1887,6 +1874,19 @@ function progMailGuardiaTexto(g) {
         .sort((a, b) => a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
         .forEach(printSuelto);
     });
+
+    /* 💦 Hidrolavados — Roof Top separados */
+    if (hidroOTs.length) {
+      L.push('');
+      L.push(`💦 Hidrolavados (${hidroOTs.length} OT${hidroOTs.length === 1 ? '' : 's'}):`);
+      hidroOTs
+        .sort((a, b) => a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
+        .forEach(o => {
+          const rec    = idx[o.equipo] || {};
+          const sector = rec.sector || o.zona || '';
+          L.push(`  · ${o.ot_num ? 'OT ' + o.ot_num + ' — ' : ''}${o.equipo} — ${o.denominacion || ''}${sector ? ' — ' + sector : ''}`);
+        });
+    }
   }
 
   /* ════════════════════════════════════════════
@@ -1895,21 +1895,6 @@ function progMailGuardiaTexto(g) {
   if (mecOTs.length) {
     L.push('');
     L.push(`━━━ 🔧 MECÁNICOS — ${mecOTs.length} OT${mecOTs.length === 1 ? '' : 's'} ━━━`);
-
-    /* Prioridades SAP dentro de la sección */
-    const mecPrio = mecOTs.filter(o => o.prio && o.prio <= progPrioCorte());
-    if (mecPrio.length) {
-      L.push('');
-      L.push(`⚠ Prioridades SAP — hacer primero (${mecPrio.length} OT${mecPrio.length === 1 ? '' : 's'}):`);
-      mecPrio
-        .sort((a, b) => a.prio - b.prio || a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
-        .forEach(o => {
-          const rec    = idx[o.equipo] || {};
-          const sector = rec.sector || o.zona || '';
-          L.push(`  [P${o.prio}] ${o.equipo} — ${o.denominacion || ''}${sector ? ' — ' + sector : ''}${o.esAltura ? ' ⛰️' : ''}`);
-        });
-      L.push(sep);
-    }
 
     const carruseles  = mecOTs.filter(progEsCarruselO);
     const mangaOTs    = mecOTs.filter(o => progMangaDeEquipo(o.equipo) != null || String(o.equipo).toUpperCase().startsWith('MAN'));
@@ -1926,7 +1911,7 @@ function progMailGuardiaTexto(g) {
         .forEach(o => {
           const rec    = idx[o.equipo] || {};
           const sector = rec.sector || o.zona || '';
-          L.push(`  · ${o.equipo} — ${o.denominacion || ''}${sector ? ' — ' + sector : ''} — ${progPeriodicidadCorta(o)}${o.esAltura ? ' ⛰️' : ''}`);
+          L.push(`  · ${o.ot_num ? 'OT ' + o.ot_num + ' — ' : ''}${o.equipo} — ${o.denominacion || ''}${sector ? ' — ' + sector : ''} — ${progPeriodicidadCorta(o)}`);
         });
     }
 
@@ -1941,7 +1926,7 @@ function progMailGuardiaTexto(g) {
         (porManga[label] = porManga[label] || []).push(o);
       });
       Object.keys(porManga).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).forEach(label => {
-        const eqs = porManga[label].map(o => `${o.equipo}${o.esAltura ? ' ⛰️' : ''}`).join(', ');
+        const eqs = porManga[label].map(o => `${o.ot_num ? 'OT ' + o.ot_num + ' — ' : ''}${o.equipo}`).join(', ');
         L.push(`  · ${label}: ${eqs}`);
       });
     }
@@ -1957,7 +1942,7 @@ function progMailGuardiaTexto(g) {
         ots
           .sort((a, b) => a.equipo.localeCompare(b.equipo, 'es', { numeric: true }))
           .forEach(o => {
-            L.push(`  · ${o.equipo} — ${o.denominacion || ''} — ${progPeriodicidadCorta(o)}${o.esAltura ? ' ⛰️' : ''}`);
+            L.push(`  · ${o.ot_num ? 'OT ' + o.ot_num + ' — ' : ''}${o.equipo} — ${o.denominacion || ''} — ${progPeriodicidadCorta(o)}`);
           });
       });
     }
