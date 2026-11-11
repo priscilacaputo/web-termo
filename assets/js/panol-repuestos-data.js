@@ -873,12 +873,6 @@ const PANOL_REPUESTOS = [
     { cod: "20206499", nota: "Termostato 2.5 (2KD)" },
     { cod: "20206484", nota: "Alternador 2.5-3.0 sin depresor" },
   ] },
-  { equipo: "AVO305", materiales: [
-    { cod: "20088680", nota: "Kit escobillas limpiaparabrisas Toyota Hilux 2017-2022" },
-    { cod: "20206580", nota: "Cable espiral cinta airbag" },
-    { cod: "20087933", nota: "Funda de asiento (doble cabina)" },
-    { cod: "20206483", nota: "Polea tensor poli V (rango 2.4-2.8, cubre ambos motores)" },
-  ] },
   { equipo: "AVO356", materiales: [
     { cod: "20088680", nota: "Kit escobillas limpiaparabrisas Toyota Hilux 2017-2022" },
     { cod: "20206580", nota: "Cable espiral cinta airbag" },

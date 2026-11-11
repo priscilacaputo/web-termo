@@ -108,11 +108,6 @@ const FLOTA_DATA = [
   /* ── Alta desde export SAP EXPORT_20260828201120; ficha técnica (año, motor,
      chasis) completada 2026-09-10 con el export de flota "avooooo.xlsx" ── */
   {
-    equipo: "AVO305", dominio: "OHP 940", denominacion: "Camioneta",
-    anio: 2015, fabricante: "TOYOTA", tipo: "HILUX L/12 DC DX 4X4",
-    motor: "2KD-A573536", chasis: "8AJFR22G6F4574561"
-  },
-  {
     equipo: "AVO1001", dominio: "AH 148 HE", denominacion: "Camioneta Pañol",
     anio: 2025, fabricante: "PEUGEOT", tipo: "PARTNER CONFORT L/23",
     motor: "10JBGR0045348", chasis: "8AEGC9HP5SG545307"
