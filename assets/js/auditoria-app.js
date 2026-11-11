@@ -1160,7 +1160,7 @@
         objetos: AAC_SISTEMAS.filter((x) => {
           const c = bk([x.cabeza]), i = bk(x.miembros);
           return [...c].some((b) => !i.has(b)) || [...i].some((b) => !c.has(b));
-        }).map((x) => ({ cod: x.cabeza, det: `${x.nombre} — condensadora ${[...bk([x.cabeza])].join('+') || 'sin plan'} · interiores ${[...bk(x.miembros)].join('+') || 'sin plan'}` })),
+        }).map((x) => ({ cod: x.cabeza, det: `${x.nombre} — condensadora ${[...bk([x.cabeza])].join('+') || 'sin plan'} · interiores ${[...bk(x.miembros)].join('+') || 'sin plan'} → elegir una frecuencia y dejar las dos igual` })),
       });
     }
     add({
@@ -1176,7 +1176,7 @@
       titulo: 'Frecuencia que no es un ciclo válido de su estrategia',
       que: 'Ajustar el ciclo del plan a un paquete de la estrategia (o cambiar de estrategia).',
       tx: 'IP02 (ciclo) · IP11 (estrategia)', tab: 'planes',
-      objetos: (P.fueraDePaquete || []).map((d) => ({ cod: 'Plan ' + d.plan, det: `${d.equipo} · ${d.desc} (${d.estr})` })),
+      objetos: (P.fueraDePaquete || []).map((d) => ({ cod: 'Plan ' + d.plan, det: `${d.equipo} · «${d.desc}» — hoy va cada ~${d.realDias} días y la estrategia ${d.estr} solo permite: ${(((typeof ESTRATEGIAS_SAP !== 'undefined' && ESTRATEGIAS_SAP[d.estr]) || {}).paquetes || []).map((q) => q.breve).join(', ') || '—'} → ajustar el ciclo a uno de esos paquetes` })),
     });
 
     /* ─── Hojas de ruta (IA17 / IA02) ─── */
@@ -1201,21 +1201,25 @@
         titulo: 'Hoja de ruta asignada que no parece corresponder al plan',
         que: 'Verificar la hoja de ruta de la posición; si es un error, asignar la correcta.',
         tx: 'IP02 → posición → Hoja de ruta', tab: 'hdr',
-        objetos: H.noCorresponde.map((r) => ({ cod: r.ruta, det: `Plan "${r.desc}" usa «${r.rutaDesc}» · ${eqs(r.equipos)}` })),
+        objetos: H.noCorresponde.map((r) => ({ cod: r.ruta, det: `El plan "${r.desc}" usa la hoja de ruta «${r.rutaDesc}» → verificar si es la correcta; si no, asignarle la que corresponde · ${eqs(r.equipos)}` })),
       });
       add({
         id: 'hr-puestos', area: 'Hojas de ruta', prio: 'media',
         titulo: 'Operaciones o planes con puesto de trabajo distinto de AUX_TER / AUX_MEC / MOEX',
         que: 'Cambiar el puesto de trabajo de la operación (y el puesto responsable del plan) a AUX_TER, AUX_MEC o MOEX.',
         tx: 'IA02 → operación → Puesto de trabajo · IP02 (puesto responsable)', tab: 'ots',
-        objetos: H.puestos.map((f) => ({ cod: `${f.ruta}/${f.cont}`, det: `${f.equipo} · ${f.desc} — puestos a cambiar: ${f.puestos.join(', ')}` })),
+        objetos: H.puestos.map((f) => ({ cod: `${f.ruta}/${f.cont}`, det: `${f.equipo} · ${f.desc} — hoy figura: ${f.puestos.join(', ')} → pasar a AUX_TER, AUX_MEC o MOEX según el tipo de tarea` })),
       });
       add({
         id: 'hr-estandar', area: 'Hojas de ruta', prio: 'media',
         titulo: 'Tareas del estándar del Manual de Mtto que faltan en las hojas de ruta',
         que: 'Agregar las operaciones que faltan (o corregir su frecuencia) en la hoja de ruta. Si el tipo está bien así, marcarlo "Dar por OK" en la pestaña Hojas de ruta.',
         tx: 'IA02 → hoja de ruta → operaciones', tab: 'hdr',
-        objetos: H.estandar.map((g) => ({ cod: g.nombre, det: `${g.falta.length} tareas faltan · ${g.otraFrec} con otra frecuencia — hojas de ruta: ${g.pares.map((x) => x.rc).join(', ')}` })),
+        objetos: H.estandar.map((g) => {
+          const lst = g.falta.slice(0, 5).map((t) => `${t.f ? '[' + t.f + '] ' : ''}${t.t}${t.moex ? ' (MOEX)' : ''}`).join(' | ');
+          const mas = g.falta.length > 5 ? ` | +${g.falta.length - 5} más (ver pestaña Hojas de ruta)` : '';
+          return { cod: g.nombre, det: `Agregar en la hoja de ruta ${g.pares.map((x) => x.rc).join(', ')} ${g.falta.length ? 'las tareas que faltan: ' + lst + mas : ''}${g.otraFrec ? ` · ${g.otraFrec} tarea(s) están con otra frecuencia que el estándar` : ''}` };
+        }),
       });
       add({
         id: 'hr-sin-hr-tipo', area: 'Hojas de ruta', prio: 'baja',
@@ -1240,7 +1244,7 @@
       titulo: 'Equipos con OT que no están en el maestro',
       que: 'Crear el equipo o corregir el equipo de la OT / plan que la genera.',
       tx: 'IE01 · IW32 · IP02', tab: 'ots',
-      objetos: (O.equiposConOTfueraDelMaestro || []).filter((c) => !enMaestro.has(c) && !paraBaja.some((e) => e.equipo === c)).map((c) => ({ cod: c, det: '' })),
+      objetos: (O.equiposConOTfueraDelMaestro || []).filter((c) => !enMaestro.has(c) && !paraBaja.some((e) => e.equipo === c)).map((c) => ({ cod: c, det: (typeof OTS_SAP_POR_EQUIPO !== 'undefined' && OTS_SAP_POR_EQUIPO[c]) ? `${OTS_SAP_POR_EQUIPO[c].n} OT en 2 años (última ${OTS_SAP_POR_EQUIPO[c].ult || '—'}) → crear el equipo o corregir el equipo de esas OT` : '' })),
     });
     if (O.backlogViejo) add({
       id: 'ot-backlog', area: 'Órdenes de trabajo', prio: 'media',
@@ -1261,7 +1265,7 @@
       titulo: 'Repuestos del BOM cargados como texto, sin código SAP',
       que: 'Dar de alta el material (o buscar su código existente) para poder pedirlo y reservarlo en las OT.',
       tx: 'MM01 (crear material) · MM03', tab: 'mat',
-      objetos: (M.bomSinCodigoReal || []).map((c) => ({ cod: c, det: '' })),
+      objetos: (M.bomSinCodigoReal || []).map((c) => ({ cod: c, det: 'Usado en: ' + ((typeof PANOL_REPUESTOS !== 'undefined' ? PANOL_REPUESTOS : []).filter((e) => (e.materiales || []).some((m) => String(m.cod) === c)).map((e) => e.equipo).join(', ') || '—') })),
     });
     add({
       id: 'mat-faltantes', area: 'Materiales', prio: 'media',
@@ -1275,7 +1279,7 @@
       titulo: 'Repuestos del BOM sin clasificación ABC',
       que: 'Cargar la clasificación ABC del material para priorizar su reposición.',
       tx: 'MM02 → vista MRP 1 → Indicador ABC', tab: 'mat',
-      objetos: (M.bomSinABC || []).map((c) => ({ cod: c, det: '' })),
+      objetos: (M.bomSinABC || []).map((c) => ({ cod: c, det: (typeof MM60_BOM !== 'undefined' && MM60_BOM[c]) ? MM60_BOM[c].texto || '' : '' })),
     });
     /* ─── Programación de planes: nivelar la carga mensual (pestaña Capacidad del personal) ─── */
     const N = (typeof nivAccion === 'function') ? nivAccion() : null;
