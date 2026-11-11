@@ -919,7 +919,6 @@ function renderProgramacion() {
   renderProgStats();
   renderProgMangasPanel();
   renderProgGuardias();
-  renderProgResumenSistemas();
   renderProgResumenAltura();
   renderProgResumenAdicionales();
   renderProgResumenMangas();
@@ -1574,33 +1573,38 @@ function progCopiarAdicionales() { progCopiarTexto(progAdicionalesTexto(), '📋
 function renderProgResumenAdicionales() {
   const wrap = document.getElementById('prog-resumen-adicionales');
   if (!wrap) return;
-  const res = progState.ots.length ? progAdicionalesPorGuardia() : [];
-  if (!res.some(r => r.ots.length)) { wrap.innerHTML = ''; return; }
+  const res = progState.ots.length ? progResumenSistemas() : [];
+  const nSis = res.reduce((t, r) => t + r.sistemas.length, 0);
+  if (!nSis) { wrap.innerHTML = ''; return; }
   const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   wrap.innerHTML = `
     <div class="table-card" style="margin-top:20px">
-      <div style="padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-bottom:1px solid var(--color-border)">
-        <div style="flex:1;min-width:240px">
-          <div style="font-weight:800;font-size:14px">➕ OTs con tareas adicionales al mantenimiento básico · ${esc(progMesLegible(progState.otsMes || progState.mes))}</div>
-          <div style="font-size:12px;color:var(--color-muted)">OTs que este mes no son solo el mantenimiento básico: qué tareas se agregan (trimestral, semestral, anual…). Para copiar y pegar en el mail.</div>
-        </div>
-        <button class="prog-btn prog-btn-primary" onclick="progCopiarAdicionales()">📋 Copiar OTs con tareas adicionales</button>
+      <div style="padding:14px 16px;border-bottom:1px solid var(--color-border)">
+        <div style="font-weight:800;font-size:14px">❄️ Sistemas de aire acondicionado por guardia · ${esc(progMesLegible(progState.otsMes || progState.mes))}</div>
+        <div style="font-size:12px;color:var(--color-muted)">Qué sistemas (condensadora + interiores) le toca mantener a cada guardia este mes.</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;padding:14px 16px">
         ${res.map(r => `
           <div style="border:1px solid var(--color-border);border-radius:10px;padding:10px 12px">
-            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:4px">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px">
               <b style="font-size:13.5px;color:var(--color-primary);white-space:nowrap">${esc(PROG_GUARDIAS[r.g])}</b>
               <span class="turno-badge ${r.turno === 'noche' ? 'noche' : 'manana'}">${r.turno === 'noche' ? '🌙 Noche' : '☀️ Mañana'}</span>
-              <span style="margin-left:auto;font-size:12px;color:var(--color-muted);font-weight:700">➕ ${r.ots.length} OT${r.ots.length === 1 ? '' : 's'}</span>
+              <span style="margin-left:auto;font-size:12px;color:var(--color-muted);font-weight:700">❄️ ${r.sistemas.length} sistema${r.sistemas.length === 1 ? '' : 's'}</span>
             </div>
-            ${r.ots.length ? r.ots.map(o => `
-              <div style="font-size:12px;padding:5px 0;border-top:1px solid var(--color-surface)">
-                ${o.ot_num ? `<span style="color:var(--color-muted)">OT ${esc(o.ot_num)}</span> · ` : ''}<b>${esc(o.equipo)}</b> ${esc(o.denominacion || '')}${o.esAltura ? ' <span title="Paga altura">⛰️</span>' : ''}
-                <div style="font-size:11.5px;margin-top:2px"><span style="font-weight:800;color:${PROG_FREC_COLOR[o.gama] || '#b45309'}">${esc(o.gama)}</span>: ${esc(progAdicionalQue(o))}</div>
-                <div style="font-size:11px;color:var(--color-muted)">${r.lugar(o) ? '📍 ' + esc(r.lugar(o)) + ' · ' : ''}${o.textoOT ? 'plan: ' + esc(o.textoOT) : ''}</div>
-                ${progOpsAdicionales(o).map(t => `<div style="font-size:11px">🔧 ${esc(t)}</div>`).join('')}
-              </div>`).join('') : '<div style="font-size:12px;color:var(--color-muted)">Todas sus OTs de este mes son el mantenimiento básico.</div>'}
+            ${r.sistemas.length ? r.sistemas.map(x => `
+              <div style="font-size:12px;padding:6px 0;border-top:1px solid var(--color-surface)">
+                <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
+                  <span class="equipo-tag" style="background:#6366f1">${esc(x.cabeza)}</span>
+                  <b style="font-size:12.5px">${esc(x.nombre)}</b>
+                </div>
+                ${x.sector ? `<div style="font-size:11px;color:var(--color-muted);margin-top:2px">📍 ${esc(x.sector)}</div>` : ''}
+                <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px">
+                  <span style="font-size:10.5px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:4px;padding:1px 5px;color:var(--color-muted)">condensadora</span>
+                  ${x.interiores.map(m => `<span style="font-size:10.5px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:4px;padding:1px 5px">${esc(m)}</span>`).join('')}
+                  ${x.cargados < x.total ? `<span style="font-size:10.5px;color:#b45309">+${x.total - x.cargados} sin OT</span>` : ''}
+                </div>
+                <div style="font-size:11px;color:var(--color-muted);margin-top:3px">📅 ${esc(x.periodicidad.txt)}</div>
+              </div>`).join('') : '<div style="font-size:12px;color:var(--color-muted)">Sin sistemas de aire este mes.</div>'}
           </div>`).join('')}
       </div>
     </div>`;
