@@ -1044,7 +1044,13 @@
       tx: 'IE01 (crear equipo) · IE03 (verificar)', tab: 'equipos',
       objetos: GHOST.map((g) => ({ cod: g.equipo, det: `${g.denom || ''} — sección web: ${g.seccion}` })),
     });
-    const paraBaja = (typeof EQUIPOS_SAP_PARA_BAJA !== 'undefined') ? EQUIPOS_SAP_PARA_BAJA : [];
+    // IH08 2026-11-11: siguen en SAP con status "MONT NOAC PTBO" y no entran al portal (regla permanente).
+    const paraBaja = (typeof EQUIPOS_SAP_PARA_BAJA !== 'undefined') ? EQUIPOS_SAP_PARA_BAJA : [
+      ['AAC1272', 'Split - Baja Silueta 5'], ['AAC193', 'Split X Tr Cabina de Peaje'], ['AAC2112', 'Roof Top - F/C por Bomba'],
+      ['AAC250', 'Split'], ['AAC2721', 'Split F/C'], ['AAC2722', 'Split F/C'], ['AAC2723', 'Split F/C'], ['AAC2724', 'Split F/C'],
+      ['AAC2725', 'Split F/C'], ['AAC2732', 'Split - Sala Técnica Caseta Central'], ['AVO018', 'Camioneta [NHB 055]'],
+      ['MBO001', 'Bomba Sumergible de achique Lugones'], ['MBO1165', 'Bomba Sumergible Cloacal Nº1'], ['MBO1166', 'Bomba Sumergible Cloacal Nº2'],
+    ].map((x) => ({ equipo: x[0], denom: x[1], status: 'MONT NOAC PTBO' }));
     add({
       id: 'eq-baja-pendiente', area: 'Equipos', prio: 'media',
       titulo: 'Equipos marcados para baja (NOAC / PTBO) que siguen en el maestro',
@@ -1067,6 +1073,20 @@
       tx: 'IE02 → pestaña Datos generales → Fabricante', tab: 'equipos',
       objetos: maestro.filter((e) => e.status === 'MONT' && (!e.fab || FAB_TYPO[String(e.fab).toUpperCase()]))
         .map((e) => ({ cod: e.equipo, det: `${e.denom || ''} — ${e.fab ? `fabricante "${e.fab}" → "${FAB_TYPO[String(e.fab).toUpperCase()]}"` : 'sin fabricante'}` })),
+    });
+    add({
+      id: 'eq-codigo-raro', area: 'Equipos', prio: 'media',
+      titulo: 'Equipo dado de alta con código de otra familia (probable error de tipeo)',
+      que: 'Es un aire acondicionado (Westric Nº2 UPS Parking Río, par del AAC9443) con prefijo ACC en lugar de AAC. Corregir el código o recrearlo como AAC9444 y migrar sus planes/OTs.',
+      tx: 'IE02 / IE01 (código de equipo)', tab: 'equipos',
+      objetos: [{ cod: 'ACC9444', det: 'Westric Nº2 - UPS Parking Río — debería ser AAC9444' }],
+    });
+    add({
+      id: 'eq-no-en-ih08', area: 'Equipos', prio: 'media',
+      titulo: 'Equipos del portal que no vinieron en el IH08 del 11/11/2026',
+      que: 'Verificar en SAP que existen y están de alta (si ya no existen, avisar para sacarlos del portal). Se conservan en el maestro mientras tanto.',
+      tx: 'IH08 / IE03', tab: 'equipos',
+      objetos: ['EMO1575', 'MAS588', 'ARC001', 'ARC002', 'PPA913', 'PPA915', 'PPA916'].map((c) => ({ cod: c, det: (maestro.find((e) => e.equipo === c) || {}).denom || '' })),
     });
     add({
       id: 'eq-her', area: 'Equipos', prio: 'baja',
