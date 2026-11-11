@@ -521,7 +521,7 @@
     PL.forEach((p) => {
       if (!p.realDias || /s\/fechas/.test(p.realBucket || '')) return;
       if (!efectiva[p.equipo] || p.realDias < efectiva[p.equipo].d) {
-        efectiva[p.equipo] = { d: p.realDias, b: p.realBucket };
+        efectiva[p.equipo] = { d: p.realDias, b: p.realBucket, pos: p.pos, plan: p.plan, desc: p.desc };
       }
     });
     const porTipo = {};
@@ -529,7 +529,7 @@
       const inf = eqInfo[equipo];
       if (!inf) return;
       const key = inf.familia + ' · ' + inf.tipo;
-      (porTipo[key] || (porTipo[key] = [])).push({ equipo, b: v.b, d: v.d });
+      (porTipo[key] || (porTipo[key] = [])).push({ equipo, b: v.b, d: v.d, pos: v.pos, plan: v.plan, desc: v.desc });
     });
     const consist = Object.entries(porTipo).map(([key, lst]) => {
       const c = {};
@@ -537,7 +537,9 @@
       const orden = Object.entries(c).sort((a, b) => b[1] - a[1]);
       const norma = orden[0][0];
       const outliers = lst.filter((x) => x.b !== norma);
-      return { te: key, n: lst.length, norma, dist: orden, outliers };
+      const dn = lst.filter((x) => x.b === norma).map((x) => x.d).sort((a, b) => a - b);
+      const normaDias = dn[Math.floor(dn.length / 2)];
+      return { te: key, n: lst.length, norma, normaDias, dist: orden, outliers };
     }).filter((x) => x.n >= 3).sort((a, b) => b.n - a.n);
     // solo cuenta como "problema" si el tipo tiene ≥4 equipos y >1 se aparta
     const totalOutliers = consist.reduce((s, x) => s + (x.n >= 4 ? x.outliers.length : 0), 0);
@@ -1135,14 +1137,18 @@
       titulo: 'Plan que no corresponde al tipo de equipo (aire)',
       que: 'El plan nombra otro tipo de equipo (ej. un Split con plan de Roof Top): pasar el equipo al plan / hoja de ruta de su tipo.',
       tx: 'IP02 (sacar la posición y agregarla al plan correcto)', tab: 'resumen',
-      objetos: mismatch.map((m) => ({ cod: m.equipo, det: `Es ${m.teq} y el plan dice ${m.tplan}: ${m.desc}` })),
+      objetos: mismatch.map((m) => ({ cod: m.equipo, det: `Es un ${m.teq} pero está en un plan de ${m.tplan} («${m.desc}») → pasarlo a un plan de ${m.teq}` })),
     });
     add({
       id: 'pl-periodicidad', area: 'Planes', prio: 'media',
       titulo: 'Equipos con frecuencia distinta al resto de su tipo',
-      que: 'Revisar si la diferencia es a propósito. Si no, pasarlos al plan con la frecuencia habitual de su tipo; si sí, dejarlo documentado.',
-      tx: 'IP02 (cambiar de plan / ciclo) · IP10 (reprogramar)', tab: 'resumen',
-      objetos: consist.filter((c) => c.n >= 4).flatMap((c) => c.outliers.map((o) => ({ cod: o.equipo, det: `${c.te}: va ${o.b}, lo habitual es ${c.norma}` }))),
+      que: 'Cada fila dice cómo está HOY el equipo en SAP y a qué frecuencia pasarlo para igualarlo al resto de su tipo (la que usa la mayoría). Si la diferencia es a propósito, no se cambia nada: dejalo documentado.',
+      tx: 'IP02 → abrir el plan → en la posición indicada cambiar el paquete / ciclo · IP10 (reprogramar)', tab: 'resumen',
+      objetos: consist.filter((c) => c.n >= 4).flatMap((c) => c.outliers.map((o) => {
+        const hoy = /^otro/.test(o.b) ? `cada ${o.d} días (no es una frecuencia estándar)` : `${o.b} (cada ~${o.d} días)`;
+        const dir = o.d < c.normaDias ? 'ALARGAR' : 'ACORTAR';
+        return { cod: o.equipo, det: `${c.te} · Hoy: ${hoy} → ${dir} a ${c.norma} (como el resto) · plan ${o.plan}, posición ${o.pos} «${o.desc || ''}»` };
+      })),
     });
     if (typeof AAC_SISTEMAS !== 'undefined') {
       const bk = (eqs) => new Set(eqs.flatMap((e) => PL.filter((p) => p.equipo === e).map((p) => p.realBucket)));
@@ -1163,7 +1169,7 @@
       que: 'Corregir el texto del plan (ej. dice 6M y se hace anual) o el ciclo, según cuál sea el correcto.',
       tx: 'IP02 (texto del plan / ciclo)', tab: 'planes',
       objetos: [].concat(P.desajusteMenosSeguido || [], P.desajusteNoCoincide || [])
-        .map((d) => ({ cod: 'Plan ' + d.plan, det: `${d.equipo} · ${d.desc} — dice ${d.declara || '—'}, se ejecuta cada ~${d.realDias} días (${d.realBucket})` })),
+        .map((d) => ({ cod: 'Plan ' + d.plan, det: `${d.equipo} · «${d.desc}» — el nombre dice ${d.declara || '—'} pero se ejecuta ${d.realBucket} (cada ~${d.realDias} días). Si lo correcto es ${d.realBucket}: cambiar el NOMBRE del plan; si lo correcto es ${d.declara || 'lo que dice el nombre'}: cambiar el CICLO` })),
     });
     add({
       id: 'pl-estrategia', area: 'Planes', prio: 'baja',
